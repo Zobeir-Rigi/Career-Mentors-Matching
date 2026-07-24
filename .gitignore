@@ -9,6 +9,8 @@ node_modules/
 # Build output
 dist/
 build/
+dist-ssr
+*.local
 
 # Coverage reports
 coverage/
@@ -18,6 +20,9 @@ coverage/
 logs/
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -51,6 +56,14 @@ prisma/*.db-journal
 .DS_Store
 Thumbs.db
 
+
+# Editor directories and files
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 # temp directory
 .temp/
 .tmp/
