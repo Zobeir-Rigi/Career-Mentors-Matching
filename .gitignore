@@ -12,10 +12,16 @@ build/
 
 # Coverage reports
 coverage/
+.nyc_output/
 
 # Logs
 logs/
 *.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
 # TypeScript
 *.tsbuildinfo
@@ -23,10 +29,18 @@ logs/
 # Prisma
 prisma/*.db
 prisma/*.db-journal
+**/src/generated/
+
 
 # IDE
 .vscode/
 .idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
 # Cache
 .npm/
@@ -36,3 +50,16 @@ prisma/*.db-journal
 # OS
 .DS_Store
 Thumbs.db
+
+# temp directory
+.temp/
+.tmp/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
