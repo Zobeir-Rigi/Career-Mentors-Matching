@@ -4,7 +4,8 @@ export function Logo() {
       href="/"
       className="text-xl font-extrabold tracking-tight text-foreground"
     >
-      CYF <span className="text-accent">Mentoring</span>
+      <span className="text-fg">CYF</span>{" "}
+      <span className="text-accent">Mentoring</span>
     </a>
   );
 }
