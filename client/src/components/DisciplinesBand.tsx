@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Chip } from "./ui/Chip";
+import { Button } from "./ui/Button";
 
 const disciplines: string[] = [
   "Software Engineering",
@@ -15,7 +16,7 @@ const disciplines: string[] = [
   "Leadership & Management",
 ];
 
-export const DisciplinesBand = () => {
+export const DisciplinesBand = ({ header, smallerText, isSubmitButtonToRender }: any) => {
   const [selectedDiscipline, setSelectedDiscipline] = useState<string[]>([]);
 
   // handle chip click
@@ -36,12 +37,10 @@ export const DisciplinesBand = () => {
           id="disciplines-heading"
           className="overshoot font-display font-semibold text-[30px] text-fg"
         >
-          Mentors across eleven disciplines
+          {header}
         </h2>
         <p className="mt-6 max-w-3xl font-sans text-muted">
-          From your first CV review to cloud architecture — every mentor sets
-          their own capacity, so nobody gets overbooked and nobody gets lost in
-          a list.
+          {smallerText}
         </p>
         <div className="mt-8 flex flex-wrap gap-3.5">
           {disciplines.map((discipline) => (
@@ -53,6 +52,9 @@ export const DisciplinesBand = () => {
             />
           ))}
         </div>
+        {isSubmitButtonToRender && (
+          <Button variant="outline" className="mt-3">Save goals</Button>
+        )}
       </div>
     </section>
   );

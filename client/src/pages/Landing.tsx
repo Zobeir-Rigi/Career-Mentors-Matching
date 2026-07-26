@@ -11,7 +11,11 @@ export function Landing() {
       <Header></Header>
       <HeroBand />
       <HowMatchingWorks />
-      <DisciplinesBand />
+      <DisciplinesBand
+        header={"Mentors across eleven disciplines"}
+        smallerText={"Pick what you From your first CV review to cloud architecture — every mentor sets their own capacity, so nobody gets overbooked and nobody gets lost in a list. to grow in — this is what the matcher scores."}
+        isSubmitButtonToRender={false}
+      />
       <VolunteerAnHour />
       <Footer></Footer>
     </div>
