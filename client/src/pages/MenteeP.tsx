@@ -15,28 +15,46 @@ const availabilityOptions = [
   "Weekend evening",
 ];
 
+const goalOptions = [
+  "Software Engineering",
+  "Data & Analytics",
+  "Cybersecurity",
+  "Cloud & DevOps",
+  "Product",
+  "UX/UI",
+  "Leadership",
+  "Communication",
+  "Interview Prep",
+  "Career Direction",
+  "Networking",
+  "Confidence"
+];
+
 export function MenteeProfile() {
   const [isRemote, setIsRemote] = useState(true);
   const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
     [],
   );
-  const handleAvailabilityClick = (option: string) => {
-  if (selectedAvailability.includes(option)) {
-    setSelectedAvailability(
-      selectedAvailability.filter(
-        (item) => item !== option
-      )
-    );
-  } else {
-    setSelectedAvailability([
-      ...selectedAvailability,
-      option,
-    ]);
-  }
-};
+  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
 
+  const handleAvailabilityClick = (option: string) => {
+    if (selectedAvailability.includes(option)) {
+      setSelectedAvailability(
+        selectedAvailability.filter((item) => item !== option),
+      );
+    } else {
+      setSelectedAvailability([...selectedAvailability, option]);
+    }
+  };
 
   // console.log(selectedAvailability);
+  const handleGoalClick = (goal: string) => {
+    if (selectedGoals.includes(goal)) {
+      setSelectedGoals(selectedGoals.filter((item) => item !== goal));
+    } else {
+      setSelectedGoals([...selectedGoals, goal]);
+    }
+  };
 
   return (
     <div>
@@ -117,7 +135,28 @@ export function MenteeProfile() {
           </div>
         </Card>
 
-        <section>Your goals</section>
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl font-semibold">
+            <span className="overshoot">Your goals</span>
+          </h2>
+
+          <p className="text-muted">
+            What you want to grow in — the core matching signal.
+          </p>
+
+          <Card className="max-w-[738px]">
+            <div className="flex flex-wrap gap-3">
+              {goalOptions.map((goal) => (
+                <Chip
+                  key={goal}
+                  label={goal}
+                  isSelected={selectedGoals.includes(goal)}
+                  onClick={() => handleGoalClick(goal)}
+                />
+              ))}
+            </div>
+          </Card>
+        </section>
         <section>Compatibility questions</section>
       </main>
 
