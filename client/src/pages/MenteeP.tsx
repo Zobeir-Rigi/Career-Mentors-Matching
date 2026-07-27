@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
@@ -18,16 +17,23 @@ const availabilityOptions = [
 const goalOptions = [
   "Software Engineering",
   "Data & Analytics",
+  "Data Engineering",
+  "DevOps, Cloud & Platform",
   "Cybersecurity",
-  "Cloud & DevOps",
-  "Product",
-  "UX/UI",
-  "Leadership",
-  "Communication",
-  "Interview Prep",
-  "Career Direction",
-  "Networking",
-  "Confidence"
+  "QA & Testing",
+  "Product & Project Managment",
+  "Business Analysis",
+  "UX & Design",
+  "Career Development & Interview Prep",
+  "Leadership & managment",
+  "AI & Machine Learning",
+];
+
+const mentorshipOptions = [
+  "Career advice",
+  "Interview prep",
+  "Technical growth",
+  "Confidence",
 ];
 
 export function MenteeProfile() {
@@ -36,6 +42,14 @@ export function MenteeProfile() {
     [],
   );
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
+  const [selectedMentorshipOptions, setSelectedMentorshipOptions] = useState<
+    string[]
+  >([]);
+
+  const [meetingCadence, setMeetingCadence] = useState("");
+  const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];
+  const [mentoringStyle, setMentoringStyle] = useState("");
+  const mentoringStyleOptions = ["Structured", "Open", "Mix"];
 
   const handleAvailabilityClick = (option: string) => {
     if (selectedAvailability.includes(option)) {
@@ -56,12 +70,28 @@ export function MenteeProfile() {
     }
   };
 
+  const handleMentorshipOptionClick = (option: string) => {
+    if (selectedMentorshipOptions.includes(option)) {
+      setSelectedMentorshipOptions(
+        selectedMentorshipOptions.filter((item) => item !== option),
+      );
+    } else {
+      setSelectedMentorshipOptions([...selectedMentorshipOptions, option]);
+    }
+  };
+
+  const handleMentoringStyleChange = (style: string) => {
+    setMentoringStyle(style);
+  };
+
   return (
     <div>
       <Header></Header>
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <section className="space-y-4">
-          <h1 className="font-display text-4xl font-semibold">Your profile</h1>
+          <h1 className="font-display text-4xl font-semibold overshoot">
+            Your profile
+          </h1>
 
           <p className="max-w-2xl text-muted">
             Everything here feeds the matcher — the more you fill in, the better
@@ -70,9 +100,11 @@ export function MenteeProfile() {
           </p>
         </section>
 
-        <section>
-          <h2>Where you are</h2>
-          <Card className="max-w-[738px]">
+        <section className="space-y-6">
+          <h2 className="font-display text-2xl font-semibold overshoot ">
+            Where you are
+          </h2>
+          <Card className="max-w-[738px] ">
             <div className=" space-y-2">
               <label className="text-sm font-semibold">Current job title</label>
               <input className="w-full rounded-md border border-line bg-surface px-4 py-2" />
@@ -122,7 +154,7 @@ export function MenteeProfile() {
             What you want to grow in — the core matching signal.
           </p>
         </section>
-        <Card className="max-w-[738px]">
+        <div className="max-w-[738px]">
           <div className="flex flex-wrap gap-3">
             {availabilityOptions.map((option) => (
               <Chip
@@ -133,7 +165,7 @@ export function MenteeProfile() {
               />
             ))}
           </div>
-        </Card>
+        </div>
 
         <section className="space-y-4">
           <h2 className="font-display text-2xl font-semibold">
@@ -144,7 +176,7 @@ export function MenteeProfile() {
             What you want to grow in — the core matching signal.
           </p>
 
-          <Card className="max-w-[738px]">
+          <div className="max-w-[738px]">
             <div className="flex flex-wrap gap-3">
               {goalOptions.map((goal) => (
                 <Chip
@@ -155,13 +187,97 @@ export function MenteeProfile() {
                 />
               ))}
             </div>
+          </div>
+        </section>
+        <section className="space-y-4">
+          <h2 className="font-display text-2xl font-semibold">
+            <span className="overshoot">Compatibility questions</span>
+          </h2>
+
+          <p className="text-muted">
+            These preferences help us make better matches and set expectations
+            for the mentorship.
+          </p>
+
+          <Card className="space-y-6 max-w-[738px]">
+            {/* What do you most want from mentorship? */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                What do you most want from mentorship?
+              </label>
+
+              <div className="flex flex-wrap gap-3">
+                {mentorshipOptions.map((option) => (
+                  <Chip
+                    key={option}
+                    label={option}
+                    isSelected={selectedMentorshipOptions.includes(option)}
+                    onClick={() => handleMentorshipOptionClick(option)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Meeting cadence */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">Meeting cadence</label>
+
+              <div className="space-y-2">
+                {cadenceOptions.map((option) => (
+                  <label key={option} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="meeting-cadence"
+                      value={option}
+                      checked={meetingCadence === option}
+                      onChange={() => setMeetingCadence(option)}
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                Anything your mentor should know about you?
+              </label>
+
+              <textarea
+                className="w-full rounded-md border border-line bg-surface px-4 py-2"
+                rows={4}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                Preferred mentoring style
+              </label>
+
+              <div className="space-y-2">
+                {mentoringStyleOptions.map((option) => (
+                  <label key={option} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="mentoring-style"
+                      value={option}
+                      checked={mentoringStyle === option}
+                      onChange={() => handleMentoringStyleChange(option)}
+                    />
+
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </div>
           </Card>
         </section>
-        <section>Compatibility questions</section>
+        <section className="max-w-[738px] space-y-6">
+        <div className="h-px bg-line" />
+
+        <Button>Save profile</Button>
+      </section>
       </main>
 
-      <Button>Save</Button>
-      <Footer></Footer>
+
     </div>
   );
 }
