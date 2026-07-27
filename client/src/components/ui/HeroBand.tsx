@@ -1,4 +1,5 @@
 import { Button } from "./Button";
+import { Thread } from "./Thread";
 
 export function HeroBand() {
     return (
@@ -31,22 +32,7 @@ export function HeroBand() {
                             Career-switcher, aiming for frontend
                         </p>
                     </div>
-                    <svg
-                        className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible"
-                        viewBox="0 0 440 200"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <circle cx="162" cy="100" r="4.5" className="fill-accent thread-dot thread-dot-a" />
-                        <path
-                            d="M 162 100 C 210 115, 230 85, 280 100"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            className="text-accent thread-draw"
-                        />
-                        <circle cx="280" cy="100" r="4.5" className="fill-accent thread-dot thread-dot-b" />
-                    </svg>
+                    <Thread />
                     <div className="w-[170px] sm:w-[180px] p-4 rounded-[10px] bg-surface border border-line shadow-sm rotate-2">
                         <span className="block text-[10px] font-semibold tracking-wider text-muted uppercase">
                             Mentor
