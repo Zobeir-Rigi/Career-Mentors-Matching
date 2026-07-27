@@ -4,6 +4,7 @@ import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Thread } from "../components/ui/Thread";
+import { DisciplinesBand } from "../components/DisciplinesBand";
 
 export function Landing() {
   return (
@@ -57,6 +58,7 @@ export function Landing() {
           <Thread />
         </div>
       </section>
+      <DisciplinesBand />
       <Footer></Footer>
     </div>
   );
