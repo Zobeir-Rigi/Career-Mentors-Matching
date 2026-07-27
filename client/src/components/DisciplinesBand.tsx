@@ -31,7 +31,7 @@ export const DisciplinesBand = () => {
       aria-labelledby="disciplines-heading"
       className="bg-bg px-5 py-16 sm:px-8 lg:px-10"
     >
-      <div className="mx-auto max-w-277.5">
+      <div className="mx-auto max-w-277.5 font-semibold text-[30px]">
         <h2 id="disciplines-heading" className="overshoot font-display text-fg">
           Mentors across eleven disciplines
         </h2>
