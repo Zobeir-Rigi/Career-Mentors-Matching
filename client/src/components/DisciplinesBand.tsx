@@ -31,11 +31,14 @@ export const DisciplinesBand = () => {
       aria-labelledby="disciplines-heading"
       className="bg-bg px-5 py-16 sm:px-8 lg:px-10"
     >
-      <div className="mx-auto max-w-277.5 font-semibold text-[30px]">
-        <h2 id="disciplines-heading" className="overshoot font-display text-fg">
+      <div className="mx-auto max-w-277.5">
+        <h2
+          id="disciplines-heading"
+          className="overshoot font-display font-semibold text-[30px] text-fg"
+        >
           Mentors across eleven disciplines
         </h2>
-        <p className="mt-6 max-w-3xl font-sans text-fg">
+        <p className="mt-6 max-w-3xl font-sans text-muted">
           From your first CV review to cloud architecture — every mentor sets
           their own capacity, so nobody gets overbooked and nobody gets lost in
           a list.
