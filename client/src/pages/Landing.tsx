@@ -5,6 +5,7 @@ import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
 import { Thread } from "../components/ui/Thread";
 import { DisciplinesBand } from "../components/DisciplinesBand";
+import { HeroBand } from "../components/ui/HeroBand";
 
 export function Landing() {
   return (
