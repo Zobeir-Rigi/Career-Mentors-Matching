@@ -14,7 +14,7 @@ export function Button({
     <button
       className={cn(
         // Base styles
-        "min-h-[44px] px-[16px] py-[10px] rounded-md font-semibold text-sm ransition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
+        "min-h-[44px] px-[16px] py-[10px] rounded-md font-semibold text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
 
         // Variant styles
         variant === "primary" &&
