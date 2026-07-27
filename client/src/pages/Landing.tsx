@@ -59,6 +59,7 @@ export function Landing() {
           <Thread />
         </div>
       </section>
+      <HeroBand />
       <DisciplinesBand />
       <Footer></Footer>
     </div>
