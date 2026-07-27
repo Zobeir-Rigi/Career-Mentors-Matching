@@ -3,6 +3,7 @@ import { Header } from "../components/Header";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { Thread } from "../components/ui/Thread";
 import { DisciplinesBand } from "../components/DisciplinesBand";
 
 export function Landing() {
@@ -54,16 +55,7 @@ export function Landing() {
 
         {/* 🧵 Signature Pairing-Thread SVG */}
         <div className="flex justify-center items-center p-4">
-          <svg className="w-48 h-12" viewBox="0 0 200 50">
-            <path
-              d="M 10,25 Q 100,0 190,25"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              className="thread-draw text-accent"
-            />
-            <circle cx="190" cy="25" r="4" className="thread-dot fill-accent" />
-          </svg>
+          <Thread />
         </div>
       </section>
       <DisciplinesBand />
