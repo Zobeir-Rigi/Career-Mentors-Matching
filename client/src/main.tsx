@@ -7,13 +7,14 @@ import "@fontsource-variable/fraunces";
 import "@fontsource-variable/public-sans";
 import "./index.css";
 
-import { Landing } from "../src/pages/Landing";
+// import { Landing } from "../src/pages/Landing";
+import { MenteeProfile } from "./pages/MenteeP";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<MenteeProfile />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
