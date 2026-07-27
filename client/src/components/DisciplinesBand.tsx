@@ -1,4 +1,5 @@
-// import { Chip } from './ui/Chip'
+import { useState } from "react";
+import { Chip } from "./ui/Chip";
 
 const disciplines: string[] = [
   "Software Engineering",
@@ -15,6 +16,16 @@ const disciplines: string[] = [
 ];
 
 export const DisciplinesBand = () => {
+  const [selectedDiscipline, setSelectedDiscipline] = useState<string[]>([]);
+
+  // handle chip click
+  const handleChipClick = (discipline: string) => {
+    setSelectedDiscipline((current) =>
+      current.includes(discipline)
+        ? current.filter((item) => item !== discipline)
+        : [...current, discipline],
+    );
+  };
   return (
     <section
       aria-labelledby="disciplines-heading"
@@ -24,14 +35,19 @@ export const DisciplinesBand = () => {
         <h2 id="disciplines-heading" className="overshoot font-display text-fg">
           Mentors across eleven disciplines
         </h2>
-        <p>
+        <p className="mt-6 max-w-3xl font-sans text-fg">
           From your first CV review to cloud architecture — every mentor sets
           their own capacity, so nobody gets overbooked and nobody gets lost in
           a list.
         </p>
-        <div>
+        <div className="mt-8 flex flex-wrap gap-3.5">
           {disciplines.map((discipline) => (
-            <p key={discipline}> {discipline}</p>
+            <Chip
+              key={discipline}
+              label={discipline}
+              isSelected={selectedDiscipline.includes(discipline)}
+              onClick={() => handleChipClick(discipline)}
+            />
           ))}
         </div>
       </div>

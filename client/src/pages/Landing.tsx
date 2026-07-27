@@ -3,6 +3,7 @@ import { Header } from "../components/Header";
 import { Button } from "../components/ui/Button";
 import { Card } from "../components/ui/Card";
 import { StatusBadge } from "../components/ui/StatusBadge";
+import { DisciplinesBand } from "../components/DisciplinesBand";
 
 export function Landing() {
   return (
@@ -65,6 +66,7 @@ export function Landing() {
           </svg>
         </div>
       </section>
+      <DisciplinesBand />
       <Footer></Footer>
     </div>
   );
