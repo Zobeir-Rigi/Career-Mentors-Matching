@@ -17,6 +17,27 @@ const availabilityOptions = [
 
 export function MenteeProfile() {
   const [isRemote, setIsRemote] = useState(true);
+  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
+    [],
+  );
+  const handleAvailabilityClick = (option: string) => {
+  if (selectedAvailability.includes(option)) {
+    setSelectedAvailability(
+      selectedAvailability.filter(
+        (item) => item !== option
+      )
+    );
+  } else {
+    setSelectedAvailability([
+      ...selectedAvailability,
+      option,
+    ]);
+  }
+};
+
+
+  // console.log(selectedAvailability);
+
   return (
     <div>
       <Header></Header>
@@ -82,24 +103,25 @@ export function MenteeProfile() {
           <p className="text-muted">
             What you want to grow in — the core matching signal.
           </p>
-
-          
         </section>
         <Card className="max-w-[738px]">
-            <div className="flex flex-wrap gap-3">
-                {availabilityOptions.map((option) => (
-                    <Chip key={option} label= {option} isSelected= {false} onClick={() => {}} />
-                ))}
-            </div>
-
+          <div className="flex flex-wrap gap-3">
+            {availabilityOptions.map((option) => (
+              <Chip
+                key={option}
+                label={option}
+                isSelected={selectedAvailability.includes(option)}
+                onClick={() => handleAvailabilityClick(option)}
+              />
+            ))}
+          </div>
         </Card>
 
         <section>Your goals</section>
         <section>Compatibility questions</section>
       </main>
 
-      
-        <Button>Save</Button>
+      <Button>Save</Button>
       <Footer></Footer>
     </div>
   );
