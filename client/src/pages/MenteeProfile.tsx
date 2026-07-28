@@ -15,7 +15,6 @@ import { Input } from "../components/ui/Input";
 import { FormField } from "../components/ui/FormField";
 import { Textarea } from "../components/ui/Textarea";
 
-
 export function MenteeProfile() {
   const isMatchReady = false;
   const [isRemote, setIsRemote] = useState(true);
@@ -95,9 +94,18 @@ export function MenteeProfile() {
             Where you are
           </h2>
           <Card className="max-w-[738px] space-y-6">
-            <FormField label="Current job title">
-            <Input placeholder="e.g. Care worker" />
-            </FormField>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-semibold">
+                  Current job title
+                </label>
+
+                <span className="text-sm text-muted">(Optional)</span>
+              </div>
+
+              <Input placeholder="e.g. Care worker" />
+            </div>
+
             <FormField label="What do you want from mentorship?">
               <Textarea />
             </FormField>
