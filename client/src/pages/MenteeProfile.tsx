@@ -213,7 +213,7 @@ export function MenteeProfile() {
             <div className="space-y-2">
               <label className="text-sm font-semibold">Meeting cadence</label>
 
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-6 pt-4">
                 {cadenceOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2">
                     <input
@@ -235,8 +235,7 @@ export function MenteeProfile() {
               <label className="text-sm font-semibold">
                 Preferred mentoring style
               </label>
-
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-6 pt-4" >
                 {mentoringStyleOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2">
                     <input
@@ -246,11 +245,11 @@ export function MenteeProfile() {
                       checked={mentoringStyle === option}
                       onChange={() => handleMentoringStyleChange(option)}
                     />
-
                     {option}
                   </label>
                 ))}
               </div>
+          
             </div>
           </Card>
         </section>
