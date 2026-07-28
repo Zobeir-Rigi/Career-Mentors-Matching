@@ -253,7 +253,7 @@ export function MenteeProfile() {
             </div>
           </Card>
         </section>
-        <section className="max-w-[738px] space-y-6">
+        <section className="max-w-[738px] space-y-6 pb-15">
           <div className="h-px bg-line" />
 
           <Button>Save profile</Button>
