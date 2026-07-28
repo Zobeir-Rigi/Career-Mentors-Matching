@@ -36,6 +36,8 @@ const mentorshipOptions = [
   "Confidence",
 ];
 
+const isMatchReady = false;
+
 export function MenteeProfile() {
   const [isRemote, setIsRemote] = useState(true);
   const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
@@ -99,6 +101,18 @@ export function MenteeProfile() {
             the algorithm.
           </p>
         </section>
+        {/* Warning banner */}
+        {!isMatchReady && (
+          <section className="max-w-[708px]">
+            <div className="rounded-md bg-warn-tint px-4 py-3 text-sm text-fg">
+              <span className="font-semibold">You can't be matched yet.</span>
+
+              <span className="ml-4">
+                Still needed: your availability — set it below and save.
+              </span>
+            </div>
+          </section>
+        )}
 
         <section className="space-y-6">
           <h2 className="font-display text-2xl font-semibold overshoot ">
@@ -271,13 +285,11 @@ export function MenteeProfile() {
           </Card>
         </section>
         <section className="max-w-[738px] space-y-6">
-        <div className="h-px bg-line" />
+          <div className="h-px bg-line" />
 
-        <Button>Save profile</Button>
-      </section>
+          <Button>Save profile</Button>
+        </section>
       </main>
-
-
     </div>
   );
 }
