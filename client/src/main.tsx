@@ -8,7 +8,7 @@ import "@fontsource-variable/public-sans";
 import "./index.css";
 
 // import { Landing } from "../src/pages/Landing";
-import { MenteeProfile } from "./pages/MenteeP";
+import { MenteeProfile } from "./pages/MenteeProfile";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

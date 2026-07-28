@@ -4,41 +4,20 @@ import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
 import { Button } from "../components/ui/Button";
 import { Chip } from "../components/ui/Chip";
+import {
+  availabilityOptions,
+  goalOptions,
+  mentorshipOptions,
+  cadenceOptions,
+  mentoringStyleOptions,
+} from "../ProfileOptions";
+import { Input } from "../components/ui/Input";
+import { FormField } from "../components/ui/FormField";
+import { Textarea } from "../components/ui/Textarea";
 
-const availabilityOptions = [
-  "Weekday morning",
-  "Weekday afternoon",
-  "Weekday evening",
-  "Weekend morning",
-  "Weekend afternoon",
-  "Weekend evening",
-];
-
-const goalOptions = [
-  "Software Engineering",
-  "Data & Analytics",
-  "Data Engineering",
-  "DevOps, Cloud & Platform",
-  "Cybersecurity",
-  "QA & Testing",
-  "Product & Project Managment",
-  "Business Analysis",
-  "UX & Design",
-  "Career Development & Interview Prep",
-  "Leadership & managment",
-  "AI & Machine Learning",
-];
-
-const mentorshipOptions = [
-  "Career advice",
-  "Interview prep",
-  "Technical growth",
-  "Confidence",
-];
-
-const isMatchReady = false;
 
 export function MenteeProfile() {
+  const isMatchReady = false;
   const [isRemote, setIsRemote] = useState(true);
   const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
     [],
@@ -49,9 +28,7 @@ export function MenteeProfile() {
   >([]);
 
   const [meetingCadence, setMeetingCadence] = useState("");
-  const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];
   const [mentoringStyle, setMentoringStyle] = useState("");
-  const mentoringStyleOptions = ["Structured", "Open", "Mix"];
 
   const handleAvailabilityClick = (option: string) => {
     if (selectedAvailability.includes(option)) {
@@ -63,7 +40,6 @@ export function MenteeProfile() {
     }
   };
 
-  // console.log(selectedAvailability);
   const handleGoalClick = (goal: string) => {
     if (selectedGoals.includes(goal)) {
       setSelectedGoals(selectedGoals.filter((item) => item !== goal));
@@ -118,37 +94,30 @@ export function MenteeProfile() {
           <h2 className="font-display text-2xl font-semibold overshoot ">
             Where you are
           </h2>
-          <Card className="max-w-[738px] ">
-            <div className=" space-y-2">
-              <label className="text-sm font-semibold">Current job title</label>
-              <input className="w-full rounded-md border border-line bg-surface px-4 py-2" />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                What do you want from mentorship?
-              </label>
-              <textarea className="w-full rounded-md border border-line bg-surface px-4 py-2" />
+          <Card className="max-w-[738px] space-y-6">
+            <FormField label="Current job title">
+              <Input />
+            </FormField>
+            <FormField label="What do you want from mentorship?">
+              <Textarea />
+            </FormField>
+
+            <div className="grid md:grid-cols-2 gap-4">
+              <FormField label="LinkedIn URL">
+                <Input />
+              </FormField>
+
+              <FormField label="Scheduler link">
+                <Input />
+              </FormField>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">LinkedIn URL</label>
-                <input className="w-full rounded-md border border-line bg-surface px-4 py-2" />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Scheduler link</label>
-                <input className="w-full rounded-md border border-line bg-surface px-4 py-2" />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold">Region</label>
+              <FormField label="Region">
                 <select className="w-full rounded-md border border-line bg-surface px-4 py-2">
                   <option>No region — remote only</option>
                 </select>
-              </div>
+              </FormField>
 
               <div className="flex items-center gap-2">
                 <Switch checked={isRemote} onCheckedChange={setIsRemote} />
@@ -251,16 +220,9 @@ export function MenteeProfile() {
                 ))}
               </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                Anything your mentor should know about you?
-              </label>
-
-              <textarea
-                className="w-full rounded-md border border-line bg-surface px-4 py-2"
-                rows={4}
-              />
-            </div>
+            <FormField label="Anything your mentor should know about you?">
+              <Textarea rows={4} />
+            </FormField>
             <div className="space-y-2">
               <label className="text-sm font-semibold">
                 Preferred mentoring style
