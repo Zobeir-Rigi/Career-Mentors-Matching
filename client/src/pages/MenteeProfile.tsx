@@ -96,7 +96,7 @@ export function MenteeProfile() {
           </h2>
           <Card className="max-w-[738px] space-y-6">
             <FormField label="Current job title">
-              <Input />
+            <Input placeholder="e.g. Care worker" />
             </FormField>
             <FormField label="What do you want from mentorship?">
               <Textarea />
@@ -104,11 +104,11 @@ export function MenteeProfile() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="LinkedIn URL">
-                <Input />
+                <Input placeholder="https://linkedin.com/in/…" />
               </FormField>
 
               <FormField label="Scheduler link">
-                <Input />
+                <Input placeholder="https://calendly.com/…" />
               </FormField>
             </div>
 
