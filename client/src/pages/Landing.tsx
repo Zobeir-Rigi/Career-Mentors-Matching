@@ -1,9 +1,9 @@
 import { Footer } from "../components/Footer";
 import { Header } from "../components/Header";
 import { DisciplinesBand } from "../components/DisciplinesBand";
-import { HeroBand } from "../components/ui/HeroBand";
-import { HowMatchingWorks } from "../components/ui/HowMatchingWorks";
-import { VolunteerAnHour } from "../components/ui/VolunteerAnHour";
+import { HeroBand } from "../components/HeroBand";
+import { HowMatchingWorks } from "../components/HowMatchingWorks";
+import { VolunteerAnHour } from "../components/VolunteerAnHour";
 
 export function Landing() {
   return (
