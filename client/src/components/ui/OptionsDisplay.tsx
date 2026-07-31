@@ -1,4 +1,3 @@
-import { optionsSetHandler } from "../../lib/utils";
 import { Chip } from "./Chip";
 
 interface OptionsDisplayProps {
@@ -10,6 +9,7 @@ interface OptionsDisplayProps {
 export function OptionsDisplay({
   options,
   selectedOptionsSet,
+  onToggle,
 }: OptionsDisplayProps) {
   return (
     <div className="max-w-[738px]">
@@ -19,7 +19,7 @@ export function OptionsDisplay({
             key={option}
             label={option}
             isSelected={selectedOptionsSet.has(option)}
-            onClick={() => optionsSetHandler()}
+            onClick={() => onToggle(option)}
           />
         ))}
       </div>

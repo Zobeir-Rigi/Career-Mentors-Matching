@@ -1,15 +1,14 @@
-import { useState } from "react";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
 import { Button } from "../components/ui/Button";
-import { Chip } from "../components/ui/Chip";
 import {
   availabilityOptions,
   goalOptions,
   mentorshipOptions,
   cadenceOptions,
   mentoringStyleOptions,
+  industryOptions,
 } from "../ProfileOptions";
 import { Input } from "../components/ui/Input";
 import { FormField } from "../components/ui/FormField";
@@ -18,51 +17,39 @@ import { PageTitle } from "../components/ui/PageTitle";
 import { SectionHead } from "../components/ui/SectionHead";
 import { OptionsDisplay } from "../components/ui/OptionsDisplay";
 
+import { useProfile } from "../lib/context/MentorProfileContext";
+
 export function MentorProfile() {
   const isMatchReady = false;
-  const [isRemote, setIsRemote] = useState(true);
-  const [selectedAvailability, setSelectedAvailability] = useState<Set<string>>(
-    new Set(),
-  );
-  const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set());
-  const [selectedSkillOptions, setSelectedSkillOptions] = useState<Set<string>>(
-    new Set(),
-  );
 
-  const [meetingCadence, setMeetingCadence] = useState("");
-  const [mentoringStyle, setMentoringStyle] = useState("");
-
-  const handleAvailabilityClick = (option: string) => {
-    if (selectedAvailability.includes(option)) {
-      setSelectedAvailability(
-        selectedAvailability.filter((item) => item !== option),
-      );
-    } else {
-      setSelectedAvailability([...selectedAvailability, option]);
-    }
-  };
-
-  const handleGoalClick = (goal: string) => {
-    if (selectedGoals.includes(goal)) {
-      setSelectedGoals(selectedGoals.filter((item) => item !== goal));
-    } else {
-      setSelectedGoals([...selectedGoals, goal]);
-    }
-  };
-
-  const handleSkillOptionsClick = (option: string) => {
-    if (selectedSkillOptions.includes(option)) {
-      setSelectedSkillOptions(
-        selectedSkillOptions.filter((item) => item !== option),
-      );
-    } else {
-      setSelectedSkillOptions([...selectedSkillOptions, option]);
-    }
-  };
-
-  const handleMentoringStyleChange = (style: string) => {
-    setMentoringStyle(style);
-  };
+  const {
+    jobTitle,
+    setJobTitle,
+    bio,
+    setBio,
+    linkedInUrl,
+    setLinkedInUrl,
+    scheduleUrl,
+    setScheduleUrl,
+    region,
+    setRegion,
+    isRemote,
+    setIsRemote,
+    selectedAvailability,
+    toggleAvailability,
+    selectedDisciplines,
+    toggleDisciplines,
+    capacity,
+    setCapacity,
+    selectedSkills,
+    toggleSkills,
+    selectedIndustries,
+    toggleIndustries,
+    meetingCadence,
+    setMeetingCadence,
+    meetingStructure,
+    setMeetingStructure,
+  } = useProfile();
 
   return (
     <div>
@@ -99,27 +86,45 @@ export function MentorProfile() {
                 <span className="text-sm text-muted">(Optional)</span>
               </div>
 
-              <Input placeholder="e.g. Care worker" />
+              <Input
+                placeholder="e.g. Care worker"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+              />
             </div>
 
-            <FormField label="What do you want from mentorship?">
-              <Textarea />
+            <FormField label="Bio shown to matches">
+              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="LinkedIn URL">
-                <Input placeholder="https://linkedin.com/in/…" />
+                <Input
+                  placeholder="https://linkedin.com/in/…"
+                  value={linkedInUrl}
+                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                />
               </FormField>
 
               <FormField label="Scheduler link">
-                <Input placeholder="https://calendly.com/…" />
+                <Input
+                  placeholder="https://calendly.com/…"
+                  value={scheduleUrl}
+                  onChange={(e) => setScheduleUrl(e.target.value)}
+                />
               </FormField>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="Region">
-                <select className="w-full rounded-md border border-line bg-surface px-4 py-2">
-                  <option>No region — remote only</option>
+                <select
+                  className="w-full rounded-md border border-line bg-surface px-4 py-2"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                >
+                  <option value="OTHER">No region — remote only</option>
+                  <option value="LONDON">London</option>
+                  <option value="WEST_MIDLANDS">West Midland</option>
                 </select>
               </FormField>
 
@@ -138,7 +143,11 @@ export function MentorProfile() {
             sectionDescription="Shared slots
             are scored by the matcher."
           />
-          <OptionsDisplay options={availabilityOptions} selectedOptionsSet={selectedAvailability} onToggle={(option) => setSelectedAvailability(prevSet) => optionsSetHandler(selectedAvailability, option)} />
+          <OptionsDisplay
+            options={availabilityOptions}
+            selectedOptionsSet={selectedAvailability}
+            onToggle={toggleAvailability}
+          />
         </section>
 
         <section className="space-y-4">
@@ -146,25 +155,24 @@ export function MentorProfile() {
             sectionHead="Your disciplines"
             sectionDescription="What you can mentor in — the core matching signal."
           />
-
-          <div className="max-w-[738px]">
-            <div className="flex flex-wrap gap-3">
-              {goalOptions.map((goal) => (
-                <Chip
-                  key={goal}
-                  label={goal}
-                  isSelected={selectedGoals.includes(goal)}
-                  onClick={() => handleGoalClick(goal)}
-                />
-              ))}
-            </div>
-          </div>
+          <OptionsDisplay
+            options={goalOptions}
+            selectedOptionsSet={selectedDisciplines}
+            onToggle={toggleDisciplines}
+          />
         </section>
 
         <section className="space-y-4">
           <SectionHead
             sectionHead="Capacity"
             sectionDescription="How many mentees you can take at once. You will never be proposed beyond it."
+          />
+
+          <Input
+            type="number"
+            min={1}
+            value={capacity}
+            onChange={(e) => setCapacity(Number(e.target.value))}
           />
         </section>
         <section className="space-y-4">
@@ -174,22 +182,28 @@ export function MentorProfile() {
           />
 
           <Card className="space-y-6 max-w-[738px]">
-            {/* What do you most want from mentorship? */}
             <div className="space-y-2">
               <label className="text-sm font-semibold">
-                What do you most want from mentorship?
+                What skills can you mentor?
               </label>
 
-              <div className="flex flex-wrap gap-3">
-                {mentorshipOptions.map((option) => (
-                  <Chip
-                    key={option}
-                    label={option}
-                    isSelected={selectedSkillOptions.includes(option)}
-                    onClick={() => handleSkillOptionsClick(option)}
-                  />
-                ))}
-              </div>
+              <OptionsDisplay
+                options={mentorshipOptions}
+                selectedOptionsSet={selectedSkills}
+                onToggle={toggleSkills}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                What industries domain knowledge can you mentor?
+              </label>
+
+              <OptionsDisplay
+                options={industryOptions}
+                selectedOptionsSet={selectedIndustries}
+                onToggle={toggleIndustries}
+              />
             </div>
 
             {/* Meeting cadence */}
@@ -216,7 +230,7 @@ export function MentorProfile() {
             </FormField>
             <div className="space-y-2">
               <label className="text-sm font-semibold">
-                Preferred mentoring style
+                Preferred meeting style
               </label>
               <div className="flex flex-wrap gap-6 pt-4">
                 {mentoringStyleOptions.map((option) => (
@@ -225,8 +239,8 @@ export function MentorProfile() {
                       type="radio"
                       name="mentoring-style"
                       value={option}
-                      checked={mentoringStyle === option}
-                      onChange={() => handleMentoringStyleChange(option)}
+                      checked={meetingStructure === option}
+                      onChange={() => setMeetingStructure(option)}
                     />
                     {option}
                   </label>

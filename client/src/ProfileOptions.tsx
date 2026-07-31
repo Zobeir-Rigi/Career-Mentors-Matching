@@ -22,6 +22,21 @@ export const goalOptions = [
   "AI & Machine Learning",
 ];
 
+export const industryOptions = [
+  "Agriculture & Natural Resources",
+  "Construction & Real Estate",
+  "Manufacturing & Industrial",
+  "Technology & Telecoms",
+  "Finance & Insurance",
+  "Healthcare & Life Sciences",
+  "Retail & Consumer Goods",
+  "Hospitality & Leisure",
+  "Transportation & Logistics",
+  "Professional & Business Services",
+  "Education & Training",
+  "Public Sector & Non-Profit",
+];
+
 export const mentorshipOptions = [
   "Career advice",
   "Interview prep",
@@ -29,14 +44,6 @@ export const mentorshipOptions = [
   "Confidence",
 ];
 
-export const cadenceOptions = [
-  "Weekly",
-  "Fortnightly",
-  "Monthly",
-];
+export const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];
 
-export const mentoringStyleOptions = [
-  "Structured",
-  "Open",
-  "Mix",
-];
+export const mentoringStyleOptions = ["Structured", "Open", "Mix"];
