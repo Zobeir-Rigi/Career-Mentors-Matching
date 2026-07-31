@@ -3,7 +3,7 @@ import { Thread } from "./ui/Thread";
 
 export function VolunteerAnHour() {
   return (
-    <section className="w-full bg-surface py-16 md:py-24">
+    <section className="w-full bg-surface px-5 py-16 md:py-24">
       <div className="max-w-[1152px] mx-auto  grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
         <div className="flex flex-col items-start">
           <h2 className="overshoot font-display font-semibold text-[30px] text-fg mb-6">

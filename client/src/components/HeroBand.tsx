@@ -3,7 +3,7 @@ import { Thread } from "./ui/Thread";
 
 export function HeroBand() {
   return (
-    <div className="container max-w-[1152px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr]">
+    <div className="container px-5 max-w-[1152px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr]">
       <div className="flex flex-col items-start text-left">
         <p className="font-sans font-semibold text-[12px] uppercase wide-tracking text-accent">
           CODEYOURFUTURE · CAREER MENTORSHIP
