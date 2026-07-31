@@ -12,7 +12,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const [selectedAvailability, toggleAvailability] = useToggleSet();
   const [selectedDisciplines, toggleDisciplines] = useToggleSet();
-  const [capacity, setCapacity] = useState(0);
+  const [capacity, setCapacity] = useState(1);
   const [selectedSkills, toggleSkills] = useToggleSet();
   const [selectedIndustries, toggleIndustries] = useToggleSet();
   const [meetingCadence, setMeetingCadence] = useState("");

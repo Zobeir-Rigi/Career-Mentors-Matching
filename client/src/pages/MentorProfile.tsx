@@ -52,6 +52,21 @@ export function MentorProfile() {
     setMeetingStructure,
   } = useProfile();
 
+  const missingFields: string[] = [];
+  if (!jobTitle.trim()) missingFields.push("Job title");
+  if (!bio.trim()) missingFields.push("Bio");
+  if (!linkedInUrl.trim()) missingFields.push("LinkedIn URL");
+  if (!scheduleUrl.trim()) missingFields.push("Schedule URL");
+  if (!region.trim()) missingFields.push("Region");
+  if (selectedAvailability.size === 0) missingFields.push("Availability");
+  if (selectedDisciplines.size === 0) missingFields.push("Disciplines");
+  if (capacity <= 0) missingFields.push("Capacity");
+  if (selectedSkills.size === 0) missingFields.push("Skills");
+  if (selectedIndustries.size === 0) missingFields.push("Industries");
+  if (!meetingCadence.trim()) missingFields.push("Meeting Cadence");
+  if (!meetingStructure.trim()) missingFields.push("Meeting Structure");
+
+
   return (
     <div>
       <Header></Header>
