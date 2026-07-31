@@ -18,6 +18,7 @@ import { SectionHead } from "../components/ui/SectionHead";
 import { OptionsDisplay } from "../components/ui/OptionsDisplay";
 
 import { useProfile } from "../lib/context/MentorProfileContext";
+import { QuestionLabel } from "../components/ui/QuestionLabel";
 
 export function MentorProfile() {
   const isMatchReady = false;
@@ -169,6 +170,7 @@ export function MentorProfile() {
           />
 
           <Input
+            className="max-w-[100px]"
             type="number"
             min={1}
             value={capacity}
@@ -186,7 +188,6 @@ export function MentorProfile() {
               <label className="text-sm font-semibold">
                 What skills can you mentor?
               </label>
-
               <OptionsDisplay
                 options={mentorshipOptions}
                 selectedOptionsSet={selectedSkills}
@@ -195,9 +196,11 @@ export function MentorProfile() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-semibold">
+              {/* <label className="text-sm font-semibold">
                 What industries domain knowledge can you mentor?
-              </label>
+              </label> */}
+
+              <QuestionLabel question="What industries domain knowledge can you mentor?" />
 
               <OptionsDisplay
                 options={industryOptions}
