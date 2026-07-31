@@ -185,9 +185,7 @@ export function MentorProfile() {
 
           <Card className="space-y-6 max-w-[738px]">
             <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                What skills can you mentor?
-              </label>
+              <QuestionLabel question="What skills can you mentor?" />
               <OptionsDisplay
                 options={mentorshipOptions}
                 selectedOptionsSet={selectedSkills}
@@ -196,10 +194,6 @@ export function MentorProfile() {
             </div>
 
             <div className="space-y-2">
-              {/* <label className="text-sm font-semibold">
-                What industries domain knowledge can you mentor?
-              </label> */}
-
               <QuestionLabel question="What industries domain knowledge can you mentor?" />
 
               <OptionsDisplay
@@ -211,9 +205,9 @@ export function MentorProfile() {
 
             {/* Meeting cadence */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Meeting cadence</label>
+              <QuestionLabel question="Meeting cadence" />
 
-              <div className="flex flex-wrap gap-6 pt-4">
+              <div className="flex flex-wrap gap-6">
                 {cadenceOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2">
                     <input
@@ -232,10 +226,8 @@ export function MentorProfile() {
               <Textarea rows={4} />
             </FormField>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                Preferred meeting style
-              </label>
-              <div className="flex flex-wrap gap-6 pt-4">
+              <QuestionLabel question="Preferred meeting style" />
+              <div className="flex flex-wrap gap-6">
                 {mentoringStyleOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2">
                     <input

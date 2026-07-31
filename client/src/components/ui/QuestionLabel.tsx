@@ -6,6 +6,6 @@ interface QuestionLabelProps {
 
 export function QuestionLabel({ question }: QuestionLabelProps) {
   return (
-    <label className={cn("block mb-2 text-sm font-semibold")}>{question}</label>
+    <label className={cn("block mb-4 text-sm font-semibold")}>{question}</label>
   );
 }
