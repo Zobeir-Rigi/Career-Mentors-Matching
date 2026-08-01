@@ -19,6 +19,7 @@ import { OptionsDisplay } from "../components/ui/OptionsDisplay";
 
 import { useProfile } from "../lib/context/MentorProfileContext";
 import { QuestionLabel } from "../components/ui/QuestionLabel";
+import { Notice } from "../components/ui/Notice";
 
 export function MentorProfile() {
   const isMatchReady = false;
@@ -52,19 +53,20 @@ export function MentorProfile() {
     setMeetingStructure,
   } = useProfile();
 
-  const missingFields: string[] = [];
-  if (!jobTitle.trim()) missingFields.push("Job title");
-  if (!bio.trim()) missingFields.push("Bio");
-  if (!linkedInUrl.trim()) missingFields.push("LinkedIn URL");
-  if (!scheduleUrl.trim()) missingFields.push("Schedule URL");
-  if (!region.trim()) missingFields.push("Region");
-  if (selectedAvailability.size === 0) missingFields.push("Availability");
-  if (selectedDisciplines.size === 0) missingFields.push("Disciplines");
-  if (capacity <= 0) missingFields.push("Capacity");
-  if (selectedSkills.size === 0) missingFields.push("Skills");
-  if (selectedIndustries.size === 0) missingFields.push("Industries");
-  if (!meetingCadence.trim()) missingFields.push("Meeting Cadence");
-  if (!meetingStructure.trim()) missingFields.push("Meeting Structure");
+  const FIELD_LABELS: Record<string, string> = {
+    jobTitle: "Job title",
+    bio: "Bio",
+    linkedInUrl: "LinkedIn URL",
+    scheduleUrl: "Scheduler link",
+    region: "Region",
+    capacity: "Capacity",
+    meetingCadence: "Meeting cadence",
+    meetingStructure: "Preferred meeting style",
+    availability: "Availability",
+    disciplines: "Disciplines",
+    skills: "Skills",
+    industries: "Industries",
+  };
 
   const profileData = {
     jobTitle,
@@ -86,15 +88,15 @@ export function MentorProfile() {
     return Object.entries(profileData).reduce((acc, [key, value]) => {
       if (typeof value === "string") {
         if (value.trim() === "") {
-          acc.push(key);
+          acc.push(FIELD_LABELS[key] || key);
         }
       } else if (typeof value === "number") {
         if (value <= 0) {
-          acc.push(key);
+          acc.push(FIELD_LABELS[key] || key);
         }
       } else if (Array.isArray(value)) {
         if (value.length == 0) {
-          acc.push(key);
+          acc.push(FIELD_LABELS[key] || key);
         }
       }
       return acc;
@@ -112,17 +114,7 @@ export function MentorProfile() {
             the algorithm."
         />
         {/* Warning banner */}
-        {!isMatchReady && (
-          <section className="max-w-[708px]">
-            <div className="rounded-md bg-warn-tint px-4 py-3 text-sm text-fg">
-              <span className="font-semibold">You can't be matched yet.</span>
-
-              <span className="ml-4">
-                Still needed: your availability — set it below and save.
-              </span>
-            </div>
-          </section>
-        )}
+        <Notice missingFields={checkEmptyFields(profileData)} />
 
         <section className="space-y-4">
           <SectionHead sectionHead="About you" sectionDescription="" />
