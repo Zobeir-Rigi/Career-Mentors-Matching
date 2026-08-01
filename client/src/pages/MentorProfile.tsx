@@ -34,8 +34,8 @@ export function MentorProfile() {
     setScheduleUrl,
     region,
     setRegion,
-    isRemote,
-    setIsRemote,
+    openToRemote,
+    setOpenToRemote,
     selectedAvailability,
     toggleAvailability,
     selectedDisciplines,
@@ -66,6 +66,40 @@ export function MentorProfile() {
   if (!meetingCadence.trim()) missingFields.push("Meeting Cadence");
   if (!meetingStructure.trim()) missingFields.push("Meeting Structure");
 
+  const profileData = {
+    jobTitle,
+    bio,
+    linkedInUrl,
+    scheduleUrl,
+    region,
+    openToRemote,
+    capacity,
+    meetingCadence,
+    meetingStructure,
+    availability: [...selectedAvailability],
+    disciplines: [...selectedDisciplines],
+    skills: [...selectedSkills],
+    industries: [...selectedIndustries],
+  };
+
+  function checkEmptyFields(profileData: object) {
+    return Object.entries(profileData).reduce((acc, [key, value]) => {
+      if (typeof value === "string") {
+        if (value.trim() === "") {
+          acc.push(key);
+        }
+      } else if (typeof value === "number") {
+        if (value <= 0) {
+          acc.push(key);
+        }
+      } else if (Array.isArray(value)) {
+        if (value.length == 0) {
+          acc.push(key);
+        }
+      }
+      return acc;
+    }, [] as string[]);
+  }
 
   return (
     <div>
@@ -145,7 +179,10 @@ export function MentorProfile() {
               </FormField>
 
               <div className="flex items-center gap-2">
-                <Switch checked={isRemote} onCheckedChange={setIsRemote} />
+                <Switch
+                  checked={openToRemote}
+                  onCheckedChange={setOpenToRemote}
+                />
                 <label className="text-sm font-semibold">
                   Open to remote mentoring
                 </label>

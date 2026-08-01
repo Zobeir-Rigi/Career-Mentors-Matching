@@ -8,7 +8,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [linkedInUrl, setLinkedInUrl] = useState("");
   const [scheduleUrl, setScheduleUrl] = useState("");
   const [region, setRegion] = useState("");
-  const [isRemote, setIsRemote] = useState(false);
+  const [openToRemote, setOpenToRemote] = useState(false);
 
   const [selectedAvailability, toggleAvailability] = useToggleSet();
   const [selectedDisciplines, toggleDisciplines] = useToggleSet();
@@ -29,8 +29,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     setScheduleUrl,
     region,
     setRegion,
-    isRemote,
-    setIsRemote,
+    openToRemote,
+    setOpenToRemote,
     selectedAvailability,
     toggleAvailability,
     selectedDisciplines,

@@ -17,8 +17,8 @@ interface MentorProfileContextType {
   region: string;
   setRegion: (val: string) => void;
 
-  isRemote: boolean;
-  setIsRemote: (val: boolean) => void;
+  openToRemote: boolean;
+  setOpenToRemote: (val: boolean) => void;
 
   // Availability
   selectedAvailability: Set<string>;
