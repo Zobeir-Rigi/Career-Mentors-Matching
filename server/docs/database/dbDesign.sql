@@ -50,10 +50,16 @@ CREATE TYPE "ApprovalStatus" AS ENUM (
   'DECLINED'
 );
 
+CREATE TYPE "Roles" AS ENUM (
+  'MENTEE',
+  'MENTOR',
+  'ADMIN'
+);
+
 CREATE TABLE "Users" (
   "id" uuid PRIMARY KEY,
   "fullName" varchar,
-  "role" varchar,
+  "role" "Roles",
   "email" varchar UNIQUE NOT NULL,
   "passwordHashed" varchar NOT NULL,
   "linkedinURL" varchar,
@@ -61,7 +67,8 @@ CREATE TABLE "Users" (
   "createdAt" timestamp NOT NULL,
   "updatedAt" timestamp NOT NULL,
   "isActive" bool,
-  "deactivatedAt" timestamp
+  "deactivatedAt" timestamp,
+  "isAdmin" bool NOT NULL DEFAULT false
 );
 
 CREATE TABLE "MenteeProfile" (
