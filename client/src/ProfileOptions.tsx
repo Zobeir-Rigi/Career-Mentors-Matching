@@ -47,3 +47,13 @@ export const mentorshipOptions = [
 export const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];
 
 export const mentoringStyleOptions = ["Structured", "Open", "Mix"];
+
+export const regionOptions = [
+  "LONDON",
+  "WEST_MIDLANDS",
+  "SCOTLAND",
+  "NORTH_WEST",
+  "CAPE_TOWN",
+  "SHEFFIELD",
+  "OTHER",
+];

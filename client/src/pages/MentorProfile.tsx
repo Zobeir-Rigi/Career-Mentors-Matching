@@ -9,6 +9,7 @@ import {
   cadenceOptions,
   mentoringStyleOptions,
   industryOptions,
+  regionOptions,
 } from "../ProfileOptions";
 import { Input } from "../components/ui/Input";
 import { FormField } from "../components/ui/FormField";
@@ -22,8 +23,6 @@ import { QuestionLabel } from "../components/ui/QuestionLabel";
 import { Notice } from "../components/ui/Notice";
 
 export function MentorProfile() {
-  const isMatchReady = false;
-
   const {
     jobTitle,
     setJobTitle,
@@ -119,21 +118,13 @@ export function MentorProfile() {
         <section className="space-y-4">
           <SectionHead sectionHead="About you" sectionDescription="" />
           <Card className="max-w-[738px] space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold">
-                  Current job title
-                </label>
-
-                <span className="text-sm text-muted">(Optional)</span>
-              </div>
-
+            <FormField label="Job title / headline">
               <Input
-                placeholder="e.g. Care worker"
+                placeholder="e.g. Senior Engineer at …"
                 value={jobTitle}
                 onChange={(e) => setJobTitle(e.target.value)}
               />
-            </div>
+            </FormField>
 
             <FormField label="Bio shown to matches">
               <Textarea value={bio} onChange={(e) => setBio(e.target.value)} />
@@ -164,21 +155,30 @@ export function MentorProfile() {
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
                 >
-                  <option value="OTHER">No region — remote only</option>
-                  <option value="LONDON">London</option>
-                  <option value="WEST_MIDLANDS">West Midland</option>
+                  <option key="" value="">
+                    Please select your region
+                  </option>
+                  {regionOptions.map((region) => {
+                    return (
+                      <option key={region} value={region}>
+                        {region}
+                      </option>
+                    );
+                  })}
                 </select>
               </FormField>
 
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={openToRemote}
-                  onCheckedChange={setOpenToRemote}
-                />
-                <label className="text-sm font-semibold">
-                  Open to remote mentoring
-                </label>
-              </div>
+              <FormField label="">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={openToRemote}
+                    onCheckedChange={setOpenToRemote}
+                  />
+                  <label className="text-sm font-semibold">
+                    Open to remote mentoring
+                  </label>
+                </div>
+              </FormField>
             </div>
           </Card>
         </section>
@@ -266,9 +266,7 @@ export function MentorProfile() {
                 ))}
               </div>
             </div>
-            <FormField label="Anything your mentor should know about you?">
-              <Textarea rows={4} />
-            </FormField>
+
             <div className="space-y-2">
               <QuestionLabel question="Preferred meeting style" />
               <div className="flex flex-wrap gap-6">
@@ -291,7 +289,14 @@ export function MentorProfile() {
         <section className="max-w-[738px] space-y-6 pb-15">
           <div className="h-px bg-line" />
 
-          <Button>Save profile</Button>
+          <Button
+            onClick={() =>
+              checkEmptyFields(profileData).length == 0 &&
+              console.log(profileData)
+            }
+          >
+            Save profile
+          </Button>
         </section>
       </main>
     </div>
