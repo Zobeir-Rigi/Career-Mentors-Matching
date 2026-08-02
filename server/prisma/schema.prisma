@@ -1,14 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
   generatedFileExtension = "ts"
-  importFileExtension = "js"
+  importFileExtension    = "js"
+  moduleFormat           = "cjs"
 }
 
 datasource db {
@@ -18,4 +13,111 @@ datasource db {
 model HealthCheck {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
+}
+
+enum Role {
+  MENTEE
+  MENTOR
+  ADMIN
+
+  @@map("Roles")
+}
+
+enum Region {
+  LONDON
+  WEST_MIDLANDS
+  SCOTLAND
+  NORTH_WEST
+  CAPE_TOWN
+  SHEFFIELD
+  OTHER
+}
+
+enum AvailabilityOption {
+  WEEKDAY_MORNING
+  WEEKDAY_AFTERNOON
+  WEEKDAY_EVENING
+  WEEKEND_MORNING
+  WEEKEND_AFTERNOON
+  WEEKEND_EVENING
+
+  @@map("AvailabilityOptions")
+}
+
+enum MeetingCadence {
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+}
+
+enum MeetingStructure {
+  OPEN
+  STRUCTURED
+  MIX
+}
+
+enum ApprovalStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model User {
+  id              String    @id @default(uuid()) @db.Uuid
+  fullName        String
+  role            Role
+  email           String    @unique
+  passwordHashed  String
+  linkedinURL     String?
+  scheduleURL     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  isActive        Boolean   @default(true)
+  deactivatedAt   DateTime?
+  isEmailVerified Boolean   @default(false)
+
+  emailVerificationTokenHash String?   @unique
+  emailVerificationExpiresAt DateTime?
+
+  menteeProfile MenteeProfile? @relation("UserMenteeProfile")
+  mentorProfile MentorProfile? @relation("UserMentorProfile")
+
+  @@map("Users")
+}
+
+model MenteeProfile {
+  id               String               @id @default(uuid()) @db.Uuid
+  userId           String               @unique @db.Uuid
+  currentJobTitle  String?
+  reasonsNote      String?
+  region           Region?
+  openToRemote     Boolean              @default(false)
+  availability     AvailabilityOption[] @map("Availability")
+  meetingCadence   MeetingCadence?
+  meetingStructure MeetingStructure?
+  bio              String?
+
+  user User @relation("UserMenteeProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("MenteeProfile")
+}
+
+model MentorProfile {
+  id                 String               @id @default(uuid()) @db.Uuid
+  userId             String               @unique @db.Uuid
+  currentJobTitle    String?
+  capacity           Int                  @default(1)
+  region             Region?
+  openToRemote       Boolean              @default(false)
+  availability       AvailabilityOption[] @map("Availability")
+  meetingCadence     MeetingCadence?
+  meetingStructure   MeetingStructure?
+  bio                String?
+  isAcceptingMentees Boolean              @default(false)
+  approvalStatus     ApprovalStatus       @default(PENDING)
+  notifiedAdminAt    DateTime?
+
+  user User @relation("UserMentorProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("MentorProfile")
 }

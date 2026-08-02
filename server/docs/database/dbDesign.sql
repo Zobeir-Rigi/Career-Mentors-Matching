@@ -68,7 +68,7 @@ CREATE TABLE "Users" (
   "updatedAt" timestamp NOT NULL,
   "isActive" bool,
   "deactivatedAt" timestamp,
-  "isAdmin" bool NOT NULL DEFAULT false
+  "isEmailVerified" bool NOT NULL DEFAULT false
 );
 
 CREATE TABLE "MenteeProfile" (
