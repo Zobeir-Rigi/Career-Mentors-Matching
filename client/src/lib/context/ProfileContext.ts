@@ -1,6 +1,9 @@
 import { createContext, useContext } from "react";
 
-interface MentorProfileContextType {
+type UserRole = "mentor" | "mentee";
+interface ProfileContextType {
+  role: UserRole;
+
   // About you
   jobTitle: string;
   setJobTitle: (val: string) => void;
@@ -50,7 +53,7 @@ interface MentorProfileContextType {
 }
 
 export const MentorProfileContext = createContext<
-  MentorProfileContextType | undefined
+  ProfileContextType | undefined
 >(undefined);
 
 export function useProfile() {

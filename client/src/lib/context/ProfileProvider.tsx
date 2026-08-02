@@ -1,8 +1,13 @@
-import { useState, type ReactNode } from "react";
-import { MentorProfileContext } from "./MentorProfileContext";
+import { useState } from "react";
+import { MentorProfileContext } from "./ProfileContext";
 import { useToggleSet } from "../hooks/useToggleSet";
 
-export function ProfileProvider({ children }: { children: ReactNode }) {
+interface ProfileProviderProps {
+  role: "mentor" | "mentee";
+  children: React.ReactNode;
+}
+
+export function ProfileProvider({ role, children }: ProfileProviderProps) {
   const [jobTitle, setJobTitle] = useState("");
   const [bio, setBio] = useState("");
   const [linkedInUrl, setLinkedInUrl] = useState("");
@@ -19,6 +24,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [meetingStructure, setMeetingStructure] = useState("");
 
   const value = {
+    role,
     jobTitle,
     setJobTitle,
     bio,

@@ -10,7 +10,7 @@ import {
   mentoringStyleOptions,
   industryOptions,
   regionOptions,
-} from "../ProfileOptions";
+} from "../lib/ProfileOptions";
 import { Input } from "../components/ui/Input";
 import { FormField } from "../components/ui/FormField";
 import { Textarea } from "../components/ui/Textarea";
@@ -18,12 +18,15 @@ import { PageTitle } from "../components/ui/PageTitle";
 import { SectionHead } from "../components/ui/SectionHead";
 import { OptionsDisplay } from "../components/ui/OptionsDisplay";
 
-import { useProfile } from "../lib/context/MentorProfileContext";
+import { useProfile } from "../lib/context/ProfileContext";
 import { QuestionLabel } from "../components/ui/QuestionLabel";
 import { Notice } from "../components/ui/Notice";
+import { checkEmptyFields } from "@/lib/profileValidation";
+import { RadioGroup } from "@/components/ui/RadioGroup";
 
 export function MentorProfile() {
   const {
+    role,
     jobTitle,
     setJobTitle,
     bio,
@@ -52,21 +55,6 @@ export function MentorProfile() {
     setMeetingStructure,
   } = useProfile();
 
-  const FIELD_LABELS: Record<string, string> = {
-    jobTitle: "Job title",
-    bio: "Bio",
-    linkedInUrl: "LinkedIn URL",
-    scheduleUrl: "Scheduler link",
-    region: "Region",
-    capacity: "Capacity",
-    meetingCadence: "Meeting cadence",
-    meetingStructure: "Preferred meeting style",
-    availability: "Availability",
-    disciplines: "Disciplines",
-    skills: "Skills",
-    industries: "Industries",
-  };
-
   const profileData = {
     jobTitle,
     bio,
@@ -83,23 +71,16 @@ export function MentorProfile() {
     industries: [...selectedIndustries],
   };
 
-  function checkEmptyFields(profileData: object) {
-    return Object.entries(profileData).reduce((acc, [key, value]) => {
-      if (typeof value === "string") {
-        if (value.trim() === "") {
-          acc.push(FIELD_LABELS[key] || key);
-        }
-      } else if (typeof value === "number") {
-        if (value <= 0) {
-          acc.push(FIELD_LABELS[key] || key);
-        }
-      } else if (Array.isArray(value)) {
-        if (value.length == 0) {
-          acc.push(FIELD_LABELS[key] || key);
-        }
-      }
-      return acc;
-    }, [] as string[]);
+  const missingFields = checkEmptyFields(role, profileData);
+
+  function submitHandler() {
+    if (missingFields.length > 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+
+    // Next step: Navigate to dashboard
+    console.log("Saving profile:", profileData);
   }
 
   return (
@@ -112,8 +93,8 @@ export function MentorProfile() {
             your match. Free-text fields are read by your future mentor, not by
             the algorithm."
         />
-        {/* Warning banner */}
-        <Notice missingFields={checkEmptyFields(profileData)} />
+
+        <Notice missingFields={missingFields} />
 
         <section className="space-y-4">
           <SectionHead sectionHead="About you" sectionDescription="" />
@@ -139,7 +120,7 @@ export function MentorProfile() {
                 />
               </FormField>
 
-              <FormField label="Scheduler link">
+              <FormField label="Scheduler link" optional="(optional)">
                 <Input
                   placeholder="https://calendly.com/…"
                   value={scheduleUrl}
@@ -238,7 +219,7 @@ export function MentorProfile() {
             </div>
 
             <div className="space-y-2">
-              <QuestionLabel question="What industries domain knowledge can you mentor?" />
+              <QuestionLabel question="What industry domain knowledge can you mentor?" />
 
               <OptionsDisplay
                 options={industryOptions}
@@ -247,56 +228,31 @@ export function MentorProfile() {
               />
             </div>
 
-            {/* Meeting cadence */}
             <div className="space-y-2">
               <QuestionLabel question="Meeting cadence" />
-
-              <div className="flex flex-wrap gap-6">
-                {cadenceOptions.map((option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="meeting-cadence"
-                      value={option}
-                      checked={meetingCadence === option}
-                      onChange={() => setMeetingCadence(option)}
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
+              <RadioGroup
+                name="meeting-cadence"
+                options={cadenceOptions}
+                value={meetingCadence}
+                onChange={setMeetingCadence}
+              />
             </div>
 
             <div className="space-y-2">
               <QuestionLabel question="Preferred meeting style" />
-              <div className="flex flex-wrap gap-6">
-                {mentoringStyleOptions.map((option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="mentoring-style"
-                      value={option}
-                      checked={meetingStructure === option}
-                      onChange={() => setMeetingStructure(option)}
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
+              <RadioGroup
+                name="meeting-style"
+                options={mentoringStyleOptions}
+                value={meetingStructure}
+                onChange={setMeetingStructure}
+              />
             </div>
           </Card>
         </section>
         <section className="max-w-[738px] space-y-6 pb-15">
           <div className="h-px bg-line" />
 
-          <Button
-            onClick={() =>
-              checkEmptyFields(profileData).length == 0 &&
-              console.log(profileData)
-            }
-          >
-            Save profile
-          </Button>
+          <Button onClick={() => submitHandler()}>Save profile</Button>
         </section>
       </main>
     </div>

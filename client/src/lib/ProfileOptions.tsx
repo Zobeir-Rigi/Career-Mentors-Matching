@@ -42,6 +42,12 @@ export const mentorshipOptions = [
   "Interview prep",
   "Technical growth",
   "Confidence",
+  "LinkedIn Optimisation",
+  "CV",
+  "Career transition",
+  "Soft skills",
+  "Networking",
+  "Job search",
 ];
 
 export const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];

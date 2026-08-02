@@ -9,7 +9,7 @@ import "./index.css";
 
 import { Landing } from "../src/pages/Landing";
 import { MenteeProfile } from "./pages/MenteeProfile";
-import { ProfileProvider } from "./lib/context/MentorProfileProvider";
+import { ProfileProvider } from "./lib/context/ProfileProvider";
 import { MentorProfile } from "./pages/MentorProfile";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route
           path="/mentor/profile"
           element={
-            <ProfileProvider>
+            <ProfileProvider role="mentor">
               <MentorProfile />
             </ProfileProvider>
           }
