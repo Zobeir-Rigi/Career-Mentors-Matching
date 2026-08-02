@@ -1,4 +1,4 @@
-import { cn } from "../../lib/utils";
+import { cn } from "@lib/utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "outline" | "quiet";
@@ -18,9 +18,9 @@ export function Button({
 
         // Variant styles
         variant === "primary" &&
-          "bg-accent text-on-accent hover:bg-accent-hover",
+        "bg-accent text-on-accent hover:bg-accent-hover",
         variant === "outline" &&
-          "border-[1.5px] border-accent text-accent hover:bg-tint",
+        "border-[1.5px] border-accent text-accent hover:bg-tint",
         variant === "quiet" && "text-muted hover:bg-tint",
 
         className,
