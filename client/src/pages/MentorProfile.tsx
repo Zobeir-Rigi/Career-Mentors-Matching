@@ -149,17 +149,15 @@ export function MentorProfile() {
                 </select>
               </FormField>
 
-              <FormField label="">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={openToRemote}
-                    onCheckedChange={setOpenToRemote}
-                  />
-                  <label className="text-sm font-semibold">
-                    Open to remote mentoring
-                  </label>
-                </div>
-              </FormField>
+              <div className="flex items-center gap-2 md:pt-6">
+                <Switch
+                  checked={openToRemote}
+                  onCheckedChange={setOpenToRemote}
+                />
+                <label className="text-sm font-semibold">
+                  Open to remote mentoring
+                </label>
+              </div>
             </div>
           </Card>
         </section>

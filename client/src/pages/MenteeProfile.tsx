@@ -127,7 +127,7 @@ export function MenteeProfile() {
                 </select>
               </FormField>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 md:pt-6">
                 <Switch checked={isRemote} onCheckedChange={setIsRemote} />
                 <label className="text-sm font-semibold">
                   Open to remote mentoring
