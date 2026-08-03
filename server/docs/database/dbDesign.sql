@@ -78,7 +78,7 @@ CREATE TABLE "MenteeProfile" (
   "reasonsNote" varchar,
   "region" "Region",
   "openToRemote" bool NOT NULL,
-  "Availability" "AvailabilityOptions[]",
+  "Availability" "AvailabilityOptions"[],
   "meetingCadence" "MeetingCadence",
   "meetingStructure" "MeetingStructure",
   "bio" varchar
@@ -91,7 +91,7 @@ CREATE TABLE "MentorProfile" (
   "capacity" int NOT NULL,
   "region" "Region",
   "openToRemote" bool NOT NULL,
-  "Availability" "AvailabilityOptions[]",
+  "Availability" "AvailabilityOptions"[],
   "meetingCadence" "MeetingCadence",
   "meetingStructure" "MeetingStructure",
   "bio" varchar,
