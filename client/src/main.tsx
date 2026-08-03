@@ -9,6 +9,8 @@ import "./index.css";
 
 import { Landing } from "../src/pages/Landing";
 import { MenteeProfile } from "./pages/MenteeProfile";
+import { ProfileProvider } from "./lib/context/ProfileProvider";
+import { MentorProfile } from "./pages/MentorProfile";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -16,6 +18,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/mentee/profile" element={<MenteeProfile />} />
+        <Route
+          path="/mentor/profile"
+          element={
+            <ProfileProvider role="mentor">
+              <MentorProfile />
+            </ProfileProvider>
+          }
+        />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

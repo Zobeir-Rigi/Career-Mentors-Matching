@@ -10,7 +10,7 @@ import {
   mentorshipOptions,
   cadenceOptions,
   mentoringStyleOptions,
-} from "../ProfileOptions";
+} from "../lib/ProfileOptions";
 import { Input } from "../components/ui/Input";
 import { FormField } from "../components/ui/FormField";
 import { Textarea } from "../components/ui/Textarea";
@@ -127,7 +127,7 @@ export function MenteeProfile() {
                 </select>
               </FormField>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 md:pt-6">
                 <Switch checked={isRemote} onCheckedChange={setIsRemote} />
                 <label className="text-sm font-semibold">
                   Open to remote mentoring
@@ -235,7 +235,7 @@ export function MenteeProfile() {
               <label className="text-sm font-semibold">
                 Preferred mentoring style
               </label>
-              <div className="flex flex-wrap gap-6 pt-4" >
+              <div className="flex flex-wrap gap-6 pt-4">
                 {mentoringStyleOptions.map((option) => (
                   <label key={option} className="flex items-center gap-2">
                     <input
@@ -249,7 +249,6 @@ export function MenteeProfile() {
                   </label>
                 ))}
               </div>
-          
             </div>
           </Card>
         </section>
