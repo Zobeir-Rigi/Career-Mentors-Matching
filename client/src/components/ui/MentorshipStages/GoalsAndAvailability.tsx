@@ -2,7 +2,13 @@ import { Thread } from "../Thread";
 import { Button } from "../Button";
 import { useNavigate } from "react-router";
 
-export function GoalsAndAvailability({ isProfileComplete, onStepSubmit }: any) {
+interface GoalsAndAvailability {
+    isProfileComplete: boolean;
+    onStepSubmit: (viewToRender: string, changeProgressBar?: boolean) => void;
+    currentStep?: string;
+};
+
+export function GoalsAndAvailability({ isProfileComplete, onStepSubmit }: GoalsAndAvailability) {
     const navigate = useNavigate();
     function checkProfile() {
         if (isProfileComplete) {

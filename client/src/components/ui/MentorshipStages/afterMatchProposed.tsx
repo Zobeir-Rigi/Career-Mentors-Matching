@@ -3,7 +3,21 @@ import { Button } from "../Button";
 
 export function AfterMatchProposed({ onStepSubmit, currentStep, steps }: any) {
     const nextStep = steps[steps.indexOf(currentStep) + 1];
-    let changeProgressBar = false;
+    const changeProgressBar = shouldChangeProgressBar(currentStep);
+    function shouldChangeProgressBar(nextStep: string): boolean {
+        switch (nextStep) {
+            case "mentorship-confirmed-waiting":
+            case "mentorship-active":
+                return true;
+            case "match-proposed":
+            case "chemistry-and-confirm":
+            case "mentorship-booked":
+            case "mentor-confirm":
+                return false;
+            default:
+                return false;
+        }
+    }
     function matchStatus() {
         let content = null;
         switch (currentStep) {
@@ -14,29 +28,11 @@ export function AfterMatchProposed({ onStepSubmit, currentStep, steps }: any) {
                         <p className="text-accent font-sans text-[12px]">acceptance</p>
                     </div>
                 );
-                changeProgressBar = true;
                 break
             case "chemistry-and-confirm":
-                changeProgressBar = true;
-                content = (
-                    <div className="rounded-[20px] bg-tint w-[137px] text-left pl-3 p-1">
-                        <p className="text-warm font-sans text-[12px]">Chemistry &</p>
-                        <p className="text-warm font-sans text-[12px]">confirm</p>
-                    </div>
-                );
-                break
             case "mentorship-booked":
             case "mentor-confirm":
-                changeProgressBar = false;
-                content = (
-                    <div className="rounded-[20px] bg-tint w-[137px] text-left pl-3 p-1">
-                        <p className="text-warm font-sans text-[12px]">Chemistry &</p>
-                        <p className="text-warm font-sans text-[12px]">confirm</p>
-                    </div>
-                );
-                break
             case "mentorship-confirmed-waiting":
-                changeProgressBar = true;
                 content = (
                     <div className="rounded-[20px] bg-tint w-[137px] text-left pl-3 p-1">
                         <p className="text-warm font-sans text-[12px]">Chemistry &</p>
@@ -50,7 +46,6 @@ export function AfterMatchProposed({ onStepSubmit, currentStep, steps }: any) {
                         <p className="text-ok font-sans text-[12px]">Active</p>
                     </div>
                 )
-                changeProgressBar = true;
         }
         return content;
     }

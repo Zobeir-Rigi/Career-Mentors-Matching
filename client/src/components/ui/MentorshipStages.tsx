@@ -15,8 +15,8 @@ export function MentorshipStages({ className, children }: any) {
         "mentorship-confirmed-waiting",
         "mentorship-active"
     ]
-    const [isProfileComplete, setProfileComplete] = useState<Boolean>(true);
-    const [currentStep, setCurrentView] = isProfileComplete ? useState(steps[1]) : useState(steps[0]);
+    const [isProfileComplete, setProfileComplete] = useState<boolean>(true);
+    const [currentStep, setCurrentView] = useState(isProfileComplete ? steps[0] : steps[1])
     function renderHeroContent() {
         switch (currentStep) {
             case "complete-profile":
@@ -40,7 +40,9 @@ export function MentorshipStages({ className, children }: any) {
                 return "default";
         }
     }
-    const [currentStepNumber, setCurrentStep] = isProfileComplete ? useState<number>(1) : useState<number>(2);
+    const [currentStepNumber, setCurrentStep] = useState(
+        isProfileComplete ? 2 : 1
+    );
     const [circleStyles, setCircleStyles] = useState<Record<number, string>>({
         1: isProfileComplete ? "bg-accent-soft border-accent-soft" : "border-2 border-accent-soft",
         2: isProfileComplete ? "border-2 border-accent-soft" : "border - 1 border- muted",
@@ -59,7 +61,7 @@ export function MentorshipStages({ className, children }: any) {
         3: "border-line"
     });
 
-    function handleStepChange(viewToRender: string, changeProgressBar: boolean) {
+    function handleStepChange(viewToRender: string, changeProgressBar = true) {
         setCurrentView(viewToRender);
         if (!changeProgressBar) return
         setCurrentStep(currentStepNumber + 1);
