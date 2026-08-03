@@ -3,7 +3,6 @@ import { useState } from "react";
 import { GoalsAndAvailability } from "./MentorshipStages/GoalsAndAvailability";
 import { StageTracker } from "./MentorshipStages/StageTracker";
 import { AfterMatchProposed } from "./MentorshipStages/afterMatchProposed";
-import { DisciplinesBand } from "../DisciplinesBand";
 
 
 export function MentorshipStages({ className, children }: any) {
@@ -94,11 +93,6 @@ export function MentorshipStages({ className, children }: any) {
                 <div className="container max-w-[1152px] mx-auto bg-surface rounded-[10px] border border-line p-1 p-8">
                     {renderHeroContent()}
                 </div>
-                <DisciplinesBand
-                    header={"Your goals"}
-                    smallerText={"Pick what you want to grow in — this is what the matcher scores."}
-                    isSubmitButtonToRender={true}
-                />
             </div>
         </div>
     );
