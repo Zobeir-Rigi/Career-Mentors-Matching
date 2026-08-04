@@ -30,8 +30,6 @@ export function LoginForm() {
         password,
       });
 
-      // localStorage.setItem("accessToken", result.accessToken);
-
       if (result.user.role === "ADMIN") {
         navigate("/admin");
       } else if (result.user.role === "MENTOR") {

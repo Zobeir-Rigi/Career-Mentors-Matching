@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 
 import { resendVerification, verifyEmail } from "@/services/authService";
@@ -21,9 +21,11 @@ export function VerifyEmailPanel() {
 
   const locationState = location.state as VerifyEmailLocationState | null;
 
-  const email = (location.state as VerifyEmailLocationState | null)?.email;
+  const email = locationState?.email;
   const signupMessage = locationState?.message;
   const verificationEmailSent = locationState?.verificationEmailSent;
+
+  const verificationStarted = useRef(false);
 
   const [status, setStatus] = useState<VerificationStatus>(
     token ? "verifying" : "check-email",
@@ -32,12 +34,13 @@ export function VerifyEmailPanel() {
   const [isResending, setIsResending] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || verificationStarted.current) return;
+
+    verificationStarted.current = true;
+
+    const tokenToVerify = token;
 
     async function verifyToken() {
-      const tokenToVerify = token;
-      if (!tokenToVerify) return;
-
       try {
         const result = await verifyEmail(tokenToVerify);
 

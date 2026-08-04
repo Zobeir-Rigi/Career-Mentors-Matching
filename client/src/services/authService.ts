@@ -35,7 +35,6 @@ export interface SignupResponse {
 }
 
 export interface LoginResponse {
-  // accessToken: string;
   user: AuthUser;
 }
 
