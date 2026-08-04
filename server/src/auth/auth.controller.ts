@@ -41,7 +41,20 @@ export class AuthController {
   })
   @ApiCreatedResponse({
     description:
-      'Account created successfully. Email verification is required.',
+      'Account created. The response indicates whether the verification email was sent.',
+    schema: {
+      example: {
+        message: 'Account created. Please verify your email.',
+        verificationEmailSent: true,
+        user: {
+          id: '543e8400-e29b-41d4-a716-446655440000',
+          fullName: 'Jane Doe',
+          email: 'jane@example.com',
+          role: 'MENTEE',
+          isEmailVerified: false,
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description: 'Signup input failed validation.',

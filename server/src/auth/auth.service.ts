@@ -3,6 +3,7 @@ import {
   ConflictException,
   BadRequestException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
@@ -20,6 +21,7 @@ import { LoginResponse } from './types/login-response';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   // Inject one instance of prisma client rather than creating a new client
   constructor(
     private readonly prisma: PrismaService,
@@ -82,14 +84,27 @@ export class AuthService {
       return createdUser;
     });
 
-    await this.mailService.sendVerificationEmail({
-      email: user.email,
-      fullName: user.fullName,
-      token: verificationToken.token,
-    });
+    let verificationEmailSent = true;
 
+    try {
+      await this.mailService.sendVerificationEmail({
+        email: user.email,
+        fullName: user.fullName,
+        token: verificationToken.token,
+      });
+    } catch (error) {
+      verificationEmailSent = false;
+
+      this.logger.error(
+        `Verification email could not be sent for user ${user.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
     return {
-      message: 'Account created, Please verify your email.',
+      message: verificationEmailSent
+        ? 'Account created, Please verify your email.'
+        : 'Account created, but the verification email could not be sent. Please request a new verification email.',
+      verificationEmailSent,
       user,
     };
   }
