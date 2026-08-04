@@ -9,6 +9,7 @@ import "./index.css";
 
 import { Landing } from "../src/pages/Landing";
 import { MenteeProfile } from "./pages/MenteeProfile";
+import { MenteeDashboard } from "../src/pages/MenteeDashboard";
 import { ProfileProvider } from "./lib/context/ProfileProvider";
 import { MentorProfile } from "./pages/MentorProfile";
 
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/mentee/profile" element={<MenteeProfile />} />
+        <Route path="/mentee/dashboard" element={<MenteeDashboard />} />
         <Route
           path="/mentor/profile"
           element={
