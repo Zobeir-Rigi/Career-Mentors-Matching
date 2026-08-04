@@ -19,6 +19,8 @@
   --ok-tint: #e7f3ec;
   --warn: #875c15;
   --warn-tint: #f8efdd;
+  --error: #b42318; /* Error messages */
+  --error-tint: #fef0ed;
 }
 
 /* ---------- 2. Dark values, twice ----------
@@ -44,6 +46,8 @@
     --ok-tint: #22352b;
     --warn: #dcaa54;
     --warn-tint: #3a2f1c;
+    --error: #ff9b91;
+    --error-tint: #442521;
   }
 }
 :root[data-theme="dark"] {
@@ -62,6 +66,8 @@
   --ok-tint: #22352b;
   --warn: #dcaa54;
   --warn-tint: #3a2f1c;
+  --error: #ff9b91;
+  --error-tint: #442521;
 }
 
 /* ---------- 3. Expose to Tailwind (v4, CSS-first) ----------
@@ -83,6 +89,8 @@
   --color-ok-tint: var(--ok-tint);
   --color-warn: var(--warn);
   --color-warn-tint: var(--warn-tint);
+  --color-error: var(--error);
+  --color-error-tint: var(--error-tint);
   --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
   --font-sans: "Public Sans Variable", "Helvetica Neue", Arial, sans-serif;
 }
