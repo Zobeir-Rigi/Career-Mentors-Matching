@@ -18,7 +18,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/mentee/profile" element={<MenteeProfile />} />
+
+        <Route
+          path="/mentee/profile"
+          element={
+            <ProfileProvider role="mentee">
+              <MenteeProfile />
+            </ProfileProvider>
+          }
+        />
+
         <Route path="/mentee/dashboard" element={<MenteeDashboard />} />
         <Route
           path="/mentor/profile"

@@ -7,7 +7,10 @@ interface ProfileContextType {
   // About you
   jobTitle: string;
   setJobTitle: (val: string) => void;
-
+  
+  reasonNote: string;
+  setReasonNote: (val: string) => void;
+  
   bio: string;
   setBio: (val: string) => void;
 
