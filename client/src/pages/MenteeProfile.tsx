@@ -109,7 +109,7 @@ export function MenteeProfile() {
             </FormField>
 
             <FormField label="Tell us what you're hoping to achieve through mentorship">
-              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} />
+              <Textarea value={reasonNote} onChange={(e) => setReasonNote(e.target.value)} />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -227,8 +227,8 @@ export function MenteeProfile() {
             <FormField label="Anything your mentor should know about you?">
               <Textarea
                 rows={4}
-                value={reasonNote}
-                onChange={(e) => setReasonNote(e.target.value)}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
               />
             </FormField>
             <div className="space-y-2">
