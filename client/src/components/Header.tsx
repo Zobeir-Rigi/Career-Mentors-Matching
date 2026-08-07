@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
 import { Button } from "./ui/Button";
@@ -16,8 +17,12 @@ export function Header() {
         {/* Right end */}
         <div className="flex items-center">
           <ThemeToggle />
-          <Button variant="quiet">LogIn</Button>
-          <Button variant="primary">SignUp</Button>
+          <Link to="/login">
+            <Button variant="quiet">LogIn</Button>
+          </Link>
+          <Link to="/signup">
+            <Button variant="primary">SignUp</Button>
+          </Link>
         </div>
       </div>
     </header>
