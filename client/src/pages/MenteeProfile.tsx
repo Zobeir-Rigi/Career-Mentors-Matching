@@ -1,134 +1,158 @@
-import { useState } from "react";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
 import { Button } from "../components/ui/Button";
-import { Chip } from "../components/ui/Chip";
+import { PageTitle } from "../components/ui/PageTitle";
+import { SectionHead } from "@/components/ui/SectionHead";
+import { Notice } from "@/components/ui/Notice";
+import { RadioGroup } from "@/components/ui/RadioGroup";
+import { Input } from "../components/ui/Input";
+import { FormField } from "../components/ui/FormField";
+import { Textarea } from "../components/ui/Textarea";
+import { QuestionLabel } from "../components/ui/QuestionLabel";
+import { OptionsDisplay } from "../components/ui/OptionsDisplay";
+
+import { checkEmptyFields } from "@/lib/profileValidation";
 import {
   availabilityOptions,
+  industryOptions,
   goalOptions,
   mentorshipOptions,
   cadenceOptions,
   mentoringStyleOptions,
+  regionOptions,
 } from "../lib/ProfileOptions";
-import { Input } from "../components/ui/Input";
-import { FormField } from "../components/ui/FormField";
-import { Textarea } from "../components/ui/Textarea";
+
+import { useProfile } from "../lib/context/ProfileContext";
 
 export function MenteeProfile() {
-  const isMatchReady = false;
-  const [isRemote, setIsRemote] = useState(true);
-  const [selectedAvailability, setSelectedAvailability] = useState<string[]>(
-    [],
-  );
-  const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
-  const [selectedMentorshipOptions, setSelectedMentorshipOptions] = useState<
-    string[]
-  >([]);
+  const {
+    role,
+    jobTitle,
+    setJobTitle,
+    reasonNote,
+    setReasonNote,
+    bio,
+    setBio,
+    linkedInUrl,
+    setLinkedInUrl,
+    scheduleUrl,
+    setScheduleUrl,
+    region,
+    setRegion,
+    openToRemote,
+    setOpenToRemote,
+    selectedAvailability,
+    toggleAvailability,
+    selectedDisciplines,
+    toggleDisciplines,
+    selectedSkills,
+    toggleSkills,
+    selectedIndustries,
+    toggleIndustries,
+    meetingCadence,
+    setMeetingCadence,
+    meetingStructure,
+    setMeetingStructure,
+  } = useProfile();
 
-  const [meetingCadence, setMeetingCadence] = useState("");
-  const [mentoringStyle, setMentoringStyle] = useState("");
+  const profileData = {
+    jobTitle,
+    bio,
+    linkedInUrl,
+    scheduleUrl,
+    region,
+    openToRemote,
+    meetingCadence,
+    meetingStructure,
+    availability: [...selectedAvailability],
+    disciplines: [...selectedDisciplines],
+    skills: [...selectedSkills],
+    industries: [...selectedIndustries],
+  };
 
-  const handleAvailabilityClick = (option: string) => {
-    if (selectedAvailability.includes(option)) {
-      setSelectedAvailability(
-        selectedAvailability.filter((item) => item !== option),
-      );
-    } else {
-      setSelectedAvailability([...selectedAvailability, option]);
+  const missingFields = checkEmptyFields(role, profileData);
+
+  function submitHandler() {
+    if (missingFields.length > 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
-  };
 
-  const handleGoalClick = (goal: string) => {
-    if (selectedGoals.includes(goal)) {
-      setSelectedGoals(selectedGoals.filter((item) => item !== goal));
-    } else {
-      setSelectedGoals([...selectedGoals, goal]);
-    }
-  };
-
-  const handleMentorshipOptionClick = (option: string) => {
-    if (selectedMentorshipOptions.includes(option)) {
-      setSelectedMentorshipOptions(
-        selectedMentorshipOptions.filter((item) => item !== option),
-      );
-    } else {
-      setSelectedMentorshipOptions([...selectedMentorshipOptions, option]);
-    }
-  };
-
-  const handleMentoringStyleChange = (style: string) => {
-    setMentoringStyle(style);
-  };
+    // Next step: Navigate to dashboard
+    console.log("Saving profile:", profileData);
+  }
 
   return (
     <div>
       <Header></Header>
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
-        <section className="space-y-4">
-          <h1 className="font-display text-4xl font-semibold overshoot">
-            Your profile
-          </h1>
-
-          <p className="max-w-2xl text-muted">
-            Everything here feeds the matcher — the more you fill in, the better
+        <PageTitle
+          titleName="Your profile"
+          titleDescription="Everything here feeds the matcher — the more you fill in, the better
             your match. Free-text fields are read by your future mentor, not by
-            the algorithm.
-          </p>
-        </section>
+            the algorithm."
+        />
         {/* Warning banner */}
-        {!isMatchReady && (
-          <section className="max-w-[708px]">
-            <div className="rounded-md bg-warn-tint px-4 py-3 text-sm text-fg">
-              <span className="font-semibold">You can't be matched yet.</span>
-
-              <span className="ml-4">
-                Still needed: your availability — set it below and save.
-              </span>
-            </div>
-          </section>
-        )}
+        <Notice missingFields={missingFields} />
 
         <section className="space-y-6">
-          <h2 className="font-display text-2xl font-semibold overshoot ">
-            Where you are
-          </h2>
+          <SectionHead sectionHead="Where you are" sectionDescription="" />
+
           <Card className="max-w-[738px] space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <label className="text-sm font-semibold">
-                  Current job title
-                </label>
+            <FormField label="Current job title" optional="(optional)">
+              <Input
+                placeholder="e.g. Care worker …"
+                value={jobTitle}
+                onChange={(e) => setJobTitle(e.target.value)}
+              />
+            </FormField>
 
-                <span className="text-sm text-muted">(Optional)</span>
-              </div>
-
-              <Input placeholder="e.g. Care worker" />
-            </div>
-
-            <FormField label="What do you want from mentorship?">
-              <Textarea />
+            <FormField label="Tell us what you're hoping to achieve through mentorship">
+              <Textarea value={reasonNote} onChange={(e) => setReasonNote(e.target.value)} />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="LinkedIn URL">
-                <Input placeholder="https://linkedin.com/in/…" />
+                <Input
+                  placeholder="https://linkedin.com/in/…"
+                  value={linkedInUrl}
+                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                />
               </FormField>
 
-              <FormField label="Scheduler link">
-                <Input placeholder="https://calendly.com/…" />
+              <FormField label="Scheduler link" optional="(optional)">
+                <Input
+                  placeholder="https://calendly.com/…"
+                  value={scheduleUrl}
+                  onChange={(e) => setScheduleUrl(e.target.value)}
+                />
               </FormField>
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="Region">
-                <select className="w-full rounded-md border border-line bg-surface px-4 py-2">
-                  <option>No region — remote only</option>
+                <select
+                  className="w-full rounded-md border border-line bg-surface px-4 py-2"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                >
+                  <option key="" value="">
+                    Please select your region
+                  </option>
+                  {regionOptions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
                 </select>
               </FormField>
 
               <div className="flex items-center gap-2 md:pt-6">
-                <Switch checked={isRemote} onCheckedChange={setIsRemote} />
+                <Switch
+                  checked={openToRemote}
+                  onCheckedChange={setOpenToRemote}
+                />
                 <label className="text-sm font-semibold">
                   Open to remote mentoring
                 </label>
@@ -137,125 +161,91 @@ export function MenteeProfile() {
           </Card>
         </section>
         <section className="space-y-4">
-          <h2 className="font-display text-2xl font-semibold">
-            <span className="overshoot">Availability</span>
-          </h2>
-
-          <p className="text-muted">
-            What you want to grow in — the core matching signal.
-          </p>
+          <SectionHead
+            sectionHead="Availability"
+            sectionDescription="Shared slots
+            are scored by the matcher."
+          />
+          <OptionsDisplay
+            options={availabilityOptions}
+            selectedOptionsSet={selectedAvailability}
+            onToggle={toggleAvailability}
+          />
         </section>
-        <div className="max-w-[738px]">
-          <div className="flex flex-wrap gap-3">
-            {availabilityOptions.map((option) => (
-              <Chip
-                key={option}
-                label={option}
-                isSelected={selectedAvailability.includes(option)}
-                onClick={() => handleAvailabilityClick(option)}
-              />
-            ))}
-          </div>
-        </div>
 
         <section className="space-y-4">
-          <h2 className="font-display text-2xl font-semibold">
-            <span className="overshoot">Your goals</span>
-          </h2>
+          <SectionHead
+            sectionHead="Your goals"
+            sectionDescription="What you want to grow in — the core matching signal."
+          />
 
-          <p className="text-muted">
-            What you want to grow in — the core matching signal.
-          </p>
-
-          <div className="max-w-[738px]">
-            <div className="flex flex-wrap gap-3">
-              {goalOptions.map((goal) => (
-                <Chip
-                  key={goal}
-                  label={goal}
-                  isSelected={selectedGoals.includes(goal)}
-                  onClick={() => handleGoalClick(goal)}
-                />
-              ))}
-            </div>
-          </div>
+          <OptionsDisplay
+            options={goalOptions}
+            selectedOptionsSet={selectedDisciplines}
+            onToggle={toggleDisciplines}
+          />
         </section>
-        <section className="space-y-4">
-          <h2 className="font-display text-2xl font-semibold">
-            <span className="overshoot">Compatibility questions</span>
-          </h2>
 
-          <p className="text-muted">
-            These preferences help us make better matches and set expectations
-            for the mentorship.
-          </p>
+        <section className="space-y-4">
+          <SectionHead
+            sectionHead="Compatibility questions"
+            sectionDescription=" These preferences help us make better matches and set expectations
+            for the mentorship."
+          />
 
           <Card className="space-y-6 max-w-[738px]">
             {/* What do you most want from mentorship? */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                What do you most want from mentorship?
-              </label>
+              <QuestionLabel question="What do you most want from mentorship?" />
+              <OptionsDisplay
+                options={mentorshipOptions}
+                selectedOptionsSet={selectedSkills}
+                onToggle={toggleSkills}
+              />
+            </div>
 
-              <div className="flex flex-wrap gap-3">
-                {mentorshipOptions.map((option) => (
-                  <Chip
-                    key={option}
-                    label={option}
-                    isSelected={selectedMentorshipOptions.includes(option)}
-                    onClick={() => handleMentorshipOptionClick(option)}
-                  />
-                ))}
-              </div>
+            <div className="space-y-2">
+              <QuestionLabel question="Which industries are you most interested in?" />
+
+              <OptionsDisplay
+                options={industryOptions}
+                selectedOptionsSet={selectedIndustries}
+                onToggle={toggleIndustries}
+              />
             </div>
 
             {/* Meeting cadence */}
             <div className="space-y-2">
-              <label className="text-sm font-semibold">Meeting cadence</label>
-
-              <div className="flex flex-wrap gap-6 pt-4">
-                {cadenceOptions.map((option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="meeting-cadence"
-                      value={option}
-                      checked={meetingCadence === option}
-                      onChange={() => setMeetingCadence(option)}
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
+              <QuestionLabel question="Meeting cadence" />
+              <RadioGroup
+                name="meeting-cadence"
+                options={cadenceOptions}
+                value={meetingCadence}
+                onChange={setMeetingCadence}
+              />
             </div>
             <FormField label="Anything your mentor should know about you?">
-              <Textarea rows={4} />
+              <Textarea
+                rows={4}
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
             </FormField>
             <div className="space-y-2">
-              <label className="text-sm font-semibold">
-                Preferred mentoring style
-              </label>
-              <div className="flex flex-wrap gap-6 pt-4">
-                {mentoringStyleOptions.map((option) => (
-                  <label key={option} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="mentoring-style"
-                      value={option}
-                      checked={mentoringStyle === option}
-                      onChange={() => handleMentoringStyleChange(option)}
-                    />
-                    {option}
-                  </label>
-                ))}
-              </div>
+              <QuestionLabel question="Preferred meeting style" />
+              <RadioGroup
+                name="meeting-style"
+                options={mentoringStyleOptions}
+                value={meetingStructure}
+                onChange={setMeetingStructure}
+              />
             </div>
           </Card>
         </section>
         <section className="max-w-[738px] space-y-6 pb-15">
           <div className="h-px bg-line" />
 
-          <Button>Save profile</Button>
+          <Button onClick={submitHandler}>Save profile</Button>
         </section>
       </main>
     </div>
