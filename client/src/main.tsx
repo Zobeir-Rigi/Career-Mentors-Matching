@@ -24,7 +24,16 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
-        <Route path="/mentee/profile" element={<MenteeProfile />} />
+
+        <Route
+          path="/mentee/profile"
+          element={
+            <ProfileProvider role="mentee">
+              <MenteeProfile />
+            </ProfileProvider>
+          }
+        />
+
         <Route path="/mentee/dashboard" element={<MenteeDashboard />} />
         <Route
           path="/mentor/profile"
