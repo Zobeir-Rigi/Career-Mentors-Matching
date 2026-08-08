@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
@@ -17,49 +19,152 @@ import { Textarea } from "../components/ui/Textarea";
 import { PageTitle } from "../components/ui/PageTitle";
 import { SectionHead } from "../components/ui/SectionHead";
 import { OptionsDisplay } from "../components/ui/OptionsDisplay";
-
-import { useProfile } from "../lib/context/ProfileContext";
 import { QuestionLabel } from "../components/ui/QuestionLabel";
 import { Notice } from "../components/ui/Notice";
-import { checkEmptyFields } from "@/lib/profileValidation";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 
+import {
+  useProfile,
+  type MentorProfileContextType,
+} from "../lib/context/ProfileContext";
+import { checkEmptyFields } from "@/lib/profileValidation";
+import { useAuth } from "@/lib/context/useAuth";
+import {
+  upsertMentorProfile,
+  type MentorProfilePayload,
+} from "@/services/mentorService";
+import { getApiErrorMessage } from "@/services/getApiErrorMessages";
+
 export function MentorProfile() {
+  const navigate = useNavigate();
+  const { profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   const {
     role,
-    jobTitle,
-    setJobTitle,
+    currentJobTitle,
+    setCurrentJobTitle,
     bio,
     setBio,
-    linkedInUrl,
-    setLinkedInUrl,
-    scheduleUrl,
-    setScheduleUrl,
+    linkedinURL,
+    setLinkedinURL,
+    scheduleURL,
+    setScheduleURL,
     region,
     setRegion,
     openToRemote,
     setOpenToRemote,
     selectedAvailability,
+    setAvailability,
     toggleAvailability,
     selectedDisciplines,
+    setDisciplines,
     toggleDisciplines,
     capacity,
     setCapacity,
     selectedSkills,
+    setSkills,
     toggleSkills,
     selectedIndustries,
+    setIndustries,
     toggleIndustries,
     meetingCadence,
     setMeetingCadence,
     meetingStructure,
     setMeetingStructure,
-  } = useProfile();
+    setIsProfileComplete,
+    setIsMatchReady,
+    setApprovalStatus,
+    setIsAcceptingMentees,
+  } = useProfile() as MentorProfileContextType;
+
+  // Pre-fill form state when existing profile loads from AuthContext
+  useEffect(() => {
+    if (!profile) return;
+
+    setCurrentJobTitle(profile.currentJobTitle || "");
+    setBio(profile.bio || "");
+    setLinkedinURL(profile.user?.linkedinURL || profile.linkedinURL || "");
+    setScheduleURL(profile.scheduleURL || "");
+    setRegion(profile.region || "");
+    setOpenToRemote(Boolean(profile.openToRemote));
+    setCapacity(profile.capacity || 1);
+    setMeetingCadence(profile.meetingCadence || "");
+    setMeetingStructure(profile.meetingStructure || "");
+
+    if (profile.availability) setAvailability(profile.availability);
+
+    if (profile.mentorDisciplines?.length) {
+      const extractedDisciplines = profile.mentorDisciplines.map(
+        (item) => item.discipline?.name || item.disciplineId || item.name || "",
+      );
+      setDisciplines(extractedDisciplines);
+    } else if (profile.disciplines) {
+      setDisciplines(profile.disciplines);
+    }
+
+    if (profile.mentorSkills?.length) {
+      const extractedSkills = profile.mentorSkills.map(
+        (item) => item.skill?.name || item.skillId || item.name || "",
+      );
+      setSkills(extractedSkills);
+    } else if (profile.skills) {
+      setSkills(profile.skills);
+    }
+
+    if (profile.mentorDomainIndustries?.length) {
+      const extractedIndustries = profile.mentorDomainIndustries.map(
+        (item) => item.industry?.name || item.industryId || item.name || "",
+      );
+      setIndustries(extractedIndustries);
+    } else if (profile.industries) {
+      setIndustries(profile.industries);
+    }
+
+    // Populate backend status flags into Context
+    if (typeof profile.isProfileComplete === "boolean") {
+      setIsProfileComplete(profile.isProfileComplete);
+    }
+    if (typeof profile.isMatchReady === "boolean") {
+      setIsMatchReady(profile.isMatchReady);
+    }
+    if (profile.approvalStatus) {
+      setApprovalStatus(profile.approvalStatus);
+    }
+    if (typeof profile.isAcceptingMentees === "boolean") {
+      setIsAcceptingMentees(profile.isAcceptingMentees);
+    }
+  }, [
+    profile,
+    setCurrentJobTitle,
+    setBio,
+    setLinkedinURL,
+    setScheduleURL,
+    setRegion,
+    setOpenToRemote,
+    setCapacity,
+    setMeetingCadence,
+    setMeetingStructure,
+    setAvailability,
+    setDisciplines,
+    setSkills,
+    setIndustries,
+    setIsProfileComplete,
+    setIsMatchReady,
+    setApprovalStatus,
+    setIsAcceptingMentees,
+  ]);
+
+  if (isAuthLoading) {
+    return <div className="p-8 text-center">Loading session...</div>;
+  }
 
   const profileData = {
-    jobTitle,
+    currentJobTitle,
     bio,
-    linkedInUrl,
-    scheduleUrl,
+    linkedinURL,
+    scheduleURL,
     region,
     openToRemote,
     capacity,
@@ -73,14 +178,39 @@ export function MentorProfile() {
 
   const missingFields = checkEmptyFields(role, profileData);
 
-  function submitHandler() {
+  async function submitHandler(profileData: MentorProfilePayload) {
     if (missingFields.length > 0) {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    // Next step: Navigate to dashboard
-    console.log("Saving profile:", profileData);
+    setIsSubmitting(true);
+    setErrorMessage(null);
+
+    try {
+      // Save profile and receive calculated flags in response
+      const updatedProfile = await upsertMentorProfile(profileData);
+
+      // Update context status flags immediately
+      setIsProfileComplete(updatedProfile.isProfileComplete);
+      setIsMatchReady(updatedProfile.isMatchReady);
+      setApprovalStatus(updatedProfile.approvalStatus);
+      setIsAcceptingMentees(updatedProfile.isAcceptingMentees);
+
+      await refreshProfile();
+
+      console.log("Profile saved successfully");
+      // Next step: Notice CYF, waiting approval, Navigate to dashboard
+      console.log("Saving profile:", profileData);
+      navigate("/mentor/dashboard");
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(error, "Failed to save profile. Please try again."),
+      );
+      console.log(error);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -96,14 +226,20 @@ export function MentorProfile() {
 
         <Notice missingFields={missingFields} />
 
+        {errorMessage && (
+          <div className="p-4 rounded bg-red-50 text-red-600 font-medium">
+            {errorMessage}
+          </div>
+        )}
+
         <section className="space-y-4">
           <SectionHead sectionHead="About you" sectionDescription="" />
           <Card className="max-w-[738px] space-y-6">
             <FormField label="Job title / headline">
               <Input
                 placeholder="e.g. Senior Engineer at …"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
+                value={currentJobTitle}
+                onChange={(e) => setCurrentJobTitle(e.target.value)}
               />
             </FormField>
 
@@ -115,16 +251,16 @@ export function MentorProfile() {
               <FormField label="LinkedIn URL">
                 <Input
                   placeholder="https://linkedin.com/in/…"
-                  value={linkedInUrl}
-                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                  value={linkedinURL}
+                  onChange={(e) => setLinkedinURL(e.target.value)}
                 />
               </FormField>
 
               <FormField label="Scheduler link" optional="(optional)">
                 <Input
                   placeholder="https://calendly.com/…"
-                  value={scheduleUrl}
-                  onChange={(e) => setScheduleUrl(e.target.value)}
+                  value={scheduleURL || ""}
+                  onChange={(e) => setScheduleURL(e.target.value)}
                 />
               </FormField>
             </div>
@@ -250,7 +386,9 @@ export function MentorProfile() {
         <section className="max-w-[738px] space-y-6 pb-15">
           <div className="h-px bg-line" />
 
-          <Button onClick={() => submitHandler()}>Save profile</Button>
+          <Button onClick={() => submitHandler(profileData)}>
+            {isSubmitting ? "Saving..." : "Save profile"}
+          </Button>
         </section>
       </main>
     </div>

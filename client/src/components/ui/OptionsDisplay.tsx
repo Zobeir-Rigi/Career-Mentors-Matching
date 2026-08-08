@@ -1,9 +1,15 @@
 import { Chip } from "./Chip";
 
+type Option =
+  | string
+  | {
+      label: string;
+      value: string;
+    };
 interface OptionsDisplayProps {
-  options: string[];
+  options: Option[];
   selectedOptionsSet: Set<string>;
-  onToggle: (option: string) => void;
+  onToggle: (value: string) => void;
 }
 
 export function OptionsDisplay({
@@ -14,14 +20,19 @@ export function OptionsDisplay({
   return (
     <div className="max-w-[738px]">
       <div className="flex flex-wrap gap-3">
-        {options.map((option) => (
-          <Chip
-            key={option}
-            label={option}
-            isSelected={selectedOptionsSet.has(option)}
-            onClick={() => onToggle(option)}
-          />
-        ))}
+        {options.map((option) => {
+          const optValue = typeof option === "string" ? option : option.value;
+          const optLabel = typeof option === "string" ? option : option.label;
+
+          return (
+            <Chip
+              key={optValue}
+              label={optLabel}
+              isSelected={selectedOptionsSet.has(optValue)}
+              onClick={() => onToggle(optValue)}
+            />
+          );
+        })}
       </div>
     </div>
   );

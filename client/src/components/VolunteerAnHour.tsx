@@ -1,7 +1,9 @@
 import { Button } from "./ui/Button";
 import { Thread } from "./ui/Thread";
+import { useNavigate } from "react-router-dom";
 
 export function VolunteerAnHour() {
+  const navigate = useNavigate();
   return (
     <section className="w-full bg-surface px-5 py-16 md:py-24">
       <div className="max-w-[1152px] mx-auto  grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -15,7 +17,12 @@ export function VolunteerAnHour() {
             respond within a week, the match frees itself. Your calendar link
             does the scheduling.
           </p>
-          <Button className="bg-accent text-on-accent">Become a mentor</Button>
+          <Button
+            className="bg-accent text-on-accent"
+            onClick={() => navigate("/signup")}
+          >
+            Become a mentor
+          </Button>
         </div>
         <div className="flex flex-col items-start max-w-[510px]">
           <div className="w-full h-8 mb-4 relative flex items-center">

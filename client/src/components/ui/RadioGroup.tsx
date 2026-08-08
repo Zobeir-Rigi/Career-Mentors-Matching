@@ -1,6 +1,13 @@
+type Option =
+  | string
+  | {
+      label: string;
+      value: string;
+    };
+
 interface RadioGroupProps {
   name: string;
-  options: string[];
+  options: Option[];
   value: string;
   onChange: (value: string) => void;
 }
@@ -13,18 +20,26 @@ export function RadioGroup({
 }: RadioGroupProps) {
   return (
     <div className="flex flex-wrap gap-6">
-      {options.map((option) => (
-        <label key={option} className="flex items-center gap-2">
-          <input
-            type="radio"
-            name={name}
-            value={option}
-            checked={value === option}
-            onChange={() => onChange(option)}
-          />
-          {option}
-        </label>
-      ))}
+      {options.map((option) => {
+        const optValue = typeof option === "string" ? option : option.value;
+        const optLabel = typeof option === "string" ? option : option.label;
+
+        return (
+          <label
+            key={optValue}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <input
+              type="radio"
+              name={name}
+              value={optValue}
+              checked={value === optValue}
+              onChange={() => onChange(optValue)}
+            />
+            {optLabel}
+          </label>
+        );
+      })}
     </div>
   );
 }

@@ -1,24 +1,19 @@
 import { createContext, useContext } from "react";
 
-type UserRole = "mentor" | "mentee";
-interface ProfileContextType {
-  role: UserRole;
+export type UserRole = "mentor" | "mentee";
 
-  // About you
-  jobTitle: string;
-  setJobTitle: (val: string) => void;
-  
-  reasonNote: string;
-  setReasonNote: (val: string) => void;
-  
+// Shared properties across all user roles
+interface BaseProfileContext {
+  // About
+
   bio: string;
   setBio: (val: string) => void;
 
-  linkedInUrl: string;
-  setLinkedInUrl: (val: string) => void;
+  linkedinURL: string;
+  setLinkedinURL: (val: string) => void;
 
-  scheduleUrl: string;
-  setScheduleUrl: (val: string) => void;
+  scheduleURL?: string;
+  setScheduleURL: (val: string) => void;
 
   region: string;
   setRegion: (val: string) => void;
@@ -26,34 +21,64 @@ interface ProfileContextType {
   openToRemote: boolean;
   setOpenToRemote: (val: boolean) => void;
 
-  // Availability
+  // Multi-select collections
   selectedAvailability: Set<string>;
   toggleAvailability: (option: string) => void;
+  setAvailability: (items: string[]) => void;
 
-  // Disciplines
   selectedDisciplines: Set<string>;
   toggleDisciplines: (option: string) => void;
+  setDisciplines: (items: string[]) => void;
 
-  // Capacity
-  capacity: number;
-  setCapacity: (val: number) => void;
-
-  // SKills
   selectedSkills: Set<string>;
   toggleSkills: (option: string) => void;
+  setSkills: (items: string[]) => void;
 
-  // Industries
   selectedIndustries: Set<string>;
   toggleIndustries: (option: string) => void;
+  setIndustries: (items: string[]) => void;
 
-  // Meeting cadence
+  // Meeting preferences
   meetingCadence: string;
   setMeetingCadence: (val: string) => void;
 
-  // Meeting structure
   meetingStructure: string;
   setMeetingStructure: (val: string) => void;
+
+  // System status flags (returned from API)
+  isProfileComplete: boolean;
+  setIsProfileComplete: (val: boolean) => void;
+
+  isMatchReady: boolean;
+  setIsMatchReady: (val: boolean) => void;
 }
+
+// Mentor-specific context type
+export interface MentorProfileContextType extends BaseProfileContext {
+  role: "mentor";
+  currentJobTitle: string;
+  setCurrentJobTitle: (val: string) => void;
+  capacity: number;
+  setCapacity: (val: number) => void;
+  approvalStatus: string;
+  setApprovalStatus: (val: string) => void;
+  isAcceptingMentees: boolean;
+  setIsAcceptingMentees: (val: boolean) => void;
+}
+
+// Mentee-specific context type
+export interface MenteeProfileContextType extends BaseProfileContext {
+  role: "mentee";
+  currentJobTitle?: string;
+  setCurrentJobTitle: (val: string) => void;
+  reasonNote: string;
+  setReasonNote: (val: string) => void;
+}
+
+// Discriminated union combining both roles
+export type ProfileContextType =
+  | MentorProfileContextType
+  | MenteeProfileContextType;
 
 export const MentorProfileContext = createContext<
   ProfileContextType | undefined

@@ -1,10 +1,28 @@
 export const availabilityOptions = [
-  "Weekday morning",
-  "Weekday afternoon",
-  "Weekday evening",
-  "Weekend morning",
-  "Weekend afternoon",
-  "Weekend evening",
+  {
+    label: "Weekday morning",
+    value: "WEEKDAY_MORNING",
+  },
+  {
+    label: "Weekday afternoon",
+    value: "WEEKDAY_AFTERNOON",
+  },
+  {
+    label: "Weekday evening",
+    value: "WEEKDAY_EVENING",
+  },
+  {
+    label: "Weekend morning",
+    value: "WEEKEND_MORNING",
+  },
+  {
+    label: "Weekend afternoon",
+    value: "WEEKEND_AFTERNOON",
+  },
+  {
+    label: "Weekend evening",
+    value: "WEEKEND_EVENING",
+  },
 ];
 
 export const goalOptions = [
@@ -50,9 +68,35 @@ export const mentorshipOptions = [
   "Job search",
 ];
 
-export const cadenceOptions = ["Weekly", "Fortnightly", "Monthly"];
+export const cadenceOptions = [
+  {
+    label: "Weekly",
+    value: "WEEKLY",
+  },
+  {
+    label: "Fortnightly",
+    value: "FORTNIGHTLY",
+  },
+  {
+    label: "Monthly",
+    value: "MONTHLY",
+  },
+];
 
-export const mentoringStyleOptions = ["Structured", "Open", "Mix"];
+export const mentoringStyleOptions = [
+  {
+    label: "Structured",
+    value: "STRUCTURED",
+  },
+  {
+    label: "Open",
+    value: "OPEN",
+  },
+  {
+    label: "Mix",
+    value: "MIX",
+  },
+];
 
 export const regionOptions = [
   "LONDON",
