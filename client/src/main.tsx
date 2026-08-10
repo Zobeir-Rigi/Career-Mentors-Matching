@@ -15,6 +15,7 @@ import { MenteeDashboard } from "../src/pages/MenteeDashboard";
 import { ProfileProvider } from "./lib/context/ProfileProvider";
 import { MentorProfile } from "./pages/MentorProfile";
 import { VerifyEmail } from "./pages/VerifyEmail";
+import { Staff } from "./pages/Staff";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -23,7 +24,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/verify-email" element={<VerifyEmail/>} />
+        <Route path="/verify-email" element={<VerifyEmail />} />
 
         <Route
           path="/mentee/profile"
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             </ProfileProvider>
           }
         />
+        <Route path="/staff" element={<Staff />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,
