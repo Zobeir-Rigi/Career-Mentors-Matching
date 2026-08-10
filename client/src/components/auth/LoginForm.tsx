@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
-import { login } from "../../services/authService";
+import { login } from "@/services/authService";
 import { getApiErrorMessage } from "@/services/getApiErrorMessages";
+import { useAuth } from "@/lib/context/useAuth";
 
 export function LoginForm() {
   const navigate = useNavigate();
+  const { setUser, refreshProfile } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +31,9 @@ export function LoginForm() {
         email: email.trim(),
         password,
       });
+
+      setUser(result.user);
+      await refreshProfile(result.user);
 
       if (result.user.role === "ADMIN") {
         navigate("/admin");

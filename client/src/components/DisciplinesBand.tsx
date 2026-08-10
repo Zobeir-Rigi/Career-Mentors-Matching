@@ -16,7 +16,17 @@ const disciplines: string[] = [
   "Leadership & Management",
 ];
 
-export const DisciplinesBand = ({ header, smallerText, isSubmitButtonToRender }: any) => {
+interface DisciplinesBandProps {
+  header?: React.ReactNode;
+  smallerText?: React.ReactNode;
+  isSubmitButtonToRender?: boolean;
+}
+
+export const DisciplinesBand = ({
+  header,
+  smallerText,
+  isSubmitButtonToRender,
+}: DisciplinesBandProps) => {
   const [selectedDiscipline, setSelectedDiscipline] = useState<string[]>([]);
 
   // handle chip click
@@ -39,9 +49,7 @@ export const DisciplinesBand = ({ header, smallerText, isSubmitButtonToRender }:
         >
           {header}
         </h2>
-        <p className="mt-6 max-w-3xl font-sans text-muted">
-          {smallerText}
-        </p>
+        <p className="mt-6 max-w-3xl font-sans text-muted">{smallerText}</p>
         <div className="mt-8 flex flex-wrap gap-3.5">
           {disciplines.map((discipline) => (
             <Chip
@@ -53,7 +61,9 @@ export const DisciplinesBand = ({ header, smallerText, isSubmitButtonToRender }:
           ))}
         </div>
         {isSubmitButtonToRender && (
-          <Button variant="outline" className="mt-3">Save goals</Button>
+          <Button variant="outline" className="mt-3">
+            Save goals
+          </Button>
         )}
       </div>
     </section>

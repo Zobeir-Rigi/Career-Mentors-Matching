@@ -28,6 +28,9 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { LoginDto } from './dto/login.dto';
 import { AUTH_COOKIE_NAME, getAuthCookieOptions } from './helpers/auth-cookie';
+import { UseGuards, Req } from '@nestjs/common';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { type RequestWithUser } from './dto/requestWithUser.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -168,6 +171,17 @@ export class AuthController {
 
     return {
       message: 'Logged out successfully',
+    };
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get current authenticated user session' })
+  @ApiOkResponse({ description: 'Returns the authenticated user details.' })
+  @ApiUnauthorizedResponse({ description: 'No valid authentication cookie.' })
+  getMe(@Req() req: RequestWithUser) {
+    return {
+      user: req.user,
     };
   }
 }

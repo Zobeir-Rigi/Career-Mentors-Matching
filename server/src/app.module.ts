@@ -6,8 +6,10 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PrismaModule } from './prisma/prisma.module';
 import { HelloModule } from './hello/hello.module';
 import { HealthModule } from './health/health.module';
+
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { MentorsModule } from './mentors/mentors.module';
 
 @Module({
   imports: [
@@ -19,6 +21,7 @@ import { MailModule } from './mail/mail.module';
     HealthModule,
     AuthModule,
     MailModule,
+    MentorsModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',

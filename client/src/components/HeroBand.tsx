@@ -1,7 +1,9 @@
 import { Button } from "./ui/Button";
 import { Thread } from "./ui/Thread";
+import { useNavigate } from "react-router-dom";
 
 export function HeroBand() {
+  const navigate = useNavigate();
   return (
     <div className="container px-5 max-w-[1152px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr]">
       <div className="flex flex-col items-start text-left">
@@ -17,8 +19,15 @@ export function HeroBand() {
           mentors across eleven disciplines.
         </p>
         <div className="flex gap-4 items-center">
-          <Button className="bg-accent text-on-accent">Find your mentor</Button>
-          <Button variant="outline">Volunteer as a mentor</Button>
+          <Button
+            className="bg-accent text-on-accent"
+            onClick={() => navigate("/signup")}
+          >
+            Find your mentor
+          </Button>
+          <Button variant="outline" onClick={() => navigate("/signup")}>
+            Volunteer as a mentor
+          </Button>
         </div>
       </div>
       <div className="flex flex-col items-center justify-center">

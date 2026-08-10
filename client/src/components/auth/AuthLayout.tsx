@@ -1,4 +1,4 @@
-import { Logo } from "../Logo";
+import { Logo } from "../ui/Logo";
 import { ThemeToggle } from "../ThemeToggle";
 import { Thread } from "../ui/Thread";
 

@@ -31,6 +31,8 @@ enum Region {
   CAPE_TOWN
   SHEFFIELD
   OTHER
+
+  @@map("Region")
 }
 
 enum AvailabilityOption {
@@ -48,39 +50,64 @@ enum MeetingCadence {
   WEEKLY
   FORTNIGHTLY
   MONTHLY
+
+  @@map("MeetingCadence")
 }
 
 enum MeetingStructure {
   OPEN
   STRUCTURED
   MIX
+
+  @@map("MeetingStructure")
 }
 
 enum ApprovalStatus {
   PENDING
   ACCEPTED
   DECLINED
+
+  @@map("ApprovalStatus")
+}
+
+enum MatchStatus {
+  CHEMISTRY_PENDING
+  CHEMISTRY_CONFIRMED
+  MATCH_PENDING
+  ACTIVE
+  COMPLETED
+  DECLINED
+
+  @@map("MatchStatus")
+}
+
+enum WaitingStatus {
+  WAITING
+  NOTIFIED
+  MATCHED
+
+  @@map("WaitingStatus")
 }
 
 model User {
-  id              String    @id @default(uuid()) @db.Uuid
-  fullName        String
-  role            Role
-  email           String    @unique
-  passwordHashed  String
-  linkedinURL     String?
-  scheduleURL     String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  isActive        Boolean   @default(true)
-  deactivatedAt   DateTime?
-  isEmailVerified Boolean   @default(false)
-
+  id                         String    @id @default(uuid()) @db.Uuid
+  fullName                   String
+  role                       Role
+  email                      String    @unique
+  passwordHashed             String
+  linkedinURL                String?
+  scheduleURL                String?
+  createdAt                  DateTime  @default(now())
+  updatedAt                  DateTime  @updatedAt
+  isActive                   Boolean   @default(true)
+  deactivatedAt              DateTime?
+  isEmailVerified            Boolean   @default(false)
   emailVerificationTokenHash String?   @unique
   emailVerificationExpiresAt DateTime?
 
-  menteeProfile MenteeProfile? @relation("UserMenteeProfile")
-  mentorProfile MentorProfile? @relation("UserMentorProfile")
+  menteeProfile  MenteeProfile?   @relation("UserMenteeProfile")
+  mentorProfile  MentorProfile?   @relation("UserMentorProfile")
+  matchingConfig MatchingConfig[]
 
   @@map("Users")
 }
@@ -98,6 +125,12 @@ model MenteeProfile {
   bio              String?
 
   user User @relation("UserMenteeProfile", fields: [userId], references: [id], onDelete: Cascade)
+
+  matches            Matches[]                  @relation("MenteeMatches")
+  goalDisciplines    MenteeGoalDisciplines[]
+  targetedIndustries MenteeTargetedIndustries[]
+  waitingList        MenteeWaitingList?
+  wantedSkills       MenteeWantedSkills[]
 
   @@map("MenteeProfile")
 }
@@ -119,5 +152,147 @@ model MentorProfile {
 
   user User @relation("UserMentorProfile", fields: [userId], references: [id], onDelete: Cascade)
 
+  matches                Matches[]                @relation("MentorMatches")
+  mentorDisciplines      MentorDisciplines[]
+  mentorDomainIndustries MentorDomainIndustries[]
+  mentorSkills           MentorSkills[]
+
   @@map("MentorProfile")
+}
+
+model Skill {
+  id                 String               @id @default(uuid()) @db.Uuid
+  name               String               @unique
+  menteeWantedSkills MenteeWantedSkills[]
+  mentorSkills       MentorSkills[]
+
+  @@map("Skills")
+}
+
+model Discipline {
+  id                    String                  @id @default(uuid()) @db.Uuid
+  name                  String                  @unique
+  menteeGoalDisciplines MenteeGoalDisciplines[]
+  mentorDisciplines     MentorDisciplines[]
+
+  @@map("Disciplines")
+}
+
+model Industry {
+  id                       String                     @id @default(uuid()) @db.Uuid
+  name                     String                     @unique
+  menteeTargetedIndustries MenteeTargetedIndustries[]
+  mentorDomainIndustries   MentorDomainIndustries[]
+
+  @@map("Industries")
+}
+
+model MentorSkills {
+  mentorId      String        @db.Uuid
+  skillId       String        @db.Uuid
+  mentorProfile MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  skill         Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([mentorId, skillId])
+  @@map("MentorSkills")
+}
+
+model MentorDisciplines {
+  mentorId      String        @db.Uuid
+  disciplineId  String        @db.Uuid
+  discipline    Discipline    @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  mentorProfile MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@id([mentorId, disciplineId])
+  @@map("MentorDisciplines")
+}
+
+model MentorDomainIndustries {
+  mentorId      String        @db.Uuid
+  industryId    String        @db.Uuid
+  industry      Industry      @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  mentorProfile MentorProfile @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+
+  @@id([mentorId, industryId])
+  @@map("MentorDomainIndustries")
+}
+
+model MenteeWantedSkills {
+  menteeId      String        @db.Uuid
+  skillId       String        @db.Uuid
+  menteeProfile MenteeProfile @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+  skill         Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([menteeId, skillId])
+  @@map("MenteeWantedSkills")
+}
+
+model MenteeGoalDisciplines {
+  menteeId      String        @db.Uuid
+  disciplineId  String        @db.Uuid
+  discipline    Discipline    @relation(fields: [disciplineId], references: [id], onDelete: Cascade)
+  menteeProfile MenteeProfile @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+
+  @@id([menteeId, disciplineId])
+  @@map("MenteeGoalDisciplines")
+}
+
+model MenteeTargetedIndustries {
+  menteeId      String        @db.Uuid
+  industryId    String        @db.Uuid
+  industry      Industry      @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  menteeProfile MenteeProfile @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+
+  @@id([menteeId, industryId])
+  @@map("MenteeTargetIndustries")
+}
+
+model Matches {
+  id                       String        @id @default(uuid()) @db.Uuid
+  mentorId                 String        @db.Uuid
+  menteeId                 String        @db.Uuid
+  menteeSnapshot           Json          @db.Json
+  mentorSnapshot           Json          @db.Json
+  scores                   Float
+  chemistryMenteeConfirmed Boolean?
+  chemistryMentorConfirmed Boolean?
+  scheduledCheckIn         DateTime?
+  checkInMenteeAgreed      Boolean?
+  checkInMentorAgreed      Boolean?
+  status                   MatchStatus   @default(CHEMISTRY_PENDING)
+  createdAt                DateTime      @default(now())
+  completedAt              DateTime?
+  declinedAt               DateTime?
+  menteeProfile            MenteeProfile @relation("MenteeMatches", fields: [menteeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  mentorProfile            MentorProfile @relation("MentorMatches", fields: [mentorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("Matches")
+}
+
+model MatchingConfig {
+  id                 String   @id @default(uuid()) @db.Uuid
+  disciplineWeight   Float
+  skillWeight        Float
+  availabilityWeight Float
+  locationWeight     Float
+  industryWeight     Float
+  meetingStyleWeight Float
+  minScoreThreshold  Float
+  isActive           Boolean
+  createdAt          DateTime @default(now())
+  updatedBy          String   @db.Uuid
+  user               User     @relation(fields: [updatedBy], references: [id], onDelete: Cascade)
+
+  @@map("MatchingConfig")
+}
+
+model MenteeWaitingList {
+  id              String         @id @default(uuid()) @db.Uuid
+  menteeId        String?        @unique @db.Uuid
+  createdAt       DateTime       @default(now())
+  notifiedAdminAt DateTime?
+  status          WaitingStatus  @default(WAITING)
+  menteeProfile   MenteeProfile? @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+
+  @@map("MenteeWaitingList")
 }

@@ -2,10 +2,10 @@ type UserRole = "mentor" | "mentee";
 
 export function getFieldLabels(role: UserRole): Record<string, string> {
   return {
-    jobTitle: "Job title",
+    currentJobTitle: "Job title",
     bio: "Bio",
-    linkedInUrl: "LinkedIn URL",
-    scheduleUrl: "Schedule URL",
+    linkedinURL: "LinkedIn URL",
+    scheduleURL: "Schedule URL",
     region: "Region",
     capacity: "Capacity",
     meetingCadence: "Meeting cadence",
@@ -27,7 +27,7 @@ export function checkEmptyFields(
   profileData: Record<string, unknown>,
 ): string[] {
   const FIELD_LABELS = getFieldLabels(role);
-  const OPTIONAL_FIELDS = new Set(["scheduleUrl"]);
+  const OPTIONAL_FIELDS = new Set(["scheduleURL"]);
   return Object.entries(profileData).reduce((acc, [key, value]) => {
     if (OPTIONAL_FIELDS.has(key)) return acc;
     if (typeof value === "string") {

@@ -15,5 +15,9 @@ export function useToggleSet(initialValues: string[] = []) {
     });
   }, []);
 
-  return [set, toggle] as const;
+  const setAll = useCallback((items: string[] | Set<string> = []) => {
+    setSet(new Set(items));
+  }, []);
+
+  return [set, toggle, setAll] as const;
 }
