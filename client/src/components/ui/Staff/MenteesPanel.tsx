@@ -1,12 +1,17 @@
 import { UserDetailsCard } from "./UserDetailsCard";
 import { ProposeMentorForm } from "./ProposeMentorForm";
 import { StaffPageMatches } from "./StaffPageMatches";
+import { useStaff } from "./StaffContext";
 
-export function MenteesPanel({ userData, menteeMatches }: any) {
+export function MenteesPanel() {
+    const { menteeData, menteeMatches, isLoading } = useStaff();
+    if (isLoading || !menteeData) {
+        return <div>Loading mentee data...</div>;
+    }
     return (
         <div>
             <UserDetailsCard
-                userData={userData}
+                userData={menteeData}
             />
             <ProposeMentorForm />
             <StaffPageMatches
