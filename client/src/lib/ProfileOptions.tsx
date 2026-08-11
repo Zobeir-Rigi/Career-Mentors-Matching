@@ -24,7 +24,6 @@ export const availabilityOptions = [
     value: "WEEKEND_EVENING",
   },
 ];
-
 export const goalOptions = [
   "Software Engineering",
   "Data & Analytics",
