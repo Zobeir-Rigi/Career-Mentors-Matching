@@ -7,6 +7,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { HelloModule } from './hello/hello.module';
 import { HealthModule } from './health/health.module';
 
+import { MenteeProfileModule } from './mentee-profile/mentee-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
@@ -18,7 +19,7 @@ import { MentorsModule } from './mentors/mentors.module';
     }),
     PrismaModule,
     HelloModule,
-    HealthModule,
+    HealthModule, MenteeProfileModule,
     AuthModule,
     MailModule,
     MentorsModule,

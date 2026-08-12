@@ -13,6 +13,7 @@ interface ProfileProviderProps {
 }
 
 export function ProfileProvider({ role, children }: ProfileProviderProps) {
+  const [reasonNote, setReasonNote] = useState("");
   // shared fields
   const [currentJobTitle, setCurrentJobTitle] = useState("");
   const [bio, setBio] = useState("");
@@ -43,9 +44,10 @@ export function ProfileProvider({ role, children }: ProfileProviderProps) {
   const [isAcceptingMentees, setIsAcceptingMentees] = useState(false);
 
   // Mentee-only state
-  const [reasonNote, setReasonNote] = useState("");
 
   const baseContext = {
+    reasonNote,
+    setReasonNote,
     bio,
     setBio,
     linkedinURL,

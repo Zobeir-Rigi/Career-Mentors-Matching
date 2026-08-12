@@ -1,3 +1,9 @@
+import {
+  getMenteeProfile,
+  updateMenteeProfile,
+} from "../services/menteeProfileService";
+
+import { useEffect } from "react";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
@@ -24,43 +30,83 @@ import {
 } from "../lib/ProfileOptions";
 
 import { useProfile } from "../lib/context/ProfileContext";
+import type { MenteeProfileContextType } from "../lib/context/ProfileContext";
 
 export function MenteeProfile() {
   const {
     role,
-    jobTitle,
-    setJobTitle,
+    currentJobTitle,
+    setCurrentJobTitle,
     reasonNote,
     setReasonNote,
     bio,
     setBio,
-    linkedInUrl,
-    setLinkedInUrl,
-    scheduleUrl,
-    setScheduleUrl,
+    linkedinURL,
+    setLinkedinURL,
+    scheduleURL,
+    setScheduleURL,
     region,
     setRegion,
     openToRemote,
     setOpenToRemote,
     selectedAvailability,
+    setAvailability,
     toggleAvailability,
     selectedDisciplines,
+    setDisciplines,
     toggleDisciplines,
     selectedSkills,
+    setSkills,
     toggleSkills,
     selectedIndustries,
+    setIndustries,
     toggleIndustries,
     meetingCadence,
     setMeetingCadence,
     meetingStructure,
     setMeetingStructure,
-  } = useProfile();
+  } = useProfile() as MenteeProfileContextType;
+
+  useEffect(() => {
+    getMenteeProfile()
+      .then((data) => {
+        setCurrentJobTitle(data.currentJobTitle ?? "");
+        setReasonNote(data.reasonsNote ?? "");
+        setBio(data.bio ?? "");
+        setLinkedinURL(data.linkedinURL ?? "");
+        setScheduleURL(data.scheduleURL ?? "");
+        setRegion(data.region ?? "");
+        setOpenToRemote(data.openToRemote ?? false);
+        setMeetingCadence(data.meetingCadence ?? "");
+        setMeetingStructure(data.meetingStructure ?? "");
+
+        if (data.availability) {
+          setAvailability(data.availability);
+        }
+
+        if (data.disciplineGoals) {
+          setDisciplines(data.disciplineGoals);
+        }
+
+        if (data.wantedSkills) {
+          setSkills(data.wantedSkills);
+        }
+
+        if (data.industries) {
+          setIndustries(data.industries);
+        }
+      })
+      .catch((error) => {
+        console.error("❌ API ERROR:", error);
+      });
+  }, []);
 
   const profileData = {
-    jobTitle,
+    currentJobTitle,
+    reasonNote,
     bio,
-    linkedInUrl,
-    scheduleUrl,
+    linkedinURL,
+    scheduleURL,
     region,
     openToRemote,
     meetingCadence,
@@ -73,14 +119,41 @@ export function MenteeProfile() {
 
   const missingFields = checkEmptyFields(role, profileData);
 
-  function submitHandler() {
-    if (missingFields.length > 0) {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
+  async function submitHandler() {
+    console.log("BUTTON CLICKED");
+    console.log("Missing fields:", missingFields);
+    console.log({
+      availability: Array.from(selectedAvailability),
+      meetingCadence,
+      meetingStructure,
+    });
+    console.log({
+      reasonsNote: reasonNote,
+    });
 
-    // Next step: Navigate to dashboard
-    console.log("Saving profile:", profileData);
+    try {
+      const response = await updateMenteeProfile({
+        currentJobTitle: currentJobTitle,
+        reasonsNote: reasonNote,
+        bio,
+        linkedinURL: linkedinURL,
+        scheduleURL: scheduleURL,
+        region,
+        openToRemote,
+        availability: Array.from(selectedAvailability),
+        disciplineGoals: Array.from(selectedDisciplines),
+        wantedSkills: Array.from(selectedSkills),
+        industries: Array.from(selectedIndustries),
+
+        meetingCadence,
+        meetingStructure,
+      });
+
+      console.log("✅ Profile saved", response);
+    } catch (error: any) {
+      console.error("❌ Failed to save profile");
+      console.error(error.response?.data);
+    }
   }
 
   return (
@@ -103,29 +176,32 @@ export function MenteeProfile() {
             <FormField label="Current job title" optional="(optional)">
               <Input
                 placeholder="e.g. Care worker …"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
+                value={currentJobTitle}
+                onChange={(e) => setCurrentJobTitle(e.target.value)}
               />
             </FormField>
 
             <FormField label="Tell us what you're hoping to achieve through mentorship">
-              <Textarea value={reasonNote} onChange={(e) => setReasonNote(e.target.value)} />
+              <Textarea
+                value={reasonNote}
+                onChange={(e) => setReasonNote(e.target.value)}
+              />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
               <FormField label="LinkedIn URL">
                 <Input
                   placeholder="https://linkedin.com/in/…"
-                  value={linkedInUrl}
-                  onChange={(e) => setLinkedInUrl(e.target.value)}
+                  value={linkedinURL}
+                  onChange={(e) => setLinkedinURL(e.target.value)}
                 />
               </FormField>
 
               <FormField label="Scheduler link" optional="(optional)">
                 <Input
                   placeholder="https://calendly.com/…"
-                  value={scheduleUrl}
-                  onChange={(e) => setScheduleUrl(e.target.value)}
+                  value={scheduleURL}
+                  onChange={(e) => setScheduleURL(e.target.value)}
                 />
               </FormField>
             </div>

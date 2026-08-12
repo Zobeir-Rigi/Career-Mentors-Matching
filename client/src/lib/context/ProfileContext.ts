@@ -8,7 +8,7 @@ interface BaseProfileContext {
 
   bio: string;
   setBio: (val: string) => void;
-
+  
   linkedinURL: string;
   setLinkedinURL: (val: string) => void;
 
