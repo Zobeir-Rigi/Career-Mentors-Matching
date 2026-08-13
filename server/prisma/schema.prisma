@@ -271,12 +271,7 @@ model Matches {
 
 model MatchingConfig {
   id                 String   @id @default(uuid()) @db.Uuid
-  disciplineWeight   Float
-  skillWeight        Float
-  availabilityWeight Float
-  locationWeight     Float
-  industryWeight     Float
-  meetingStyleWeight Float
+  weights            Json     @db.Json
   minScoreThreshold  Float
   isActive           Boolean
   createdAt          DateTime @default(now())

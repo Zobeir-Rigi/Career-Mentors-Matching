@@ -11,6 +11,7 @@ import { MenteeProfileModule } from './mentee-profile/mentee-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
+import { MatchesModule } from './matches/matches.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { MentorsModule } from './mentors/mentors.module';
     }),
     PrismaModule,
     HelloModule,
-    HealthModule, MenteeProfileModule,
+    HealthModule,
+    MenteeProfileModule,
     AuthModule,
     MailModule,
     MentorsModule,
@@ -30,6 +32,7 @@ import { MentorsModule } from './mentors/mentors.module';
         limit: 100,
       },
     ]),
+    MatchesModule,
   ],
   providers: [
     {
