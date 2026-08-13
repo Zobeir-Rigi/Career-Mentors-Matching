@@ -8,7 +8,7 @@ export function Header() {
   const { user, profile, logout } = useAuth();
   const navigate = useNavigate();
 
-  const displayName = user?.fullName || profile?.user?.fullName || "";
+  const fullName = user?.fullName || profile?.user?.fullName || "";
 
   const roleName = user?.role?.toLowerCase();
   const isAuthenticated = Boolean(user && user.role);
@@ -53,7 +53,7 @@ export function Header() {
           {user ? (
             <>
               <span className="text-sm font-medium text-foreground">
-                {displayName}
+                {fullName}
               </span>
               <Button variant="quiet" onClick={handleLogout}>
                 Logout
