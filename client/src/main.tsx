@@ -19,55 +19,58 @@ import { VerifyEmail } from "./pages/VerifyEmail";
 import { MentorDashboard } from "./pages/MentorDashboard";
 import { ProtectedRoute } from "./lib/context/ProtectedRoute";
 import { Staff } from "./pages/Staff";
+import { ThemeProvider } from "./lib/context/ThemeProvider";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route element={<ProtectedRoute allowedRoles={["MENTEE"]} />}>
-            <Route
-              path="/mentee/profile"
-              element={
-                <ProfileProvider role="mentee">
-                  <MenteeProfile />
-                </ProfileProvider>
-              }
-            />
+        <ThemeProvider>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route element={<ProtectedRoute allowedRoles={["MENTEE"]} />}>
+              <Route
+                path="/mentee/profile"
+                element={
+                  <ProfileProvider role="mentee">
+                    <MenteeProfile />
+                  </ProfileProvider>
+                }
+              />
 
-            <Route
-              path="/mentee/dashboard"
-              element={
-                <ProfileProvider role="mentee">
-                  <MenteeDashboard />
-                </ProfileProvider>
-              }
-            />
-          </Route>
-          <Route element={<ProtectedRoute allowedRoles={["MENTOR"]} />}>
-            <Route
-              path="/mentor/profile"
-              element={
-                <ProfileProvider role="mentor">
-                  <MentorProfile />
-                </ProfileProvider>
-              }
-            />
-            <Route
-              path="/mentor/dashboard"
-              element={
-                <ProfileProvider role="mentor">
-                  <MentorDashboard />
-                </ProfileProvider>
-              }
-            />
-          </Route>
-          <Route path="/staff" element={<Staff />} />
-        </Routes>
+              <Route
+                path="/mentee/dashboard"
+                element={
+                  <ProfileProvider role="mentee">
+                    <MenteeDashboard />
+                  </ProfileProvider>
+                }
+              />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={["MENTOR"]} />}>
+              <Route
+                path="/mentor/profile"
+                element={
+                  <ProfileProvider role="mentor">
+                    <MentorProfile />
+                  </ProfileProvider>
+                }
+              />
+              <Route
+                path="/mentor/dashboard"
+                element={
+                  <ProfileProvider role="mentor">
+                    <MentorDashboard />
+                  </ProfileProvider>
+                }
+              />
+            </Route>
+            <Route path="/staff" element={<Staff />} />
+          </Routes>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>,

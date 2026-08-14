@@ -1,34 +1,25 @@
-import { useEffect, useState } from "react";
-import { Switch } from "./ui/Switch";
+import { Moon, Sun } from "lucide-react";
+
+import { Button } from "./ui/Button";
+import { useTheme } from "@/lib/context/useTheme";
 
 export function ThemeToggle() {
-  // Initialize with system preference 🌗
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    if (typeof window !== "undefined") {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light";
-    }
-    return "light";
-  });
-
-  // Apply data-theme attribute whenever state updates ⚡
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+  const { theme, toggleTheme } = useTheme();
 
   const isDark = theme === "dark";
 
   return (
-    <div className="flex items-center gap-2">
-      <Switch
-        checked={isDark}
-        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
-        aria-label="Toggle theme"
-      />
-      <span className="text-sm font-medium text-fg">
-        {isDark ? "Dark Mode" : "Light Mode"}
-      </span>
-    </div>
+    <Button
+      variant="quiet"
+      onClick={toggleTheme}
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      className="px-3"
+    >
+      {isDark ? (
+        <Moon className="h-5 w-5" aria-hidden="true" />
+      ) : (
+        <Sun className="h-5 w-5" aria-hidden="true" />
+      )}
+    </Button>
   );
 }
