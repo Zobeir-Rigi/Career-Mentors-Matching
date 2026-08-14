@@ -2,16 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { InternalServerErrorException } from '@nestjs/common';
 
+import { SendEmailCommand } from '@aws-sdk/client-ses';
+
 import { MailService } from './mail.service';
 
-const resendSendMock = jest.fn();
+const sesSendMock = jest.fn();
 
-jest.mock('resend', () => ({
-  Resend: jest.fn().mockImplementation(() => ({
-    emails: {
-      send: resendSendMock,
-    },
+jest.mock('@aws-sdk/client-ses', () => ({
+  SESClient: jest.fn().mockImplementation(() => ({
+    send: sesSendMock,
   })),
+
+  SendEmailCommand: jest.fn(),
 }));
 
 describe('MailService', () => {
@@ -20,12 +22,19 @@ describe('MailService', () => {
   const configServiceMock = {
     getOrThrow: jest.fn((key: string) => {
       const values: Record<string, string> = {
-        RESEND_API_KEY: 're_test_key',
-        EMAIL_FROM: 'CYF Mentorship <onboarding@resend.dev>',
+        EMAIL_FROM: 'CYF Mentorship <mentorship@cyf.academy>',
         FRONTEND_URL: 'http://localhost:5173',
       };
 
       return values[key];
+    }),
+
+    get: jest.fn((key: string) => {
+      if (key === 'EMAIL_PROVIDER') {
+        return 'ses';
+      }
+
+      return undefined;
     }),
   };
 
@@ -41,9 +50,7 @@ describe('MailService', () => {
     }).compile();
 
     service = module.get<MailService>(MailService);
-  });
 
-  afterEach(() => {
     jest.clearAllMocks();
   });
 
@@ -52,11 +59,8 @@ describe('MailService', () => {
   });
 
   it('should send a verification email with the correct details', async () => {
-    resendSendMock.mockResolvedValue({
-      data: {
-        id: 'email-id',
-      },
-      error: null,
+    sesSendMock.mockResolvedValue({
+      MessageId: 'email-id',
     });
 
     await service.sendVerificationEmail({
@@ -65,55 +69,42 @@ describe('MailService', () => {
       token: 'verification-token',
     });
 
-    expect(resendSendMock).toHaveBeenCalledTimes(1);
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
 
-    const expectedEmailPayload: {
-      from: string;
-      to: string;
-      subject: string;
-      html: unknown;
-    } = {
-      from: 'CYF Mentorship <onboarding@resend.dev>',
-      to: 'jane@example.com',
-      subject: 'Verify your CYF Mentorship email',
-      html: expect.stringContaining(
-        'http://localhost:5173/verify-email?token=verification-token',
-      ),
-    };
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
 
-    expect(resendSendMock).toHaveBeenCalledWith(expectedEmailPayload);
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
 
-    const expectedEmailBody: { html: unknown } = {
-      html: expect.stringContaining('Hi Jane Doe,'),
-    };
+    expect(commandInput.Destination?.ToAddresses).toEqual(['jane@example.com']);
 
-    expect(resendSendMock).toHaveBeenCalledWith(
-      expect.objectContaining(expectedEmailBody),
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Verify your CYF Mentorship email',
     );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain(
+      'http://localhost:5173/verify-email?token=verification-token',
+    );
+
+    expect(html).toContain('Hi Jane,');
+
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw when Resend returns an error', async () => {
-    resendSendMock.mockResolvedValue({
-      data: null,
-      error: {
-        message: 'Resend unavailable',
-      },
+  it('should throw when AWS SES returns an error', async () => {
+    sesSendMock.mockRejectedValue(new Error('SES unavailable'));
+
+    const action = service.sendVerificationEmail({
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+      token: 'verification-token',
     });
 
-    await expect(
-      service.sendVerificationEmail({
-        email: 'jane@example.com',
-        fullName: 'Jane Doe',
-        token: 'verification-token',
-      }),
-    ).rejects.toBeInstanceOf(InternalServerErrorException);
+    await expect(action).rejects.toBeInstanceOf(InternalServerErrorException);
 
-    await expect(
-      service.sendVerificationEmail({
-        email: 'jane@example.com',
-        fullName: 'Jane Doe',
-        token: 'verification-token',
-      }),
-    ).rejects.toThrow('Unable to send verification email');
+    await expect(action).rejects.toThrow('Unable to send verification email');
   });
 });
