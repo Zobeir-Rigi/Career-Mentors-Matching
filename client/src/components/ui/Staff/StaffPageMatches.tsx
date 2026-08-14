@@ -1,5 +1,18 @@
 import { Button } from "../Button";
-export function StaffPageMatches({ matches }: any) {
+
+export interface Match {
+    fullName: string;
+    proposed: string;
+    score?: number | string;
+    status: string;
+    proposedBy?: string;
+}
+
+interface StaffPageMatchesProps {
+    matches?: Match[] | null;
+}
+
+export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
     return (
         <div className="mt-12">
             <h2 className="font-display text-4xl font-semibold overshoot">
@@ -10,10 +23,10 @@ export function StaffPageMatches({ matches }: any) {
             </p>
             <div className="bg-surface border border-line rounded-[10px] mt-4 p-6">
                 {matches && matches.length > 0 ? (
-                    matches.map((match: any, index: number) => (
-                        <div>
+                    matches.map((match, index) => (
+                        <div key={index}>
                             <div className="flex flex-row items-center justify-between w-full">
-                                <div key={index}>
+                                <div>
                                     <p className="font-sans text-[15px] text-fg">{match.fullName}</p>
                                     <p className="font-sans text-[12px] text-muted">
                                         {match.proposed}{match.score ? ` score · ${match.score}` : ``}
