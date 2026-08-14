@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
+import { CAPACITY_RELEVANT_STATUSES } from '../common/constants/capacity-relevant-statuses';
 
 import type { MentorEngagementSubStatus } from './dto/mentor-dashboard-response.dto';
 
@@ -83,12 +84,7 @@ export class MentorDashboardService {
         matches: {
           where: {
             status: {
-              in: [
-                MatchStatus.CHEMISTRY_PENDING,
-                MatchStatus.CHEMISTRY_CONFIRMED,
-                MatchStatus.MATCH_PENDING,
-                MatchStatus.ACTIVE,
-              ],
+              in: CAPACITY_RELEVANT_STATUSES,
             },
           },
 

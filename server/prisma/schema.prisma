@@ -260,8 +260,6 @@ model Matches {
   chemistryMenteeConfirmedAt DateTime?
   proposalExpiresAt          DateTime?
   confirmationDueAt          DateTime?
-  chemistryMenteeConfirmed   Boolean?
-  chemistryMentorConfirmed   Boolean?
   scheduledCheckIn           DateTime?
   checkInMenteeAgreed        Boolean?
   checkInMentorAgreed        Boolean?
