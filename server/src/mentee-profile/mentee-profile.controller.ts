@@ -7,31 +7,21 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiCookieAuth,
-  ApiOkResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiCookieAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { RequestWithUser } from '../auth/guards/jwt-auth.guard';
 
-
 import { MenteeProfileResponseDto } from './dto/mentee-profile-response.dto';
 import { UpdateMenteeProfileDto } from './dto/update-mentee-profile.dto';
 import { MenteeProfileService } from './mentee-profile.service';
-
-
-
 
 @ApiTags('Mentee Profile')
 @ApiCookieAuth('accessToken')
 @UseGuards(JwtAuthGuard)
 @Controller('mentee-profile')
 export class MenteeProfileController {
-  constructor(
-    private readonly menteeProfileService: MenteeProfileService,
-  ) { }
+  constructor(private readonly menteeProfileService: MenteeProfileService) {}
 
   @ApiOkResponse({
     description: 'Returns the mentee profile',
@@ -39,9 +29,7 @@ export class MenteeProfileController {
   })
   @Get()
   async getMenteeProfile(@Req() req: RequestWithUser) {
-    return this.menteeProfileService.getMenteeProfile(
-      req.user.userId,
-    );
+    return this.menteeProfileService.getMenteeProfile(req.user.userId);
   }
 
   @Put()

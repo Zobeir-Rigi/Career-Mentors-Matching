@@ -248,24 +248,29 @@ model MenteeTargetedIndustries {
 }
 
 model Matches {
-  id                       String        @id @default(uuid()) @db.Uuid
-  mentorId                 String        @db.Uuid
-  menteeId                 String        @db.Uuid
-  menteeSnapshot           Json          @db.Json
-  mentorSnapshot           Json          @db.Json
-  scores                   Float
-  chemistryMenteeConfirmed Boolean?
-  chemistryMentorConfirmed Boolean?
-  scheduledCheckIn         DateTime?
-  checkInMenteeAgreed      Boolean?
-  checkInMentorAgreed      Boolean?
-  status                   MatchStatus   @default(CHEMISTRY_PENDING)
-  createdAt                DateTime      @default(now())
-  completedAt              DateTime?
-  declinedAt               DateTime?
-  menteeProfile            MenteeProfile @relation("MenteeMatches", fields: [menteeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  mentorProfile            MentorProfile @relation("MentorMatches", fields: [mentorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                         String        @id @default(uuid()) @db.Uuid
+  mentorId                   String        @db.Uuid
+  menteeId                   String        @db.Uuid
+  menteeSnapshot             Json          @db.Json
+  mentorSnapshot             Json          @db.Json
+  scores                     Float
+  menteeAcceptedAt           DateTime?
+  chemistryBookedAt          DateTime?
+  chemistryMentorConfirmedAt DateTime?
+  chemistryMenteeConfirmedAt DateTime?
+  proposalExpiresAt          DateTime?
+  confirmationDueAt          DateTime?
+  scheduledCheckIn           DateTime?
+  checkInMenteeAgreed        Boolean?
+  checkInMentorAgreed        Boolean?
+  status                     MatchStatus   @default(CHEMISTRY_PENDING)
+  createdAt                  DateTime      @default(now())
+  completedAt                DateTime?
+  declinedAt                 DateTime?
+  menteeProfile              MenteeProfile @relation("MenteeMatches", fields: [menteeId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  mentorProfile              MentorProfile @relation("MentorMatches", fields: [mentorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@index([mentorId, status])
   @@map("Matches")
 }
 

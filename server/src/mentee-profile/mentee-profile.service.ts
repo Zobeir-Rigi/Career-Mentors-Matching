@@ -7,9 +7,7 @@ import { UpdateMenteeProfileDto } from './dto/update-mentee-profile.dto';
 export class MenteeProfileService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getMenteeProfile(
-    userId: string,
-  ): Promise<MenteeProfileResponseDto> {
+  async getMenteeProfile(userId: string): Promise<MenteeProfileResponseDto> {
     const profile = await this.prisma.menteeProfile.findUnique({
       where: {
         userId,
@@ -55,155 +53,19 @@ export class MenteeProfileService {
         (item) => item.discipline.name,
       ),
 
-      wantedSkills: profile.wantedSkills.map(
-        (item) => item.skill.name,
-      ),
+      wantedSkills: profile.wantedSkills.map((item) => item.skill.name),
 
-      industries: profile.targetedIndustries.map(
-        (item) => item.industry.name,
-      ),
+      industries: profile.targetedIndustries.map((item) => item.industry.name),
     };
   }
 
   async updateMenteeProfile(
-  userId: string,
-  updateMenteeProfileDto: UpdateMenteeProfileDto,
-): Promise<MenteeProfileResponseDto> {
-  const profile = await this.prisma.menteeProfile.findUnique({
-    where: {
-      userId,
-    },
-    include: {
-      user: true,
-      goalDisciplines: {
-        include: {
-          discipline: true,
-        },
-      },
-      wantedSkills: {
-        include: {
-          skill: true,
-        },
-      },
-      targetedIndustries: {
-        include: {
-          industry: true,
-        },
-      },
-    },
-  });
-
-  if (!profile) {
-    throw new NotFoundException('Mentee profile not found');
-  }
-
-  const {
-    linkedinURL,
-    scheduleURL,
-    wantedSkills,
-    disciplineGoals,
-    industries,
-    ...profileData
-  } = updateMenteeProfileDto;
-
-  return this.prisma.$transaction(async (tx) => {
-    await tx.user.update({
+    userId: string,
+    updateMenteeProfileDto: UpdateMenteeProfileDto,
+  ): Promise<MenteeProfileResponseDto> {
+    const profile = await this.prisma.menteeProfile.findUnique({
       where: {
-        id: profile.userId,
-      },
-      data: {
-        ...(linkedinURL !== undefined && { linkedinURL }),
-        ...(scheduleURL !== undefined && { scheduleURL }),
-      },
-    });
-
-    await tx.menteeProfile.update({
-      where: {
-        id: profile.id,
-      },
-      data: {
-        ...profileData,
-      },
-    });
-
-    await tx.menteeGoalDisciplines.deleteMany({
-      where: {
-        menteeId: profile.id,
-      },
-    });
-
-    if (disciplineGoals?.length) {
-      const disciplineRecords = await Promise.all(
-        disciplineGoals.map((name) =>
-          tx.discipline.upsert({
-            where: { name },
-            create: { name },
-            update: {},
-          }),
-        ),
-      );
-
-      await tx.menteeGoalDisciplines.createMany({
-        data: disciplineRecords.map((discipline) => ({
-          menteeId: profile.id,
-          disciplineId: discipline.id,
-        })),
-      });
-    }
-
-    await tx.menteeWantedSkills.deleteMany({
-      where: {
-        menteeId: profile.id,
-      },
-    });
-
-    if (wantedSkills?.length) {
-      const skillRecords = await Promise.all(
-        wantedSkills.map((name) =>
-          tx.skill.upsert({
-            where: { name },
-            create: { name },
-            update: {},
-          }),
-        ),
-      );
-
-      await tx.menteeWantedSkills.createMany({
-        data: skillRecords.map((skill) => ({
-          menteeId: profile.id,
-          skillId: skill.id,
-        })),
-      });
-    }
-
-    await tx.menteeTargetedIndustries.deleteMany({
-      where: {
-        menteeId: profile.id,
-      },
-    });
-
-    if (industries?.length) {
-      const industryRecords = await Promise.all(
-        industries.map((name) =>
-          tx.industry.upsert({
-            where: { name },
-            create: { name },
-            update: {},
-          }),
-        ),
-      );
-
-      await tx.menteeTargetedIndustries.createMany({
-        data: industryRecords.map((industry) => ({
-          menteeId: profile.id,
-          industryId: industry.id,
-        })),
-      });
-    }
-
-    const finalProfile = await tx.menteeProfile.findUnique({
-      where: {
-        id: profile.id,
+        userId,
       },
       include: {
         user: true,
@@ -225,40 +87,168 @@ export class MenteeProfileService {
       },
     });
 
-    if (!finalProfile) {
-      throw new NotFoundException(
-        'Failed to retrieve updated profile',
-      );
+    if (!profile) {
+      throw new NotFoundException('Mentee profile not found');
     }
 
-    return {
-      currentJobTitle: finalProfile.currentJobTitle ?? undefined,
-      reasonsNote: finalProfile.reasonsNote ?? undefined,
-      bio: finalProfile.bio ?? undefined,
-      linkedinURL: finalProfile.user?.linkedinURL ?? undefined,
-      scheduleURL: finalProfile.user?.scheduleURL ?? undefined,
-      openToRemote: finalProfile.openToRemote,
-      region: finalProfile.region ?? undefined,
-      availability: finalProfile.availability ?? [],
-      meetingCadence: finalProfile.meetingCadence ?? undefined,
-      meetingStructure: finalProfile.meetingStructure ?? undefined,
-      matchReady: this.isMatchReady(finalProfile.availability),
+    const {
+      linkedinURL,
+      scheduleURL,
+      wantedSkills,
+      disciplineGoals,
+      industries,
+      ...profileData
+    } = updateMenteeProfileDto;
 
-      disciplineGoals: finalProfile.goalDisciplines.map(
-        (item) => item.discipline.name,
-      ),
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: profile.userId,
+        },
+        data: {
+          ...(linkedinURL !== undefined && { linkedinURL }),
+          ...(scheduleURL !== undefined && { scheduleURL }),
+        },
+      });
 
-      wantedSkills: finalProfile.wantedSkills.map(
-        (item) => item.skill.name,
-      ),
+      await tx.menteeProfile.update({
+        where: {
+          id: profile.id,
+        },
+        data: {
+          ...profileData,
+        },
+      });
 
-      industries: finalProfile.targetedIndustries.map(
-        (item) => item.industry.name,
-      ),
-    };
-  });
-}
-  
+      await tx.menteeGoalDisciplines.deleteMany({
+        where: {
+          menteeId: profile.id,
+        },
+      });
+
+      if (disciplineGoals?.length) {
+        const disciplineRecords = await Promise.all(
+          disciplineGoals.map((name) =>
+            tx.discipline.upsert({
+              where: { name },
+              create: { name },
+              update: {},
+            }),
+          ),
+        );
+
+        await tx.menteeGoalDisciplines.createMany({
+          data: disciplineRecords.map((discipline) => ({
+            menteeId: profile.id,
+            disciplineId: discipline.id,
+          })),
+        });
+      }
+
+      await tx.menteeWantedSkills.deleteMany({
+        where: {
+          menteeId: profile.id,
+        },
+      });
+
+      if (wantedSkills?.length) {
+        const skillRecords = await Promise.all(
+          wantedSkills.map((name) =>
+            tx.skill.upsert({
+              where: { name },
+              create: { name },
+              update: {},
+            }),
+          ),
+        );
+
+        await tx.menteeWantedSkills.createMany({
+          data: skillRecords.map((skill) => ({
+            menteeId: profile.id,
+            skillId: skill.id,
+          })),
+        });
+      }
+
+      await tx.menteeTargetedIndustries.deleteMany({
+        where: {
+          menteeId: profile.id,
+        },
+      });
+
+      if (industries?.length) {
+        const industryRecords = await Promise.all(
+          industries.map((name) =>
+            tx.industry.upsert({
+              where: { name },
+              create: { name },
+              update: {},
+            }),
+          ),
+        );
+
+        await tx.menteeTargetedIndustries.createMany({
+          data: industryRecords.map((industry) => ({
+            menteeId: profile.id,
+            industryId: industry.id,
+          })),
+        });
+      }
+
+      const finalProfile = await tx.menteeProfile.findUnique({
+        where: {
+          id: profile.id,
+        },
+        include: {
+          user: true,
+          goalDisciplines: {
+            include: {
+              discipline: true,
+            },
+          },
+          wantedSkills: {
+            include: {
+              skill: true,
+            },
+          },
+          targetedIndustries: {
+            include: {
+              industry: true,
+            },
+          },
+        },
+      });
+
+      if (!finalProfile) {
+        throw new NotFoundException('Failed to retrieve updated profile');
+      }
+
+      return {
+        currentJobTitle: finalProfile.currentJobTitle ?? undefined,
+        reasonsNote: finalProfile.reasonsNote ?? undefined,
+        bio: finalProfile.bio ?? undefined,
+        linkedinURL: finalProfile.user?.linkedinURL ?? undefined,
+        scheduleURL: finalProfile.user?.scheduleURL ?? undefined,
+        openToRemote: finalProfile.openToRemote,
+        region: finalProfile.region ?? undefined,
+        availability: finalProfile.availability ?? [],
+        meetingCadence: finalProfile.meetingCadence ?? undefined,
+        meetingStructure: finalProfile.meetingStructure ?? undefined,
+        matchReady: this.isMatchReady(finalProfile.availability),
+
+        disciplineGoals: finalProfile.goalDisciplines.map(
+          (item) => item.discipline.name,
+        ),
+
+        wantedSkills: finalProfile.wantedSkills.map((item) => item.skill.name),
+
+        industries: finalProfile.targetedIndustries.map(
+          (item) => item.industry.name,
+        ),
+      };
+    });
+  }
+
   private isMatchReady(availability?: string[]): boolean {
     return !!availability?.length;
   }
