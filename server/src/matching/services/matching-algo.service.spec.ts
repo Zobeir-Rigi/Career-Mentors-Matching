@@ -1,5 +1,6 @@
 import {
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
@@ -10,11 +11,11 @@ import {
   MeetingCadence,
   MeetingStructure,
   Region,
-} from '../../../generated/prisma/enums';
+} from '../../generated/prisma/enums';
 import type {
   MenteeWithRelations,
   MentorWithRelations,
-} from '../../engine/scoring.engine';
+} from '../engine/scoring.engine';
 import {
   DEFAULT_WEIGHTS,
   MatchingAlgoService,
@@ -176,7 +177,7 @@ describe('MatchingAlgoService', () => {
   let service: MatchingAlgoService;
 
   const mockMatchingDataService = {
-    fetchMenteeContext: jest.fn(),
+    fetchMenteeContextByUserId: jest.fn(),
     fetchActiveConfig: jest.fn(),
     fetchEligibleCandidates: jest.fn(),
   };
@@ -190,7 +191,9 @@ describe('MatchingAlgoService', () => {
     }).compile();
 
     service = module.get(MatchingAlgoService);
-    mockMatchingDataService.fetchMenteeContext.mockResolvedValue(richMentee);
+    mockMatchingDataService.fetchMenteeContextByUserId.mockResolvedValue(
+      richMentee,
+    );
     mockMatchingDataService.fetchActiveConfig.mockResolvedValue(standardConfig);
     mockMatchingDataService.fetchEligibleCandidates.mockResolvedValue([]);
   });
@@ -228,7 +231,7 @@ describe('MatchingAlgoService', () => {
     });
 
     it('includes a mentor whose score is exactly the threshold', async () => {
-      // discipline 25 + availability 20 + location 10 + meetingStyle 5 = 60
+      // discipline 25 + availability 20 + location 10 + meetingStructure 5 = 60
       const thresholdMentor = makeMentor({
         id: 'mentor-threshold',
         mentorSkills: [
@@ -324,7 +327,7 @@ describe('MatchingAlgoService', () => {
     );
 
     it('passes all previous mentor IDs to candidate exclusion without duplicates', async () => {
-      mockMatchingDataService.fetchMenteeContext.mockResolvedValue({
+      mockMatchingDataService.fetchMenteeContextByUserId.mockResolvedValue({
         ...richMentee,
         matches: [
           { mentorId: 'mentor-a', status: MatchStatus.DECLINED },
@@ -391,7 +394,7 @@ describe('MatchingAlgoService', () => {
     });
 
     it('propagates NotFoundException', async () => {
-      mockMatchingDataService.fetchMenteeContext.mockRejectedValue(
+      mockMatchingDataService.fetchMenteeContextByUserId.mockRejectedValue(
         new NotFoundException('Mentee not found'),
       );
       await expect(service.findBestMatches('missing')).rejects.toBeInstanceOf(
@@ -399,12 +402,24 @@ describe('MatchingAlgoService', () => {
       );
     });
 
-    it('wraps unexpected failures', async () => {
-      mockMatchingDataService.fetchMenteeContext.mockRejectedValue(
-        new Error('database unavailable'),
+    it('logs and wraps unexpected failures', async () => {
+      const error = new Error('database unavailable');
+
+      const loggerSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+
+      mockMatchingDataService.fetchMenteeContextByUserId.mockRejectedValue(
+        error,
       );
+
       await expect(service.findBestMatches('mentee-1')).rejects.toBeInstanceOf(
         InternalServerErrorException,
+      );
+
+      expect(loggerSpy).toHaveBeenCalledWith(
+        'Failed to calculate mentor matches for mentee mentee-1',
+        error.stack,
       );
     });
   });

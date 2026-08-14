@@ -1,21 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ApprovalStatus, MatchStatus } from '../../../generated/prisma/enums';
-import { PrismaService } from '../../../prisma/prisma.service';
-
-const CAPACITY_RELEVANT_STATUSES: MatchStatus[] = [
-  MatchStatus.CHEMISTRY_PENDING,
-  MatchStatus.CHEMISTRY_CONFIRMED,
-  MatchStatus.MATCH_PENDING,
-  MatchStatus.ACTIVE,
-];
+import { ApprovalStatus } from '../../generated/prisma/enums';
+import { PrismaService } from '../../prisma/prisma.service';
+import { CAPACITY_RELEVANT_STATUSES } from '../../common/constants/capacity-relevant-statuses';
 
 @Injectable()
 export class MatchingDataService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async fetchMenteeContext(menteeId: string) {
+  async fetchMenteeContextByUserId(userId: string) {
     const mentee = await this.prisma.menteeProfile.findUnique({
-      where: { id: menteeId },
+      where: { userId },
       include: {
         goalDisciplines: { include: { discipline: true } },
         wantedSkills: { include: { skill: true } },
@@ -49,9 +43,7 @@ export class MatchingDataService {
         user: {
           select: {
             fullName: true,
-            email: true,
             linkedinURL: true,
-            scheduleURL: true,
           },
         },
         mentorDisciplines: { include: { discipline: true } },

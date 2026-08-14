@@ -3,7 +3,7 @@ import {
   calculateDynamicScore,
   calculateLocationScore,
   calculateMeetingCadenceScore,
-  calculateMeetingStyleScore,
+  calculateMeetingStructureScore,
   computeAllCategoryScores,
   type ActiveRule,
   type CategoryScores,
@@ -94,20 +94,22 @@ describe('Scoring Engine', () => {
   });
 
   describe('meeting preference scores', () => {
-    it('scores meeting style as binary compatibility', () => {
+    it('scores meeting structure as binary compatibility', () => {
       expect(
-        calculateMeetingStyleScore(
+        calculateMeetingStructureScore(
           MeetingStructure.OPEN,
           MeetingStructure.OPEN,
         ),
       ).toBe(1);
       expect(
-        calculateMeetingStyleScore(
+        calculateMeetingStructureScore(
           MeetingStructure.OPEN,
           MeetingStructure.STRUCTURED,
         ),
       ).toBe(0);
-      expect(calculateMeetingStyleScore(null, MeetingStructure.OPEN)).toBe(0);
+      expect(calculateMeetingStructureScore(null, MeetingStructure.OPEN)).toBe(
+        0,
+      );
     });
 
     it('scores meeting cadence as binary compatibility', () => {
@@ -136,7 +138,7 @@ describe('Scoring Engine', () => {
       industries: 0,
       availability: 1,
       location: 1,
-      meetingStyle: 0,
+      meetingStructure: 0,
       meetingCadence: 1,
     };
 
@@ -239,7 +241,7 @@ describe('Scoring Engine', () => {
         industries: 0,
         availability: 0.5,
         location: 0,
-        meetingStyle: 0,
+        meetingStructure: 0,
         meetingCadence: 1,
       });
     });

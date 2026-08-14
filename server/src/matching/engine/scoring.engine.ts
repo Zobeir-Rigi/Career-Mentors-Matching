@@ -27,7 +27,7 @@ export const SCORING_CATEGORY_KEYS = [
   'industries',
   'availability',
   'location',
-  'meetingStyle',
+  'meetingStructure',
   'meetingCadence',
 ] as const;
 
@@ -85,12 +85,12 @@ export function calculateLocationScore(
   return 0;
 }
 
-export function calculateMeetingStyleScore(
-  menteeStyle: MeetingStructure | null | undefined,
-  mentorStyle: MeetingStructure | null | undefined,
+export function calculateMeetingStructureScore(
+  menteeStructure: MeetingStructure | null | undefined,
+  mentorStructure: MeetingStructure | null | undefined,
 ): number {
-  if (!menteeStyle || !mentorStyle) return 0;
-  return menteeStyle === mentorStyle ? 1 : 0;
+  if (!menteeStructure || !mentorStructure) return 0;
+  return menteeStructure === mentorStructure ? 1 : 0;
 }
 
 export function calculateMeetingCadenceScore(
@@ -133,7 +133,7 @@ export function computeAllCategoryScores(
       menteeProfile.openToRemote,
       mentorProfile.openToRemote,
     ),
-    meetingStyle: calculateMeetingStyleScore(
+    meetingStructure: calculateMeetingStructureScore(
       menteeProfile.meetingStructure,
       mentorProfile.meetingStructure,
     ),

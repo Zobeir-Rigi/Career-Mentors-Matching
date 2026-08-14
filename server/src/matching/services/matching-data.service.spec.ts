@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { ApprovalStatus, MatchStatus } from '../../../generated/prisma/enums';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { ApprovalStatus, MatchStatus } from '../../generated/prisma/enums';
+import { PrismaService } from '../../prisma/prisma.service';
 import { MatchingDataService } from './matching-data.service';
 
 describe('MatchingDataService', () => {
@@ -28,17 +28,17 @@ describe('MatchingDataService', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('fetchMenteeContext', () => {
+  describe('fetchMenteeContextByUserId', () => {
     it('fetches all data needed by the scoring algorithm', async () => {
-      const mentee = { id: 'mentee-1', matches: [] };
+      const mentee = { id: 'mentee-1', userId: 'user-mentee-1', matches: [] };
       mockPrismaService.menteeProfile.findUnique.mockResolvedValue(mentee);
 
-      await expect(service.fetchMenteeContext('mentee-1')).resolves.toBe(
-        mentee,
-      );
+      await expect(
+        service.fetchMenteeContextByUserId('user-mentee-1'),
+      ).resolves.toBe(mentee);
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(prisma.menteeProfile.findUnique).toHaveBeenCalledWith({
-        where: { id: 'mentee-1' },
+        where: { userId: 'user-mentee-1' },
         include: {
           goalDisciplines: { include: { discipline: true } },
           wantedSkills: { include: { skill: true } },
@@ -51,7 +51,7 @@ describe('MatchingDataService', () => {
     it('throws when the mentee does not exist', async () => {
       mockPrismaService.menteeProfile.findUnique.mockResolvedValue(null);
       await expect(
-        service.fetchMenteeContext('missing'),
+        service.fetchMenteeContextByUserId('missing'),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
@@ -87,9 +87,7 @@ describe('MatchingDataService', () => {
           user: {
             select: {
               fullName: true,
-              email: true,
               linkedinURL: true,
-              scheduleURL: true,
             },
           },
           mentorDisciplines: { include: { discipline: true } },

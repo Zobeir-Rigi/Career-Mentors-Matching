@@ -11,7 +11,7 @@ import { MenteeProfileModule } from './mentee-profile/mentee-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
-import { MatchesModule } from './matches/matches.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -32,7 +32,7 @@ import { MatchesModule } from './matches/matches.module';
         limit: 100,
       },
     ]),
-    MatchesModule,
+    MatchingModule,
   ],
   providers: [
     {

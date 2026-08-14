@@ -1,16 +1,17 @@
 import {
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MatchStatus, Region } from '../../../generated/prisma/enums';
+import { MatchStatus, Region } from '../../generated/prisma/enums';
 import {
   calculateDynamicScore,
   computeAllCategoryScores,
   isScoringCategoryKey,
   type ActiveRule,
   type CategoryScores,
-} from '../../engine/scoring.engine';
+} from '../engine/scoring.engine';
 import { MatchingDataService } from './matching-data.service';
 
 export interface ScoredMatch {
@@ -24,9 +25,7 @@ export interface ScoredMatch {
     region: Region | null;
     openToRemote: boolean;
     bio: string | null;
-    email: string | null;
     linkedinURL: string | null;
-    scheduleURL: string | null;
   };
 }
 
@@ -36,7 +35,7 @@ export const DEFAULT_WEIGHTS: readonly ActiveRule[] = [
   { categoryKey: 'availability', weight: 20 },
   { categoryKey: 'location', weight: 10 },
   { categoryKey: 'industries', weight: 10 },
-  { categoryKey: 'meetingStyle', weight: 5 },
+  { categoryKey: 'meetingStructure', weight: 5 },
   { categoryKey: 'meetingCadence', weight: 5 },
 ];
 
@@ -101,13 +100,15 @@ export function normalizeActiveRules(value: unknown): ActiveRule[] {
 
 @Injectable()
 export class MatchingAlgoService {
+  private readonly logger = new Logger(MatchingAlgoService.name);
+
   constructor(private readonly dataService: MatchingDataService) {}
 
-  async findBestMatches(menteeId: string): Promise<ScoredMatch[]> {
+  async findBestMatches(userId: string): Promise<ScoredMatch[]> {
     try {
-      const mentee = await this.dataService.fetchMenteeContext(menteeId);
+      const mentee = await this.dataService.fetchMenteeContextByUserId(userId);
       if (!mentee) {
-        throw new NotFoundException(`Mentee with ID ${menteeId} not found`);
+        throw new NotFoundException(`Mentee with user ID ${userId} not found`);
       }
 
       const config = await this.dataService.fetchActiveConfig();
@@ -161,9 +162,7 @@ export class MatchingAlgoService {
             region: mentor.region,
             openToRemote: mentor.openToRemote,
             bio: mentor.bio,
-            email: mentor.user.email,
             linkedinURL: mentor.user.linkedinURL,
-            scheduleURL: mentor.user.scheduleURL,
           },
         });
       }
@@ -175,6 +174,11 @@ export class MatchingAlgoService {
       );
     } catch (error) {
       if (error instanceof NotFoundException) throw error;
+
+      this.logger.error(
+        `Failed to calculate mentor matches for mentee ${userId}`,
+        error instanceof Error ? error.stack : undefined,
+      );
       throw new InternalServerErrorException(
         'Failed to calculate mentor matches',
       );
