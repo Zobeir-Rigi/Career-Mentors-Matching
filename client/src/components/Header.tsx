@@ -5,10 +5,10 @@ import { Button } from "./ui/Button";
 import { useAuth } from "@/lib/context/useAuth";
 
 export function Header() {
-  const { user, profile, logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const fullName = user?.fullName || profile?.user?.fullName || "";
+  const fullName = user?.fullName ?? "";
 
   const roleName = user?.role?.toLowerCase();
   const isAuthenticated = Boolean(user && user.role);

@@ -261,4 +261,32 @@ export class AuthService {
       },
     };
   }
+
+  async getCurrentUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        role: true,
+        isEmailVerified: true,
+        isActive: true,
+      },
+    });
+
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User account not found or inactive');
+    }
+
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+    };
+  }
 }

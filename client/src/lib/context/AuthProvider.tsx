@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 import { type AuthUser, logout as apiLogout } from "../../services/authService";
 import { getMentorProfile } from "../../services/mentorService";
-// import { getMenteeProfile } from "../services/menteeService";
+import { getMenteeProfile } from "../../services/menteeService";
 import type { UserProfile } from "./AuthContext";
 import { api } from "../../services/api";
 
@@ -19,10 +19,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     try {
       if (targetUser.role === "MENTOR") {
         return await getMentorProfile();
+      } else if (targetUser.role === "MENTEE") {
+        return await getMenteeProfile();
       }
-      // else if (targetUser.role === "MENTEE") {
-      //   return await getMenteeProfile();
-      // }
       return null;
     } catch (error) {
       console.warn(

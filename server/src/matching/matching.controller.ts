@@ -18,7 +18,6 @@ import { MatchingAlgoService } from './services/matching-algo.service';
 @ApiCookieAuth('accessToken')
 @UseGuards(JwtAuthGuard)
 @Controller('matching')
-@Controller('matches')
 export class MatchingController {
   constructor(private readonly matchingAlgoService: MatchingAlgoService) {}
 

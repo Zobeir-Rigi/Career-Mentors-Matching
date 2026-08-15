@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Chip } from "./ui/Chip";
 import { Button } from "./ui/Button";
 
@@ -20,22 +19,29 @@ interface DisciplinesBandProps {
   header?: React.ReactNode;
   smallerText?: React.ReactNode;
   isSubmitButtonToRender?: boolean;
+
+  selectedDisciplines: string[];
+  onSelectedDisciplinesChange: (disciplines: string[]) => void;
+
+  onSaveGoals?: () => void | Promise<void>;
+  isSavingGoals?: boolean;
 }
 
 export const DisciplinesBand = ({
   header,
   smallerText,
   isSubmitButtonToRender,
+  selectedDisciplines,
+  onSelectedDisciplinesChange,
+  onSaveGoals,
+  isSavingGoals = false,
 }: DisciplinesBandProps) => {
-  const [selectedDiscipline, setSelectedDiscipline] = useState<string[]>([]);
-
-  // handle chip click
   const handleChipClick = (discipline: string) => {
-    setSelectedDiscipline((current) =>
-      current.includes(discipline)
-        ? current.filter((item) => item !== discipline)
-        : [...current, discipline],
-    );
+    const updatedDisciplines = selectedDisciplines.includes(discipline)
+      ? selectedDisciplines.filter((item) => item !== discipline)
+      : [...selectedDisciplines, discipline];
+
+    onSelectedDisciplinesChange(updatedDisciplines);
   };
   return (
     <section
@@ -55,14 +61,19 @@ export const DisciplinesBand = ({
             <Chip
               key={discipline}
               label={discipline}
-              isSelected={selectedDiscipline.includes(discipline)}
+              isSelected={selectedDisciplines.includes(discipline)}
               onClick={() => handleChipClick(discipline)}
             />
           ))}
         </div>
         {isSubmitButtonToRender && (
-          <Button variant="outline" className="mt-3">
-            Save goals
+          <Button
+            variant="outline"
+            className="mt-3"
+            onClick={() => void onSaveGoals?.()}
+            disabled={isSavingGoals}
+          >
+            {isSavingGoals ? "Saving..." : "Save goals"}
           </Button>
         )}
       </div>

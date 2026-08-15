@@ -1,123 +1,179 @@
 import { Thread } from "../Thread";
 import { Button } from "../Button";
 
+import type { MentorRecommendation } from "@/types/matching";
+
 interface AfterMatchProposedProps {
   onStepSubmit: (nextStep: string, changeProgressBar?: boolean) => void;
   currentStep: string;
   steps: string[];
+  mentors: MentorRecommendation[];
 }
 
 export function AfterMatchProposed({
   onStepSubmit,
   currentStep,
   steps,
+  mentors,
 }: AfterMatchProposedProps) {
   const nextStep = steps[steps.indexOf(currentStep) + 1];
-  const changeProgressBar = shouldChangeProgressBar(currentStep);
-  function shouldChangeProgressBar(nextStep: string): boolean {
-    switch (nextStep) {
+
+  function shouldChangeProgressBar(step: string): boolean {
+    switch (step) {
       case "mentorship-confirmed-waiting":
       case "mentorship-active":
         return true;
+
       case "match-proposed":
       case "chemistry-and-confirm":
       case "mentorship-booked":
       case "mentor-confirm":
-        return false;
       default:
         return false;
     }
   }
+
+  const changeProgressBar = shouldChangeProgressBar(currentStep);
+
   function matchStatus() {
-    let content = null;
     switch (currentStep) {
       case "match-proposed":
-        content = (
+        return (
           <div className="rounded-[20px] bg-tint w-[137px] text-left pl-3 p-1">
             <p className="text-accent font-sans text-[12px]">Awaiting</p>
             <p className="text-accent font-sans text-[12px]">acceptance</p>
           </div>
         );
-        break;
+
       case "chemistry-and-confirm":
       case "mentorship-booked":
       case "mentor-confirm":
       case "mentorship-confirmed-waiting":
-        content = (
+        return (
           <div className="rounded-[20px] bg-tint w-[137px] text-left pl-3 p-1">
             <p className="text-warm font-sans text-[12px]">Chemistry &</p>
             <p className="text-warm font-sans text-[12px]">confirm</p>
           </div>
         );
-        break;
+
       case "mentorship-active":
-        content = (
+        return (
           <div className="rounded-[20px] bg-ok-tint w-[137px] text-left pl-3 p-1">
             <p className="text-ok font-sans text-[12px]">Active</p>
           </div>
         );
+
+      default:
+        return null;
     }
-    return content;
   }
+
   function renderConfirmButton() {
-    let buttonText = "";
     switch (currentStep) {
-      case "match-proposed":
-        buttonText = "Accept match";
-        break;
       case "chemistry-and-confirm":
-        buttonText = "I've booked our session";
-        break;
+        return (
+          <Button
+            onClick={() => onStepSubmit(nextStep, changeProgressBar)}
+            className="bg-accent text-on-accent"
+          >
+            I've booked our session
+          </Button>
+        );
+
       case "mentorship-booked":
       case "mentor-confirm":
       case "mentorship-confirmed-waiting":
-        buttonText = "Confirm mentorship";
-    }
+        return (
+          <Button
+            onClick={() => onStepSubmit(nextStep, changeProgressBar)}
+            className="bg-accent text-on-accent"
+          >
+            Confirm mentorship
+          </Button>
+        );
 
+      default:
+        return null;
+    }
+  }
+
+  if (currentStep === "match-proposed") {
     return (
-      <Button
-        onClick={() => onStepSubmit(nextStep, changeProgressBar)}
-        className="bg-accent text-on-accent"
-      >
-        {buttonText}
-      </Button>
+      <div className="space-y-6">
+        <div>
+          <h2 className="font-display font-semibold text-[24px]">
+            Your mentor recommendations
+          </h2>
+
+          <p className="text-muted text-sm mt-1">
+            Ranked using your goals, availability, location and meeting
+            preferences.
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {mentors.map((mentor, index) => (
+            <div
+              key={mentor.mentorId}
+              className="border border-line rounded-[10px] p-6"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  {index === 0 && (
+                    <p className="text-xs font-semibold text-accent mb-1">
+                      Best match
+                    </p>
+                  )}
+
+                  <h3 className="font-display font-semibold text-[20px]">
+                    {mentor.profile.fullName}
+                  </h3>
+
+                  {mentor.profile.currentJobTitle && (
+                    <p className="text-muted text-sm">
+                      {mentor.profile.currentJobTitle}
+                    </p>
+                  )}
+                </div>
+
+                <div className="text-right">
+                  <p className="font-semibold text-accent">
+                    {mentor.score}% match
+                  </p>
+                </div>
+              </div>
+
+              {mentor.profile.bio && (
+                <p className="mt-4 text-sm">{mentor.profile.bio}</p>
+              )}
+
+              <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted">
+                {mentor.profile.region && (
+                  <span>{mentor.profile.region.replaceAll("_", " ")}</span>
+                )}
+
+                {mentor.profile.openToRemote && <span>Open to remote</span>}
+              </div>
+
+              {mentor.profile.linkedinURL && (
+                <div className="mt-4">
+                  <a
+                    href={mentor.profile.linkedinURL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-accent underline text-sm"
+                  >
+                    View LinkedIn
+                  </a>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
-  function renderEmail() {
-    let content = null;
-    switch (currentStep) {
-      case "chemistry-and-confirm":
-        content = (
-          <>
-            <p className="font-sans font-semibold text-muted text-[11px]">
-              Reach Chidiebere
-            </p>
-            <span className="font-sans text-[14px] underline text-accent mr-2">
-              Email
-            </span>
-            <span className="font-sans text-muted text-[14px] text-accent mr-2">
-              No booking link — email them to arrange the session.
-            </span>
-          </>
-        );
-        break;
-      case "mentorship-booked":
-      case "mentor-confirm":
-      case "mentorship-confirmed-waiting":
-      case "mentorship-active":
-        content = (
-          <>
-            <p className="font-sans font-semibold text-muted text-[11px]">
-              Reach Chidiebere
-            </p>
-            <span className="font-sans text-[14px] underline text-accent mr-2">
-              Email
-            </span>
-          </>
-        );
-    }
-    return content;
-  }
+
   return (
     <div>
       <div className="w-full flex justify-center items-center">
@@ -126,37 +182,29 @@ export function AfterMatchProposed({
             <p className="font-display font-semibold text-[20px] text-right">
               You
             </p>
-            <p className="font-sans text-[12px] text-right">Bola Proposed</p>
           </div>
+
           <div className="w-[20%] flex flex-col justify-center items-center">
             <Thread />
             {matchStatus()}
           </div>
+
           <div className="w-[40%]">
-            <p className="font-display font-semibold text-[20px] text-left">
-              Chidiebere Njoku
-            </p>
-            <p className="font-sans text-[12px] text-left truncate">
-              Data Science, Data Analytics, Career Development, CV, GitHub and
-              LinkedIn Op…
-            </p>
+            <p className="font-sans text-[14px] text-muted">Mentor selected</p>
           </div>
         </div>
       </div>
-      {currentStep !== "match-proposed" ? (
-        <div className="w-full h-[1px] bg-gray-200 my-4" />
-      ) : null}
-      {currentStep !== "match-proposed" ? renderEmail() : null}
+
       <div className="w-full h-[1px] bg-gray-200 my-4" />
+
       <div className="flex flex-row">
         <div className="w-[50%] text-left flex items-center">
           <p className="text-muted text-[13px]">7 days left</p>
-          {currentStep === "mentorship-booked" && (
-            <p className="text-ok text-[13px] ml-3">Chemistry session booked</p>
-          )}
         </div>
+
         <div className="w-[50%] text-right">
           {currentStep !== "mentorship-active" ? renderConfirmButton() : null}
+
           <Button className="ml-2" variant="outline">
             Decline
           </Button>

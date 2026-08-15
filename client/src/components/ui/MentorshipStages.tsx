@@ -3,12 +3,17 @@ import { useState } from "react";
 import { GoalsAndAvailability } from "./MentorshipStages/GoalsAndAvailability";
 import { StageTracker } from "./MentorshipStages/StageTracker";
 import { AfterMatchProposed } from "./MentorshipStages/afterMatchProposed";
+import type { MentorRecommendation } from "@/types/matching";
 
 interface MentorshipStagesProps {
   className?: string;
+  isMatchReady: boolean;
 }
 
-export function MentorshipStages({ className }: MentorshipStagesProps) {
+export function MentorshipStages({
+  className,
+  isMatchReady,
+}: MentorshipStagesProps) {
   const steps = [
     "complete-profile",
     "incomplete-profile",
@@ -18,19 +23,77 @@ export function MentorshipStages({ className }: MentorshipStagesProps) {
     "mentorship-confirmed-waiting",
     "mentorship-active",
   ];
-  const [isProfileComplete] = useState<boolean>(true);
+
+  const [recommendations, setRecommendations] = useState<
+    MentorRecommendation[]
+  >([]);
+
   const [currentStep, setCurrentView] = useState(
-    isProfileComplete ? steps[0] : steps[1],
+    isMatchReady ? steps[0] : steps[1],
   );
+
+  const [currentStepNumber, setCurrentStep] = useState(isMatchReady ? 2 : 1);
+
+  const [circleStyles, setCircleStyles] = useState<Record<number, string>>({
+    1: isMatchReady
+      ? "bg-accent-soft border-accent-soft"
+      : "border-2 border-accent-soft",
+    2: isMatchReady ? "border-2 border-accent-soft" : "border-1 border-muted",
+    3: "border-1 border-muted",
+    4: "border-1 border-muted",
+  });
+
+  const [progressTextStyles, setProgressTextStyles] = useState<
+    Record<number, string>
+  >({
+    1: isMatchReady ? "line-through" : "",
+    2: "",
+    3: "",
+    4: "",
+  });
+
+  const [progressLinesStyles, setProgressLinesStyles] = useState<
+    Record<number, string>
+  >({
+    1: "bg-accent-soft border-accent-soft",
+    2: "border-line",
+    3: "border-line",
+  });
+
+  function handleStepChange(viewToRender: string, changeProgressBar = true) {
+    setCurrentView(viewToRender);
+
+    if (!changeProgressBar) return;
+
+    setCurrentStep(currentStepNumber + 1);
+
+    setCircleStyles((prev) => ({
+      ...prev,
+      [currentStepNumber]: "bg-accent-soft border-accent-soft",
+      [currentStepNumber + 1]: "border-2 border-accent-soft",
+    }));
+
+    setProgressTextStyles((prev) => ({
+      ...prev,
+      [currentStepNumber]: "line-through",
+      [currentStepNumber + 1]: "font-semibold",
+    }));
+
+    setProgressLinesStyles((prev) => ({
+      ...prev,
+      [currentStepNumber]: "bg-accent-soft border-accent-soft",
+    }));
+  }
+
   function renderHeroContent() {
     switch (currentStep) {
       case "complete-profile":
       case "incomplete-profile":
         return (
           <GoalsAndAvailability
-            isProfileComplete={isProfileComplete}
+            isProfileComplete={isMatchReady}
             onStepSubmit={handleStepChange}
-            currentStep={currentStep}
+            onRecommendationsFound={setRecommendations}
           />
         );
       case "match-proposed":
@@ -43,59 +106,12 @@ export function MentorshipStages({ className }: MentorshipStagesProps) {
             onStepSubmit={handleStepChange}
             currentStep={currentStep}
             steps={steps}
+            mentors={recommendations}
           />
         );
       default:
         return "default";
     }
-  }
-  const [currentStepNumber, setCurrentStep] = useState(
-    isProfileComplete ? 2 : 1,
-  );
-  const [circleStyles, setCircleStyles] = useState<Record<number, string>>({
-    1: isProfileComplete
-      ? "bg-accent-soft border-accent-soft"
-      : "border-2 border-accent-soft",
-    2: isProfileComplete
-      ? "border-2 border-accent-soft"
-      : "border - 1 border- muted",
-    3: "border-1 border-muted",
-    4: "border-1 border-muted",
-  });
-  const [progressTextStyles, setProgressTextStyles] = useState<
-    Record<number, string>
-  >({
-    1: isProfileComplete ? "line-through" : "",
-    2: "",
-    3: "",
-    4: "",
-  });
-  const [progressLinesStyles, setProgressLinesStyles] = useState<
-    Record<number, string>
-  >({
-    1: "bg-accent-soft border-accent-soft",
-    2: "border-line",
-    3: "border-line",
-  });
-
-  function handleStepChange(viewToRender: string, changeProgressBar = true) {
-    setCurrentView(viewToRender);
-    if (!changeProgressBar) return;
-    setCurrentStep(currentStepNumber + 1);
-    setCircleStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "bg-accent-soft border-accent-soft",
-      [currentStepNumber + 1]: "border-2 border-accent-soft",
-    }));
-    setProgressTextStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "line-through",
-      [currentStepNumber + 1]: "font-semibold",
-    }));
-    setProgressLinesStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "bg-accent-soft border-accent-soft",
-    }));
   }
 
   return (

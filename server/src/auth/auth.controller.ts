@@ -29,8 +29,7 @@ import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { LoginDto } from './dto/login.dto';
 import { AUTH_COOKIE_NAME, getAuthCookieOptions } from './helpers/auth-cookie';
 import { UseGuards, Req } from '@nestjs/common';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { type RequestWithUser } from './dto/requestWithUser.dto';
+import { JwtAuthGuard, type RequestWithUser } from './guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -179,9 +178,10 @@ export class AuthController {
   @ApiOperation({ summary: 'Get current authenticated user session' })
   @ApiOkResponse({ description: 'Returns the authenticated user details.' })
   @ApiUnauthorizedResponse({ description: 'No valid authentication cookie.' })
-  getMe(@Req() req: RequestWithUser) {
+  async getMe(@Req() req: RequestWithUser) {
+    const user = await this.authService.getCurrentUser(req.user.userId);
     return {
-      user: req.user,
+      user,
     };
   }
 }

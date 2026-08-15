@@ -62,6 +62,18 @@ export interface MentorProfileResponse {
   }>;
 }
 
+export function isMentorProfileResponse(
+  profile: unknown,
+): profile is MentorProfileResponse {
+  return (
+    typeof profile === "object" &&
+    profile !== null &&
+    "capacity" in profile &&
+    "approvalStatus" in profile &&
+    "isProfileComplete" in profile
+  );
+}
+
 export async function upsertMentorProfile(
   data: MentorProfilePayload,
 ): Promise<MentorProfileResponse> {
