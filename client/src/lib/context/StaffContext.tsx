@@ -7,41 +7,45 @@ export interface GlobalMatchingData {
     liveMatches: number;
     menteesWaiting: number;
 }
-
 export interface MentorData {
     fullName: string;
-    status: string;
+    role: string;
     email: string;
     disciplines: string[];
     capacity: string;
-    joined: string;
-    location: string;
+    createdAt: string;
+    region: string;
     bio: string;
     links: string;
     availability: string[];
+    matches: Match[]
 }
+
+export type MentorsData = MentorData[];
 
 export interface MenteeData {
     fullName: string;
-    status: string;
+    role: string;
     email: string;
     goals: string[];
     goalsNotes: string;
-    joined: string;
-    location: string;
+    createdAt: string;
+    region: string;
     bio: string;
     links: string;
     availability: string[];
+    matches: Match[];
 }
 
+export type MenteesData = MenteeData[];
 export type MenteesWaitingData = MenteeData[];
 
 export interface Match {
     fullName: string;
-    proposed: string;
+    createdAt: string;
     status: string;
     proposedBy: string;
-    declined?: string;
+    declinedAt?: string | null;
     declinedBy?: string;
     score?: string;
 }
@@ -50,8 +54,10 @@ export interface StaffContextType {
     globalMatchingData: GlobalMatchingData | null;
     menteesWaitingData: MenteesWaitingData | null;
     mentorData: MentorData | null;
+    mentorsData: MentorsData | [];
     mentorMatches: Match[];
     menteeData: MenteeData | null;
+    menteesData: MenteesData | [];
     menteeMatches: Match[];
     isLoading: boolean;
     refetch: () => Promise<void>;
