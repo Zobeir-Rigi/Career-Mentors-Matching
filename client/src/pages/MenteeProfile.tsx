@@ -1,9 +1,10 @@
 import {
   getMenteeProfile,
   updateMenteeProfile,
-} from "../services/menteeProfileService";
+} from "../services/menteeService";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "../components/Header";
 import { Card } from "../components/ui/Card";
 import { Switch } from "../components/ui/Switch";
@@ -31,8 +32,13 @@ import {
 
 import { useProfile } from "../lib/context/ProfileContext";
 import type { MenteeProfileContextType } from "../lib/context/ProfileContext";
+import { useAuth } from "@/lib/context/useAuth";
+import { getApiErrorMessage } from "@/services/getApiErrorMessages";
 
 export function MenteeProfile() {
+  const navigate = useNavigate();
+  const { refreshProfile } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const {
     role,
     currentJobTitle,
@@ -97,9 +103,23 @@ export function MenteeProfile() {
         }
       })
       .catch((error) => {
-        console.error("❌ API ERROR:", error);
+        console.error("API ERROR:", error);
       });
-  }, []);
+  }, [
+    setCurrentJobTitle,
+    setReasonNote,
+    setBio,
+    setLinkedinURL,
+    setScheduleURL,
+    setRegion,
+    setOpenToRemote,
+    setMeetingCadence,
+    setMeetingStructure,
+    setAvailability,
+    setDisciplines,
+    setSkills,
+    setIndustries,
+  ]);
 
   const profileData = {
     currentJobTitle,
@@ -120,39 +140,36 @@ export function MenteeProfile() {
   const missingFields = checkEmptyFields(role, profileData);
 
   async function submitHandler() {
-    console.log("BUTTON CLICKED");
-    console.log("Missing fields:", missingFields);
-    console.log({
-      availability: Array.from(selectedAvailability),
-      meetingCadence,
-      meetingStructure,
-    });
-    console.log({
-      reasonsNote: reasonNote,
-    });
-
+    setErrorMessage(null);
     try {
-      const response = await updateMenteeProfile({
-        currentJobTitle: currentJobTitle,
+      await updateMenteeProfile({
+        currentJobTitle,
         reasonsNote: reasonNote,
         bio,
-        linkedinURL: linkedinURL,
-        scheduleURL: scheduleURL,
+        linkedinURL,
+        scheduleURL,
         region,
         openToRemote,
         availability: Array.from(selectedAvailability),
         disciplineGoals: Array.from(selectedDisciplines),
         wantedSkills: Array.from(selectedSkills),
         industries: Array.from(selectedIndustries),
-
         meetingCadence,
         meetingStructure,
       });
 
-      console.log("✅ Profile saved", response);
-    } catch (error: any) {
-      console.error("❌ Failed to save profile");
-      console.error(error.response?.data);
+      await refreshProfile();
+
+      navigate("/mentee/dashboard");
+    } catch (error) {
+      console.error("Failed to save profile", error);
+
+      setErrorMessage(
+        getApiErrorMessage(
+          error,
+          "Failed to save profile. Please check your detail and try again.",
+        ),
+      );
     }
   }
 
@@ -168,6 +185,12 @@ export function MenteeProfile() {
         />
         {/* Warning banner */}
         <Notice missingFields={missingFields} />
+
+        {errorMessage && (
+          <div className="p-4 rounded bg-red-50 text-red-600 font-medium">
+            {errorMessage}
+          </div>
+        )}
 
         <section className="space-y-6">
           <SectionHead sectionHead="Where you are" sectionDescription="" />

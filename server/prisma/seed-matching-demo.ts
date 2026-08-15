@@ -1,19 +1,30 @@
 /**
- * Demo seed for the mentor-matching flow.
+ * Deterministic demo seed for the mentor-matching flow.
  *
- * Suggested repo location: prisma/seed-matching-demo.ts
+ * Suggested repo location:
+ *   server/prisma/seeding-matching-demo.ts
  *
- * Creates:
- * - 1 demo admin (owns the active MatchingConfig)
- * - 1 demo mentee with deterministic matching preferences
- * - 5 approved, accepting mentors with intentionally different scores
- * - shared Discipline / Skill / Industry records and join-table relations
- * - 1 active matching configuration using `meetingStructure`
+ * This seed is designed for the real frontend signup/profile flow:
+ *   1. Run this seed.
+ *   2. Sign up a NEW mentee through the UI.
+ *   3. Fill the mentee profile using the exact demo form values printed below.
+ *   4. Save the profile and open the dashboard.
+ *   5. Click "Find me a mentor".
  *
- * The seed is intentionally repeatable. It clears Matches involving the demo
- * mentee/mentors so "Find me a mentor" produces the same ranking on every run.
+ * Important:
+ * - Every discipline, skill/mentorship goal, industry, availability option,
+ *   meeting cadence, meeting structure and region used below comes from the
+ *   frontend's current ProfileOptions.tsx values.
+ * - No demo mentee is pre-created, because that would bypass the signup and
+ *   profile-completion flow the team wants to demonstrate.
+ * - Seeded mentors are approved, accepting mentees and have spare capacity.
+ * - Matches involving these demo mentors are cleared on each run so capacity
+ *   cannot make the demo nondeterministic.
  */
 
+import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../src/generated/prisma/client';
 import {
   ApprovalStatus,
   AvailabilityOption,
@@ -24,23 +35,73 @@ import {
 } from '../src/generated/prisma/enums';
 import { hashPassword } from '../src/auth/helpers/hash-password';
 
-import 'dotenv/config';
-
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../src/generated/prisma/client';
-
 const LOCAL_COMPOSE_DATABASE_URL =
   'postgresql://postgres:postgres@localhost:5435/mentor_matching';
 
 const connectionString = process.env.DATABASE_URL ?? LOCAL_COMPOSE_DATABASE_URL;
 
 const adapter = new PrismaPg({ connectionString });
-
 const prisma = new PrismaClient({ adapter });
 
 const DEMO_PASSWORD = process.env.MATCHING_DEMO_PASSWORD ?? 'MatchingDemo123!';
 
 const MATCHING_CONFIG_ID = '00000000-0000-4000-8000-000000000001';
+
+// ---------------------------------------------------------------------------
+// Exact frontend ProfileOptions.tsx values
+// ---------------------------------------------------------------------------
+
+const DISCIPLINE_OPTIONS = [
+  'Software Engineering',
+  'Data & Analytics',
+  'Data Engineering',
+  'DevOps, Cloud & Platform',
+  'Cybersecurity',
+  'QA & Testing',
+  'Product & Project Management',
+  'Business Analysis',
+  'UX & Design',
+  'Career Development & Interview Prep',
+  'Leadership & Management',
+  'AI & Machine Learning',
+] as const;
+
+// The frontend currently sends mentorshipOptions through `wantedSkills`.
+const SKILL_OPTIONS = [
+  'Career advice',
+  'Interview prep',
+  'Technical growth',
+  'Confidence',
+  'LinkedIn Optimisation',
+  'CV',
+  'Career transition',
+  'Soft skills',
+  'Networking',
+  'Job search',
+] as const;
+
+const INDUSTRY_OPTIONS = [
+  'Agriculture & Natural Resources',
+  'Construction & Real Estate',
+  'Manufacturing & Industrial',
+  'Technology & Telecoms',
+  'Finance & Insurance',
+  'Healthcare & Life Sciences',
+  'Retail & Consumer Goods',
+  'Hospitality & Leisure',
+  'Transportation & Logistics',
+  'Professional & Business Services',
+  'Education & Training',
+  'Public Sector & Non-Profit',
+] as const;
+
+type DisciplineOption = (typeof DISCIPLINE_OPTIONS)[number];
+type SkillOption = (typeof SKILL_OPTIONS)[number];
+type IndustryOption = (typeof INDUSTRY_OPTIONS)[number];
+
+// ---------------------------------------------------------------------------
+// Matching configuration
+// ---------------------------------------------------------------------------
 
 const DEMO_WEIGHTS = [
   { categoryKey: 'disciplines', weight: 25 },
@@ -54,23 +115,35 @@ const DEMO_WEIGHTS = [
 
 const DEMO_THRESHOLD = 60;
 
-const demoMentee = {
-  fullName: 'Demo Mentee',
-  email: 'matching.demo.mentee@example.com',
+// ---------------------------------------------------------------------------
+// Profile values to enter manually through the mentee UI during the demo.
+// These are NOT inserted as a MenteeProfile by this seed.
+// ---------------------------------------------------------------------------
+
+const DEMO_MENTEE_FORM = {
   currentJobTitle: 'Junior Software Engineer',
-  bio: 'Looking for guidance growing as a backend engineer.',
-  reasonsNote: 'I want support with backend engineering and career growth.',
+  reasonsNote:
+    'I want support growing my technical skills and making good career decisions.',
+  bio: 'Early-career developer looking for practical guidance and confidence.',
+  linkedinURL: 'https://www.linkedin.com/in/demo-mentee',
+  scheduleURL: '',
   region: Region.LONDON,
   openToRemote: true,
   availability: [
     AvailabilityOption.WEEKDAY_EVENING,
     AvailabilityOption.WEEKEND_MORNING,
   ],
+  disciplines: [
+    'Software Engineering',
+    'Data Engineering',
+  ] satisfies DisciplineOption[],
+  skills: ['Technical growth', 'Career advice'] satisfies SkillOption[],
+  industries: [
+    'Technology & Telecoms',
+    'Finance & Insurance',
+  ] satisfies IndustryOption[],
   meetingCadence: MeetingCadence.FORTNIGHTLY,
   meetingStructure: MeetingStructure.STRUCTURED,
-  disciplines: ['Software Engineering', 'Data Engineering'],
-  skills: ['TypeScript', 'Node.js'],
-  industries: ['Technology', 'Fintech'],
 };
 
 type MentorSeed = {
@@ -86,18 +159,20 @@ type MentorSeed = {
   availability: AvailabilityOption[];
   meetingCadence: MeetingCadence;
   meetingStructure: MeetingStructure;
-  disciplines: string[];
-  skills: string[];
-  industries: string[];
+  disciplines: DisciplineOption[];
+  skills: SkillOption[];
+  industries: IndustryOption[];
   expectedScore: number;
 };
 
+// These profiles intentionally reproduce a useful ranking against
+// DEMO_MENTEE_FORM while using only values selectable in the frontend.
 const demoMentors: MentorSeed[] = [
   {
     fullName: 'Amina Patel',
     email: 'matching.demo.mentor1@example.com',
     currentJobTitle: 'Principal Software Engineer',
-    bio: 'Backend and platform engineer with experience mentoring early-career developers.',
+    bio: 'Backend and platform engineer who mentors early-career developers on technical growth and career decisions.',
     linkedinURL: 'https://www.linkedin.com/in/demo-amina-patel',
     scheduleURL: 'https://calendly.com/demo-amina-patel/chemistry',
     capacity: 3,
@@ -110,15 +185,15 @@ const demoMentors: MentorSeed[] = [
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
     disciplines: ['Software Engineering', 'Data Engineering'],
-    skills: ['TypeScript', 'Node.js'],
-    industries: ['Technology', 'Fintech'],
+    skills: ['Technical growth', 'Career advice'],
+    industries: ['Technology & Telecoms', 'Finance & Insurance'],
     expectedScore: 100,
   },
   {
     fullName: 'Marcus Chen',
     email: 'matching.demo.mentor2@example.com',
     currentJobTitle: 'Staff Backend Engineer',
-    bio: 'Backend specialist focused on TypeScript services, APIs, and distributed systems.',
+    bio: 'Backend specialist focused on APIs, distributed systems and helping developers deepen their technical skills.',
     linkedinURL: 'https://www.linkedin.com/in/demo-marcus-chen',
     scheduleURL: 'https://calendly.com/demo-marcus-chen/chemistry',
     capacity: 2,
@@ -131,15 +206,15 @@ const demoMentors: MentorSeed[] = [
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
     disciplines: ['Software Engineering', 'Data Engineering'],
-    skills: ['TypeScript'],
-    industries: ['Technology', 'Fintech'],
+    skills: ['Technical growth'],
+    industries: ['Technology & Telecoms', 'Finance & Insurance'],
     expectedScore: 88,
   },
   {
     fullName: 'Lerato Ndlovu',
     email: 'matching.demo.mentor3@example.com',
     currentJobTitle: 'Senior Data Platform Engineer',
-    bio: 'Data-platform engineer working across backend services, pipelines, and developer mentoring.',
+    bio: 'Data platform engineer with experience coaching developers through technical growth and career progression.',
     linkedinURL: 'https://www.linkedin.com/in/demo-lerato-ndlovu',
     scheduleURL: 'https://calendly.com/demo-lerato-ndlovu/chemistry',
     capacity: 2,
@@ -149,15 +224,15 @@ const demoMentors: MentorSeed[] = [
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
     disciplines: ['Software Engineering', 'Data Engineering'],
-    skills: ['Node.js'],
-    industries: ['Technology'],
+    skills: ['Career advice'],
+    industries: ['Technology & Telecoms'],
     expectedScore: 73,
   },
   {
     fullName: 'Sophie Williams',
     email: 'matching.demo.mentor4@example.com',
     currentJobTitle: 'Engineering Manager',
-    bio: 'Engineering manager with a software background and a practical coaching style.',
+    bio: 'Engineering manager with a software background and an open coaching style focused on career and technical development.',
     linkedinURL: 'https://www.linkedin.com/in/demo-sophie-williams',
     scheduleURL: 'https://calendly.com/demo-sophie-williams/chemistry',
     capacity: 4,
@@ -170,15 +245,15 @@ const demoMentors: MentorSeed[] = [
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.OPEN,
     disciplines: ['Software Engineering'],
-    skills: ['TypeScript'],
-    industries: ['Technology', 'Fintech'],
+    skills: ['Technical growth'],
+    industries: ['Technology & Telecoms', 'Finance & Insurance'],
     expectedScore: 70,
   },
   {
     fullName: 'Jamie MacLeod',
     email: 'matching.demo.mentor5@example.com',
-    currentJobTitle: 'Senior Node.js Engineer',
-    bio: 'Node.js engineer with fintech experience and a structured mentoring approach.',
+    currentJobTitle: 'Senior Software Engineer',
+    bio: 'Software engineer with finance-sector experience and a structured mentoring approach.',
     linkedinURL: 'https://www.linkedin.com/in/demo-jamie-macleod',
     scheduleURL: 'https://calendly.com/demo-jamie-macleod/chemistry',
     capacity: 2,
@@ -188,34 +263,43 @@ const demoMentors: MentorSeed[] = [
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
     disciplines: ['Data Engineering'],
-    skills: ['Node.js'],
-    industries: ['Fintech'],
+    skills: ['Career advice'],
+    industries: ['Finance & Insurance'],
     expectedScore: 60,
   },
 ];
 
-async function upsertNamedReferenceData() {
-  const disciplineNames = [
-    ...new Set([
-      ...demoMentee.disciplines,
-      ...demoMentors.flatMap((mentor) => mentor.disciplines),
-    ]),
-  ];
-  const skillNames = [
-    ...new Set([
-      ...demoMentee.skills,
-      ...demoMentors.flatMap((mentor) => mentor.skills),
-    ]),
-  ];
-  const industryNames = [
-    ...new Set([
-      ...demoMentee.industries,
-      ...demoMentors.flatMap((mentor) => mentor.industries),
-    ]),
-  ];
+function assertSeedUsesFrontendOptions() {
+  const disciplines = new Set<string>(DISCIPLINE_OPTIONS);
+  const skills = new Set<string>(SKILL_OPTIONS);
+  const industries = new Set<string>(INDUSTRY_OPTIONS);
 
+  const profiles = [DEMO_MENTEE_FORM, ...demoMentors];
+
+  for (const profile of profiles) {
+    for (const value of profile.disciplines) {
+      if (!disciplines.has(value)) {
+        throw new Error(`Invalid seeded discipline: ${value}`);
+      }
+    }
+
+    for (const value of profile.skills) {
+      if (!skills.has(value)) {
+        throw new Error(`Invalid seeded skill/mentorship option: ${value}`);
+      }
+    }
+
+    for (const value of profile.industries) {
+      if (!industries.has(value)) {
+        throw new Error(`Invalid seeded industry: ${value}`);
+      }
+    }
+  }
+}
+
+async function upsertFrontendReferenceData() {
   const disciplines = await Promise.all(
-    disciplineNames.map((name) =>
+    DISCIPLINE_OPTIONS.map((name) =>
       prisma.discipline.upsert({
         where: { name },
         update: {},
@@ -225,7 +309,7 @@ async function upsertNamedReferenceData() {
   );
 
   const skills = await Promise.all(
-    skillNames.map((name) =>
+    SKILL_OPTIONS.map((name) =>
       prisma.skill.upsert({
         where: { name },
         update: {},
@@ -235,7 +319,7 @@ async function upsertNamedReferenceData() {
   );
 
   const industries = await Promise.all(
-    industryNames.map((name) =>
+    INDUSTRY_OPTIONS.map((name) =>
       prisma.industry.upsert({
         where: { name },
         update: {},
@@ -253,9 +337,11 @@ async function upsertNamedReferenceData() {
 
 function getRequiredId(map: Map<string, string>, name: string): string {
   const id = map.get(name);
+
   if (!id) {
     throw new Error(`Seed reference data missing for: ${name}`);
   }
+
   return id;
 }
 
@@ -263,6 +349,8 @@ async function main() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('Refusing to run matching demo seed in production.');
   }
+
+  assertSeedUsesFrontendOptions();
 
   const passwordHashed = await hashPassword(DEMO_PASSWORD);
 
@@ -286,83 +374,9 @@ async function main() {
     },
   });
 
-  const menteeUser = await prisma.user.upsert({
-    where: { email: demoMentee.email },
-    update: {
-      fullName: demoMentee.fullName,
-      role: Role.MENTEE,
-      passwordHashed,
-      isEmailVerified: true,
-      isActive: true,
-      deactivatedAt: null,
-    },
-    create: {
-      fullName: demoMentee.fullName,
-      email: demoMentee.email,
-      role: Role.MENTEE,
-      passwordHashed,
-      isEmailVerified: true,
-      isActive: true,
-    },
-  });
-
-  const menteeProfile = await prisma.menteeProfile.upsert({
-    where: { userId: menteeUser.id },
-    update: {
-      currentJobTitle: demoMentee.currentJobTitle,
-      bio: demoMentee.bio,
-      reasonsNote: demoMentee.reasonsNote,
-      region: demoMentee.region,
-      openToRemote: demoMentee.openToRemote,
-      availability: demoMentee.availability,
-      meetingCadence: demoMentee.meetingCadence,
-      meetingStructure: demoMentee.meetingStructure,
-    },
-    create: {
-      userId: menteeUser.id,
-      currentJobTitle: demoMentee.currentJobTitle,
-      bio: demoMentee.bio,
-      reasonsNote: demoMentee.reasonsNote,
-      region: demoMentee.region,
-      openToRemote: demoMentee.openToRemote,
-      availability: demoMentee.availability,
-      meetingCadence: demoMentee.meetingCadence,
-      meetingStructure: demoMentee.meetingStructure,
-    },
-  });
-
-  const referenceData = await upsertNamedReferenceData();
-
-  await prisma.menteeGoalDisciplines.deleteMany({
-    where: { menteeId: menteeProfile.id },
-  });
-  await prisma.menteeWantedSkills.deleteMany({
-    where: { menteeId: menteeProfile.id },
-  });
-  await prisma.menteeTargetedIndustries.deleteMany({
-    where: { menteeId: menteeProfile.id },
-  });
-
-  await prisma.menteeGoalDisciplines.createMany({
-    data: demoMentee.disciplines.map((name) => ({
-      menteeId: menteeProfile.id,
-      disciplineId: getRequiredId(referenceData.disciplineIds, name),
-    })),
-  });
-
-  await prisma.menteeWantedSkills.createMany({
-    data: demoMentee.skills.map((name) => ({
-      menteeId: menteeProfile.id,
-      skillId: getRequiredId(referenceData.skillIds, name),
-    })),
-  });
-
-  await prisma.menteeTargetedIndustries.createMany({
-    data: demoMentee.industries.map((name) => ({
-      menteeId: menteeProfile.id,
-      industryId: getRequiredId(referenceData.industryIds, name),
-    })),
-  });
+  // Seed every current frontend reference value, not only the values used by
+  // the demo mentors. This keeps the DB reference tables aligned with the UI.
+  const referenceData = await upsertFrontendReferenceData();
 
   const seededMentorProfileIds: string[] = [];
 
@@ -404,6 +418,7 @@ async function main() {
         meetingStructure: mentor.meetingStructure,
         isAcceptingMentees: true,
         approvalStatus: ApprovalStatus.ACCEPTED,
+        notifiedAdminAt: null,
       },
       create: {
         userId: mentorUser.id,
@@ -454,20 +469,15 @@ async function main() {
     });
   }
 
-  // Reset the demo matching history so every run is deterministic. The current
-  // algorithm excludes mentors that have already appeared in a mentee's match
-  // history, regardless of status.
+  // Clear demo-mentor match history so capacity and old demo sessions do not
+  // affect a newly signed-up mentee's recommendation list.
   await prisma.matches.deleteMany({
     where: {
-      OR: [
-        { menteeId: menteeProfile.id },
-        { mentorId: { in: seededMentorProfileIds } },
-      ],
+      mentorId: { in: seededMentorProfileIds },
     },
   });
 
-  // Keep this demo deterministic even if a developer already has another active
-  // config locally. This file is guarded from running in production above.
+  // Make this local demo deterministic even if another config was active.
   await prisma.matchingConfig.updateMany({
     where: { isActive: true },
     data: { isActive: false },
@@ -491,11 +501,28 @@ async function main() {
   });
 
   console.log('\nMatching demo seed complete.');
-  console.log('Demo mentee login:');
-  console.log(`  email:    ${demoMentee.email}`);
-  console.log(`  password: ${DEMO_PASSWORD}`);
-  console.log('\nExpected recommendation order:');
+  console.log('\nDemo flow:');
+  console.log('  1. Sign up a new MENTEE through the frontend.');
+  console.log(
+    "  2. Log in after completing the app's normal verification flow.",
+  );
+  console.log('  3. Fill the profile with these exact UI values:');
+  console.log(`     Current job title: ${DEMO_MENTEE_FORM.currentJobTitle}`);
+  console.log(`     Reason: ${DEMO_MENTEE_FORM.reasonsNote}`);
+  console.log(`     Bio: ${DEMO_MENTEE_FORM.bio}`);
+  console.log(`     LinkedIn: ${DEMO_MENTEE_FORM.linkedinURL}`);
+  console.log(`     Region: ${DEMO_MENTEE_FORM.region}`);
+  console.log(`     Open to remote: ${DEMO_MENTEE_FORM.openToRemote}`);
+  console.log(`     Availability: ${DEMO_MENTEE_FORM.availability.join(', ')}`);
+  console.log(`     Goals: ${DEMO_MENTEE_FORM.disciplines.join(', ')}`);
+  console.log(`     Mentorship wants: ${DEMO_MENTEE_FORM.skills.join(', ')}`);
+  console.log(`     Industries: ${DEMO_MENTEE_FORM.industries.join(', ')}`);
+  console.log(`     Meeting cadence: ${DEMO_MENTEE_FORM.meetingCadence}`);
+  console.log(`     Meeting structure: ${DEMO_MENTEE_FORM.meetingStructure}`);
+  console.log('  4. Save the profile and go to the mentee dashboard.');
+  console.log('  5. Click "Find me a mentor".');
 
+  console.log('\nExpected recommendation order:');
   demoMentors.forEach((mentor, index) => {
     console.log(
       `  ${index + 1}. ${mentor.fullName.padEnd(18)} ${mentor.expectedScore}%`,
@@ -504,6 +531,9 @@ async function main() {
 
   console.log(
     `\nAll five mentors are at or above the ${DEMO_THRESHOLD}% threshold.`,
+  );
+  console.log(
+    'All seeded relation values are values the current frontend can submit.',
   );
 }
 

@@ -16,13 +16,14 @@ import { MentorEmptyState } from "@/components/mentorDashboard/MentorEmptyState"
 import { MentorProfileSummary } from "@/components/mentorDashboard/MentorProfileSummary";
 import { AcceptingMenteesToggle } from "@/components/ui/AcceptingMenteesToggle";
 import { MentorMenteeCard } from "@/components/mentorDashboard/MentorMenteeCard";
-
+import { isMentorProfileResponse } from "@/services/mentorService";
 // import { MentorStatusBadge } from "@/components/ui/MentorApprovalBadge";
 
 export function MentorDashboard() {
   type PendingAction = "confirm" | "decline" | "end";
 
   const { profile, isLoading } = useAuth();
+  const mentorProfile = isMentorProfileResponse(profile) ? profile : null;
 
   const [dashboard, setDashboard] = useState<MentorDashboardResponse | null>(
     null,
@@ -149,7 +150,7 @@ export function MentorDashboard() {
   }
 
   // Existing mentor profile failed / does not exist.
-  if (!profile) {
+  if (!mentorProfile) {
     return (
       <>
         <Header />
@@ -178,14 +179,14 @@ export function MentorDashboard() {
   }
 
   // PROFILE owns mentor identity/profile data.
-  const fullName = profile.user?.fullName ?? "Mentor";
+  const fullName = mentorProfile.user?.fullName ?? "Mentor";
   const firstName = fullName.trim().split(/\s+/)[0];
 
   const engagements = dashboard.engagements;
 
-  const disciplines = profile.disciplines?.length
-    ? profile.disciplines
-    : (profile.mentorDisciplines
+  const disciplines = mentorProfile.disciplines?.length
+    ? mentorProfile.disciplines
+    : (mentorProfile.mentorDisciplines
         ?.map((item) => item.discipline?.name ?? item.name ?? item.disciplineId)
         .filter((name): name is string => Boolean(name)) ?? []);
 
@@ -246,7 +247,10 @@ export function MentorDashboard() {
           )}
 
           <div className="mt-6">
-            <MentorProfileSummary disciplines={disciplines} bio={profile.bio} />
+            <MentorProfileSummary
+              disciplines={disciplines}
+              bio={mentorProfile.bio}
+            />
           </div>
         </div>
       </main>

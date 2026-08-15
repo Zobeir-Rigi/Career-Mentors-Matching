@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/context/useAuth";
+import { isMentorProfileResponse } from "@/services/mentorService";
 
 export type ApprovalStatus = "PENDING" | "ACCEPTED" | "DECLINED";
 
@@ -10,10 +11,13 @@ interface MentorStatusBadgeProps {
 export function MentorStatusBadge({ className }: MentorStatusBadgeProps) {
   const { profile } = useAuth();
 
-  if (!profile) return null;
+  const mentorProfile = isMentorProfileResponse(profile) ? profile : null;
 
-  const { isProfileComplete, isMatchReady } = profile;
-  const approvalStatus = (profile.approvalStatus?.toUpperCase() ||
+  if (!mentorProfile) return null;
+
+  const { isProfileComplete, isMatchReady } = mentorProfile;
+
+  const approvalStatus = (mentorProfile.approvalStatus?.toUpperCase() ||
     "PENDING") as ApprovalStatus;
 
   if (!isProfileComplete) {

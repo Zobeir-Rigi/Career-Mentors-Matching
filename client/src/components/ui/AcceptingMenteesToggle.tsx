@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Switch } from "./Switch";
 import { useAuth } from "@/lib/context/useAuth";
-import { updateMentorProfile } from "@/services/mentorService";
+import {
+  updateMentorProfile,
+  isMentorProfileResponse,
+} from "@/services/mentorService";
 
 interface AcceptingMenteesToggleProps {
   className?: string;
@@ -12,13 +15,16 @@ export function AcceptingMenteesToggle({
 }: AcceptingMenteesToggleProps) {
   const { profile, refreshProfile } = useAuth();
 
+  const mentorProfile = isMentorProfileResponse(profile) ? profile : null;
+
   const [optimisticChecked, setOptimisticChecked] = useState<boolean | null>(
     null,
   );
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isChecked = optimisticChecked ?? Boolean(profile?.isAcceptingMentees);
+  const isChecked =
+    optimisticChecked ?? Boolean(mentorProfile?.isAcceptingMentees);
 
   const handleToggle = async (nextState: boolean) => {
     setError(null);

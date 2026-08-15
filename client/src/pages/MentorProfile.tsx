@@ -31,6 +31,7 @@ import { checkEmptyFields } from "@/lib/profileValidation";
 import { useAuth } from "@/lib/context/useAuth";
 import {
   upsertMentorProfile,
+  isMentorProfileResponse,
   type MentorProfilePayload,
 } from "@/services/mentorService";
 import { getApiErrorMessage } from "@/services/getApiErrorMessages";
@@ -38,6 +39,7 @@ import { getApiErrorMessage } from "@/services/getApiErrorMessages";
 export function MentorProfile() {
   const navigate = useNavigate();
   const { profile, refreshProfile, isLoading: isAuthLoading } = useAuth();
+  const mentorProfile = isMentorProfileResponse(profile) ? profile : null;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -81,62 +83,64 @@ export function MentorProfile() {
 
   // Pre-fill form state when existing profile loads from AuthContext
   useEffect(() => {
-    if (!profile) return;
+    if (!mentorProfile) return;
 
-    setCurrentJobTitle(profile.currentJobTitle || "");
-    setBio(profile.bio || "");
-    setLinkedinURL(profile.user?.linkedinURL || profile.linkedinURL || "");
-    setScheduleURL(profile.scheduleURL || "");
-    setRegion(profile.region || "");
-    setOpenToRemote(Boolean(profile.openToRemote));
-    setCapacity(profile.capacity || 1);
-    setMeetingCadence(profile.meetingCadence || "");
-    setMeetingStructure(profile.meetingStructure || "");
+    setCurrentJobTitle(mentorProfile.currentJobTitle || "");
+    setBio(mentorProfile.bio || "");
+    setLinkedinURL(
+      mentorProfile.user?.linkedinURL || mentorProfile.linkedinURL || "",
+    );
+    setScheduleURL(mentorProfile.scheduleURL || "");
+    setRegion(mentorProfile.region || "");
+    setOpenToRemote(Boolean(mentorProfile.openToRemote));
+    setCapacity(mentorProfile.capacity || 1);
+    setMeetingCadence(mentorProfile.meetingCadence || "");
+    setMeetingStructure(mentorProfile.meetingStructure || "");
 
-    if (profile.availability) setAvailability(profile.availability);
+    if (mentorProfile.availability) setAvailability(mentorProfile.availability);
 
-    if (profile.mentorDisciplines?.length) {
-      const extractedDisciplines = profile.mentorDisciplines.map(
+    if (mentorProfile.mentorDisciplines?.length) {
+      const extractedDisciplines = mentorProfile.mentorDisciplines.map(
         (item) => item.discipline?.name || item.disciplineId || item.name || "",
       );
       setDisciplines(extractedDisciplines);
-    } else if (profile.disciplines) {
-      setDisciplines(profile.disciplines);
+    } else if (mentorProfile.disciplines) {
+      setDisciplines(mentorProfile.disciplines);
     }
 
-    if (profile.mentorSkills?.length) {
-      const extractedSkills = profile.mentorSkills.map(
+    if (mentorProfile.mentorSkills?.length) {
+      const extractedSkills = mentorProfile.mentorSkills.map(
         (item) => item.skill?.name || item.skillId || item.name || "",
       );
       setSkills(extractedSkills);
-    } else if (profile.skills) {
-      setSkills(profile.skills);
+    } else if (mentorProfile.skills) {
+      setSkills(mentorProfile.skills);
     }
 
-    if (profile.mentorDomainIndustries?.length) {
-      const extractedIndustries = profile.mentorDomainIndustries.map(
+    if (mentorProfile.mentorDomainIndustries?.length) {
+      const extractedIndustries = mentorProfile.mentorDomainIndustries.map(
         (item) => item.industry?.name || item.industryId || item.name || "",
       );
       setIndustries(extractedIndustries);
-    } else if (profile.industries) {
-      setIndustries(profile.industries);
+    } else if (mentorProfile.industries) {
+      setIndustries(mentorProfile.industries);
     }
 
     // Populate backend status flags into Context
-    if (typeof profile.isProfileComplete === "boolean") {
-      setIsProfileComplete(profile.isProfileComplete);
+    if (typeof mentorProfile.isProfileComplete === "boolean") {
+      setIsProfileComplete(mentorProfile.isProfileComplete);
     }
-    if (typeof profile.isMatchReady === "boolean") {
-      setIsMatchReady(profile.isMatchReady);
+    if (typeof mentorProfile.isMatchReady === "boolean") {
+      setIsMatchReady(mentorProfile.isMatchReady);
     }
-    if (profile.approvalStatus) {
-      setApprovalStatus(profile.approvalStatus);
+    if (mentorProfile.approvalStatus) {
+      setApprovalStatus(mentorProfile.approvalStatus);
     }
-    if (typeof profile.isAcceptingMentees === "boolean") {
-      setIsAcceptingMentees(profile.isAcceptingMentees);
+    if (typeof mentorProfile.isAcceptingMentees === "boolean") {
+      setIsAcceptingMentees(mentorProfile.isAcceptingMentees);
     }
   }, [
-    profile,
+    mentorProfile,
     setCurrentJobTitle,
     setBio,
     setLinkedinURL,
