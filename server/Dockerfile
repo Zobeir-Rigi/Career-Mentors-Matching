@@ -3,13 +3,13 @@ FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Copy all files first so Prisma config and schema are available
+# Copy source
 COPY . .
 
-# Install dependencies (runs postinstall -> prisma generate)
-RUN npm ci
+# Install dependencies and generate Prisma client
+RUN npm install
 
-# Build application
+# Build NestJS
 RUN npm run build
 
 # Stage 2: Production
@@ -19,17 +19,20 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Copy package manifests
+# Install production dependencies
 COPY package*.json ./
+RUN npm install --omit=dev --ignore-scripts && npm cache clean --force
 
-# Install production dependencies only and skip postinstall
-RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
-
-# Copy build artifacts and Prisma files
+# Copy build output
 COPY --from=builder /app/dist ./dist
+
+# Copy Prisma files
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
+# Copy generated Prisma client
+COPY --from=builder /app/src/generated ./src/generated
+
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+CMD ["node", "dist/src/main.js"]
