@@ -1,20 +1,32 @@
 @import "tailwindcss";
-@import "@fontsource-variable/fraunces/index.css";
-@import "@fontsource-variable/public-sans/index.css";
+/* @import "@fontsource-variable/fraunces/index.css";
+@import "@fontsource-variable/public-sans/index.css"; */
+@import "@fontsource/lato/400.css";
+@import "@fontsource/lato/700.css";
+@import "@fontsource/lato/900.css";
+@import "@fontsource/roboto-slab/900.css";
 
 /* ---------- 1. Semantic tokens: light (default) ---------- */
 :root {
   color-scheme: light; /* native controls (selects, scrollbars) match */
-  --bg: #faf6f2; /* warm paper */
-  --fg: #231d1b; /* warm ink */
-  --surface: #ffffff;
-  --line: #e9ddd5;
+
+  /* Core digital brand */
+  --bg: #ffffff;
+  --fg: #333333;
+  --surface: #f3f3f3;
+
+  /* Secondary palette #1 */
+  --line: #e3e3e3;
   --muted: #6f6259;
-  --accent: #d80f0f; /* CYF red — AA on paper/white */
-  --accent-hover: #a71000;
-  --accent-soft: #ea4549; /* decoration only — never small text */
+
+  /* Primary CYF brand */
+  --accent: #ee4434; /* CYF red — AA on paper/white */
+  --accent-hover: #b4001b;
+  --accent-soft: #ff786f; /* decoration only — never small text */
   --tint: #fbeae7;
   --on-accent: #ffffff;
+
+  /* Semantic application states */
   --ok: #1f7a4d;
   --ok-tint: #e7f3ec;
   --warn: #875c15;
@@ -91,8 +103,11 @@
   --color-warn-tint: var(--warn-tint);
   --color-error: var(--error);
   --color-error-tint: var(--error-tint);
-  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
-  --font-sans: "Public Sans Variable", "Helvetica Neue", Arial, sans-serif;
+  /* --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Public Sans Variable", "Helvetica Neue", Arial, sans-serif; */
+  --font-display: "Lato", Arial, sans-serif;
+  --font-sans: "Lato", Arial, sans-serif;
+  --font-logo: "Roboto Slab", Rockwell, serif;
 }
 
 /* ---------- 4. Base ---------- */
@@ -100,6 +115,7 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-weight: 700;
   -webkit-font-smoothing: antialiased;
 }
 

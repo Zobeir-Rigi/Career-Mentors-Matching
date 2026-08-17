@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 export function VolunteerAnHour() {
   const navigate = useNavigate();
   return (
-    <section className="w-full bg-surface px-5 py-16 md:py-24">
-      <div className="max-w-[1152px] mx-auto  grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
+    <section className="w-full bg-surface py-16 md:py-24">
+      <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-5 sm:px-8 md:grid-cols-2 lg:gap-16 lg:px-10">
         <div className="flex flex-col items-start">
           <h2 className="overshoot font-display font-semibold text-[30px] text-fg mb-6">
             Volunteer an hour, change a career
@@ -18,7 +18,7 @@ export function VolunteerAnHour() {
             does the scheduling.
           </p>
           <Button
-            className="bg-accent text-on-accent"
+            className="w-full bg-accent text-on-accent sm:w-auto"
             onClick={() => navigate("/signup")}
           >
             Become a mentor
@@ -28,7 +28,7 @@ export function VolunteerAnHour() {
           <div className="w-full h-8 mb-4 relative flex items-center">
             <Thread />
           </div>
-          <blockquote className="font-display font-semibold text-[28px] leading-[1.35] text-fg mb-4">
+          <blockquote className="mb-4 font-display text-[24px] font-semibold leading-[1.35] text-fg sm:text-[28px]">
             "A good match shouldn't depend on luck. It should put the right two
             people on either end of a line."
           </blockquote>
