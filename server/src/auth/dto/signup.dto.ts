@@ -1,12 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsEmail,
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  MinLength,
-  Matches,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsString } from 'class-validator';
+
+import { PasswordDto } from './password.dto';
 
 // Exclude Admin user type for registration.
 export enum PublicSignupRole {
@@ -15,7 +10,7 @@ export enum PublicSignupRole {
 }
 
 // Validate input data.
-export class SignupDto {
+export class SignupDto extends PasswordDto {
   @ApiProperty({
     example: 'Jane Doe',
     description: "The user's full name",
@@ -30,23 +25,6 @@ export class SignupDto {
   })
   @IsEmail()
   email!: string;
-
-  @ApiProperty({
-    example: 'Password123!',
-    minLength: 8,
-    description:
-      'The account password must contain at least 8 characters, an uppercase, a lowercase, a number, and a special character',
-  })
-  @IsString()
-  @MinLength(8)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()[\]{}\-_=+\\|;:'",.<>/?`~]).+$/,
-    {
-      message:
-        'Password must include an uppercase letter, a lowercase letter, a number, and a special character.',
-    },
-  )
-  password!: string;
 
   @ApiProperty({
     enum: PublicSignupRole,

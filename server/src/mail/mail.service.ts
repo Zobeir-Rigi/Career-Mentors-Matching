@@ -6,7 +6,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
-interface SendVerificationEmailParams {
+
+interface SendAuthEmailParams {
   email: string;
   fullName: string;
   token: string;
@@ -36,7 +37,7 @@ export class MailService {
     email,
     fullName,
     token,
-  }: SendVerificationEmailParams): Promise<void> {
+  }: SendAuthEmailParams): Promise<void> {
     const verificationUrl = new URL('/verify-email', this.frontendUrl);
 
     verificationUrl.searchParams.set('token', token);
@@ -85,6 +86,59 @@ export class MailService {
 
       throw new InternalServerErrorException(
         'Unable to send verification email',
+      );
+    }
+  }
+
+  async sendPasswordResetEmail({
+    email,
+    fullName,
+    token,
+  }: SendAuthEmailParams): Promise<void> {
+    const resetUrl = new URL('/reset-password', this.frontendUrl);
+    resetUrl.searchParams.set('token', token);
+
+    const firstName = fullName.trim().split(/\s+/)[0];
+
+    const html = `
+      <h1>Reset your password</h1>
+      <p>Hi ${firstName},</p>
+      <p>Please click the link below to reset your password for the CYF Mentorship platform.</p>
+        <p>
+          <a href="${resetUrl.toString()}">
+            Reset password
+          </a>
+        </p>
+        <p>This reset link expires in 1 hour.</p>
+        <p>If you did not request this, you can ignore this email.</p>
+      `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Password reset email for ${email}: ${resetUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: { ToAddresses: [email] },
+      Message: {
+        Subject: {
+          Data: 'Reset your CYF Mentorship password',
+          Charset: 'UTF-8',
+        },
+        Body: { Html: { Data: html, Charset: 'UTF-8' } },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send password reset email: ', error);
+
+      throw new InternalServerErrorException(
+        'Unable to send password reset email',
       );
     }
   }
