@@ -203,15 +203,12 @@ export function MentorProfile() {
 
       await refreshProfile();
 
-      console.log("Profile saved successfully");
       // Next step: Notice CYF, waiting approval, Navigate to dashboard
-      console.log("Saving profile:", profileData);
       navigate("/mentor/dashboard");
     } catch (error) {
       setErrorMessage(
         getApiErrorMessage(error, "Failed to save profile. Please try again."),
       );
-      console.log(error);
     } finally {
       setIsSubmitting(false);
     }

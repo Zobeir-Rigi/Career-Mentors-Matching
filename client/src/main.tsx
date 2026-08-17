@@ -20,6 +20,8 @@ import { MentorDashboard } from "./pages/MentorDashboard";
 import { ProtectedRoute } from "./lib/context/ProtectedRoute";
 import { Staff } from "./pages/Staff";
 import { ThemeProvider } from "./lib/context/ThemeProvider";
+import { ForgotPassword } from "./pages/ForgotPassword";
+import { ResetPassword } from "./pages/ResetPassword";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -31,6 +33,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<ProtectedRoute allowedRoles={["MENTEE"]} />}>
               <Route
                 path="/mentee/profile"
