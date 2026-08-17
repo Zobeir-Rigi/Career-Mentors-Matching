@@ -15,13 +15,19 @@ import { MeetingCadence } from '../enums/meeting-cadence.enum';
 import { MeetingStructure } from '../enums/meeting-structure.enum';
 import { Region } from '../enums/region.enum';
 
+function emptyStringToUndefined(value: unknown): unknown {
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
+  }
+
+  return value;
+}
+
 export class UpdateMenteeProfileDto {
   @ApiPropertyOptional({
     example: 'Career',
   })
-  @Transform(({ value }) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
-  )
+  @Transform(({ value }) => emptyStringToUndefined(value))
   @IsOptional()
   @IsString()
   currentJobTitle?: string;
@@ -43,6 +49,7 @@ export class UpdateMenteeProfileDto {
   @ApiPropertyOptional({
     example: 'https://linkedin.com/in/johndoe',
   })
+  @Transform(({ value }) => emptyStringToUndefined(value))
   @IsOptional()
   @IsUrl()
   linkedinURL?: string;
@@ -50,9 +57,7 @@ export class UpdateMenteeProfileDto {
   @ApiPropertyOptional({
     example: 'https://calendly.com/johndoe',
   })
-  @Transform(({ value }) =>
-    typeof value === 'string' && value.trim() === '' ? undefined : value,
-  )
+  @Transform(({ value }) => emptyStringToUndefined(value))
   @IsOptional()
   @IsUrl()
   scheduleURL?: string;

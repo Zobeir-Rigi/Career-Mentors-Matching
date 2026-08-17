@@ -1,5 +1,22 @@
+interface UserData {
+    status?: "MENTOR" | "MENTEE" | string;
+    fullName?: string;
+    email?: string;
+    disciplines?: string[];
+    goals?: string[];
+    capacity?: number | string;
+    goalsNotes?: string;
+    joined?: string;
+    location?: string;
+    bio?: string;
+    links?: string;
+    availability?: string[];
+}
 
-export function UserDetailsCard({ userData }: any) {
+interface UserDetailsCardProps {
+    userData?: UserData | null;
+}
+export function UserDetailsCard({ userData }: UserDetailsCardProps) {
     if (!userData) {
         return <div>Loading...</div>;
     }
@@ -30,9 +47,9 @@ export function UserDetailsCard({ userData }: any) {
                             {userData?.status === "MENTOR" ? "DISCIPLINES" : "GOALS"}
                         </p>
                         <p className="font-sans text-[15px] text-fg">
-                            {userData?.status === "MENTOR"
-                                ? userData?.disciplines.join(", ")
-                                : userData?.goals.join(", ")}
+                            {userData.status === "MENTOR"
+                                ? userData.disciplines?.join(", ")
+                                : userData.goals?.join(", ")}
                         </p>
                     </div>
                     <div className="mb-4">

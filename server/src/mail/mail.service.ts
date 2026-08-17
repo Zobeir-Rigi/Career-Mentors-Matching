@@ -1,6 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Resend } from 'resend';
+
+import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 interface SendVerificationEmailParams {
   email: string;
   fullName: string;
@@ -9,17 +14,22 @@ interface SendVerificationEmailParams {
 
 @Injectable()
 export class MailService {
-  private readonly resend: Resend;
+  private readonly logger = new Logger(MailService.name);
+
+  private readonly ses: SESClient;
   private readonly emailFrom: string;
   private readonly frontendUrl: string;
+  private readonly emailProvider: string;
 
   constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.getOrThrow<string>('RESEND_API_KEY');
-    this.emailFrom = this.configService.getOrThrow<string>('EMAIL_FROM');
+    this.emailFrom = this.configService.getOrThrow<string>('EMAIL_FROM') ?? '';
 
     this.frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
 
-    this.resend = new Resend(apiKey);
+    this.emailProvider =
+      this.configService.getOrThrow<string>('EMAIL_PROVIDER');
+
+    this.ses = new SESClient({ region: 'eu-west-1' });
   }
 
   async sendVerificationEmail({
@@ -28,15 +38,14 @@ export class MailService {
     token,
   }: SendVerificationEmailParams): Promise<void> {
     const verificationUrl = new URL('/verify-email', this.frontendUrl);
+
     verificationUrl.searchParams.set('token', token);
 
-    const { error } = await this.resend.emails.send({
-      from: this.emailFrom,
-      to: email,
-      subject: 'Verify your CYF Mentorship email',
-      html: `
+    const firstName = fullName.trim().split(/\s+/)[0];
+
+    const html = `
       <h1>Verify your email</h1>
-      <p>Hi ${fullName},</p>
+      <p>Hi ${firstName},</p>
       <p>Please verify your email address to continue using the CYF Mentorship platform.</p>
         <p>
           <a href="${verificationUrl.toString()}">
@@ -44,10 +53,36 @@ export class MailService {
           </a>
         </p>
         <p>This verification link expires in 24 hours.</p>
-      `,
+      `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Verification email for ${email}: ${verificationUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: { Data: 'Verify your CYF Mentorship email', Charset: 'UTF-8' },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
     });
 
-    if (error) {
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send verification email: ', error);
+
       throw new InternalServerErrorException(
         'Unable to send verification email',
       );

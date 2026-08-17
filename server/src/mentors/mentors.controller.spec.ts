@@ -1,15 +1,21 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { RequestWithUser, JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
 import { MentorsController } from './mentors.controller';
 import { MentorsService } from './mentors.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { MentorEngagementService } from './mentors-engagement.service';
+import { MentorDashboardService } from './mentors-dashboard.service';
+
 import { CreateMentorDto } from './dto/create-mentor.dto';
-import { RequestWithUser } from '../auth/guards/jwt-auth.guard';
+
 import {
   Region,
   AvailabilityOption,
   MeetingCadence,
   MeetingStructure,
   ApprovalStatus,
+  MatchStatus,
 } from '../generated/prisma/enums';
 
 describe('MentorsController', () => {
@@ -87,6 +93,75 @@ describe('MentorsController', () => {
     ],
   };
 
+  type DashboardResponse = Awaited<
+    ReturnType<MentorDashboardService['getDashboard']>
+  >;
+
+  type EngagementResponse = Awaited<
+    ReturnType<MentorEngagementService['decline']>
+  >;
+
+  const mockDashboardResponse: DashboardResponse = {
+    fullName: 'Test User',
+    capacity: {
+      filled: 1,
+      total: 3,
+      isAtCapacity: false,
+    },
+    isAcceptingMentees: true,
+    engagements: [],
+    profileSummary: {
+      disciplines: ['Software Engineering'],
+      bio: '10+ years in Node.js and systems architecture.',
+    },
+  };
+
+  const mockEngagement: EngagementResponse = {
+    id: '123e4567-e89b-12d3-a456-426614174001',
+
+    mentorId: MOCK_PROFILE_ID,
+    menteeId: '123e4567-e89b-12d3-a456-426614174002',
+
+    menteeSnapshot: {},
+    mentorSnapshot: {},
+
+    scores: 0.9,
+
+    menteeAcceptedAt: new Date(),
+    chemistryBookedAt: new Date(),
+    chemistryMentorConfirmedAt: new Date(),
+    chemistryMenteeConfirmedAt: null,
+
+    proposalExpiresAt: null,
+    confirmationDueAt: null,
+
+    scheduledCheckIn: null,
+
+    checkInMenteeAgreed: null,
+    checkInMentorAgreed: null,
+
+    status: MatchStatus.CHEMISTRY_CONFIRMED,
+
+    createdAt: new Date(),
+
+    completedAt: null,
+    declinedAt: null,
+  };
+
+  const mentorDashboardServiceMock: jest.Mocked<
+    Pick<MentorDashboardService, 'getDashboard'>
+  > = {
+    getDashboard: jest.fn(),
+  };
+
+  const mentorEngagementServiceMock: jest.Mocked<
+    Pick<MentorEngagementService, 'decline' | 'confirm' | 'end'>
+  > = {
+    decline: jest.fn(),
+    confirm: jest.fn(),
+    end: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MentorsController],
@@ -109,6 +184,14 @@ describe('MentorsController', () => {
               .mockResolvedValue(mockMentorProfileResponse),
           },
         },
+        {
+          provide: MentorDashboardService,
+          useValue: mentorDashboardServiceMock,
+        },
+        {
+          provide: MentorEngagementService,
+          useValue: mentorEngagementServiceMock,
+        },
       ],
     })
       .overrideGuard(JwtAuthGuard)
@@ -117,6 +200,12 @@ describe('MentorsController', () => {
 
     controller = module.get<MentorsController>(MentorsController);
     service = module.get<MentorsService>(MentorsService);
+
+    jest.clearAllMocks();
+
+    mentorDashboardServiceMock.getDashboard.mockResolvedValue(
+      mockDashboardResponse,
+    );
   });
 
   it('should be defined', () => {
@@ -182,6 +271,93 @@ describe('MentorsController', () => {
       const result = await controller.deleteMyProfile(mockRequest);
       expect(deleteProfileSpy).toHaveBeenCalledWith(MOCK_USER_ID);
       expect(result).toEqual(mockMentorProfileResponse);
+    });
+  });
+
+  describe('getMyDashboard (READ)', () => {
+    it('should return the authenticated mentor dashboard', async () => {
+      const result = await controller.getMyDashboard(mockRequest);
+
+      expect(mentorDashboardServiceMock.getDashboard).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+      );
+
+      expect(result).toEqual(mockDashboardResponse);
+    });
+  });
+
+  describe('declineEngagement (PATCH)', () => {
+    it('should decline the mentor engagement', async () => {
+      const engagementId = mockEngagement.id;
+
+      const response: EngagementResponse = {
+        ...mockEngagement,
+        status: MatchStatus.DECLINED,
+        declinedAt: new Date(),
+      };
+
+      mentorEngagementServiceMock.decline.mockResolvedValueOnce(response);
+
+      const result = await controller.declineEngagement(
+        mockRequest,
+        engagementId,
+      );
+
+      expect(mentorEngagementServiceMock.decline).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+        engagementId,
+      );
+
+      expect(result).toEqual(response);
+    });
+  });
+
+  describe('confirmEngagement (PATCH)', () => {
+    it('should confirm the mentor engagement', async () => {
+      const engagementId = mockEngagement.id;
+
+      const response: EngagementResponse = {
+        ...mockEngagement,
+        chemistryMentorConfirmedAt: new Date(),
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
+      };
+
+      mentorEngagementServiceMock.confirm.mockResolvedValueOnce(response);
+
+      const result = await controller.confirmEngagement(
+        mockRequest,
+        engagementId,
+      );
+
+      expect(mentorEngagementServiceMock.confirm).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+        engagementId,
+      );
+
+      expect(result).toEqual(response);
+    });
+  });
+
+  describe('endEngagement (PATCH)', () => {
+    it('should end the mentor engagement', async () => {
+      const engagementId = mockEngagement.id;
+
+      const response: EngagementResponse = {
+        ...mockEngagement,
+        status: MatchStatus.COMPLETED,
+        completedAt: new Date(),
+      };
+
+      mentorEngagementServiceMock.end.mockResolvedValueOnce(response);
+
+      const result = await controller.endEngagement(mockRequest, engagementId);
+
+      expect(mentorEngagementServiceMock.end).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+        engagementId,
+      );
+
+      expect(result).toEqual(response);
     });
   });
 });

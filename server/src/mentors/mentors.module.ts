@@ -3,10 +3,17 @@ import { JwtModule } from '@nestjs/jwt';
 import { MentorsService } from './mentors.service';
 import { MentorsController } from './mentors.controller';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { MentorDashboardService } from './mentors-dashboard.service';
+import { MentorEngagementService } from './mentors-engagement.service';
 
 @Module({
   imports: [JwtModule.register({})],
   controllers: [MentorsController],
-  providers: [MentorsService, JwtAuthGuard],
+  providers: [
+    MentorsService,
+    MentorDashboardService,
+    MentorEngagementService,
+    JwtAuthGuard,
+  ],
 })
 export class MentorsModule {}

@@ -13,8 +13,12 @@ export function Landing() {
       <HowMatchingWorks />
       <DisciplinesBand
         header={"Mentors across eleven disciplines"}
-        smallerText={"Pick what you From your first CV review to cloud architecture — every mentor sets their own capacity, so nobody gets overbooked and nobody gets lost in a list. to grow in — this is what the matcher scores."}
+        smallerText={
+          "Pick what you From your first CV review to cloud architecture — every mentor sets their own capacity, so nobody gets overbooked and nobody gets lost in a list. to grow in — this is what the matcher scores."
+        }
         isSubmitButtonToRender={false}
+        selectedDisciplines={[]}
+        onSelectedDisciplinesChange={() => {}}
       />
       <VolunteerAnHour />
       <Footer></Footer>
