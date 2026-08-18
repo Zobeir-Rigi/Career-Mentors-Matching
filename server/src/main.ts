@@ -10,11 +10,9 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     const configService = app.get(ConfigService);
 
-    const frontendUrl =
-      configService.getOrThrow<string>('FRONTEND_URL');
+    const frontendUrl = configService.getOrThrow<string>('FRONTEND_URL');
 
-    const port =
-      configService.get<number>('PORT') ?? 3000;
+    const port = configService.get<number>('PORT') ?? 3000;
 
     app.use(cookieParser());
 
