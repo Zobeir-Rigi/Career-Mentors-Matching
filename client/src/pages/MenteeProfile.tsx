@@ -196,7 +196,11 @@ export function MenteeProfile() {
           <SectionHead sectionHead="Where you are" sectionDescription="" />
 
           <Card className="max-w-[738px] space-y-6">
-            <FormField label="Current job title" optional="(optional)">
+            <FormField
+              label="Current job title"
+              htmlFor="current-job-title"
+              optional="(optional)"
+            >
               <Input
                 placeholder="e.g. Care worker …"
                 value={currentJobTitle}
@@ -204,15 +208,19 @@ export function MenteeProfile() {
               />
             </FormField>
 
-            <FormField label="Tell us what you're hoping to achieve through mentorship">
+            <FormField
+              label="Tell us what you're hoping to achieve through mentorship"
+              htmlFor="mentorship-goals"
+            >
               <Textarea
+                id="mentorship-goals"
                 value={reasonNote}
                 onChange={(e) => setReasonNote(e.target.value)}
               />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField label="LinkedIn URL">
+              <FormField label="LinkedIn URL" htmlFor="linkedin-url">
                 <Input
                   placeholder="https://linkedin.com/in/…"
                   value={linkedinURL}
@@ -220,7 +228,11 @@ export function MenteeProfile() {
                 />
               </FormField>
 
-              <FormField label="Scheduler link" optional="(optional)">
+              <FormField
+                label="Scheduler link"
+                htmlFor="schedule-url"
+                optional="(optional)"
+              >
                 <Input
                   placeholder="https://calendly.com/…"
                   value={scheduleURL}
@@ -230,8 +242,9 @@ export function MenteeProfile() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField label="Region">
+              <FormField label="Region" htmlFor="mentee-region">
                 <select
+                  id="mentee-region"
                   className="w-full rounded-md border border-line bg-surface px-4 py-2"
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
@@ -249,10 +262,14 @@ export function MenteeProfile() {
 
               <div className="flex items-center gap-2 md:pt-6">
                 <Switch
+                  id="open-to-remote"
                   checked={openToRemote}
                   onCheckedChange={setOpenToRemote}
                 />
-                <label className="text-sm font-semibold">
+                <label
+                  htmlFor="open-to-remote"
+                  className="text-sm font-semibold"
+                >
                   Open to remote mentoring
                 </label>
               </div>
@@ -323,8 +340,12 @@ export function MenteeProfile() {
                 onChange={setMeetingCadence}
               />
             </div>
-            <FormField label="Anything your mentor should know about you?">
+            <FormField
+              label="Anything your mentor should know about you?"
+              htmlFor="mentee-bio"
+            >
               <Textarea
+                id="mentee-bio"
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}

@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 export function HeroBand() {
   const navigate = useNavigate();
   return (
-    <div className="container px-5 max-w-[1152px] mx-auto grid grid-cols-1 md:grid-cols-[1.1fr_1fr]">
+    <div className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-10 px-5 sm:px-8 md:grid-cols-[1.1fr_1fr] lg:px-10">
       <div className="flex flex-col items-start text-left">
         <p className="font-sans font-semibold text-[12px] uppercase wide-tracking text-accent">
           CODEYOURFUTURE · CAREER MENTORSHIP
         </p>
-        <h1 className="font-display font-semibold text-[36px] md:text-[56px] lg:text-[60px] leading-[1.05] tracking-[-0.02em] max-w-[560px] mb-6">
+        <h1 className="mb-6 max-w-[560px] font-display text-[36px] font-semibold leading-[1.05] tracking-[-0.02em] md:text-[56px] lg:text-[60px]">
           Find the mentor who's been where you're going.
         </h1>
         <p className="font-sans text-[17px] text-muted max-w-[560px] mb-8">
@@ -18,14 +18,19 @@ export function HeroBand() {
           goals, checked for chemistry, and confirmed by both sides. Sixty-plus
           mentors across eleven disciplines.
         </p>
-        <div className="flex gap-4 items-center">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
           <Button
-            className="bg-accent text-on-accent"
+            className="w-full bg-accent text-on-accent sm:w-auto"
             onClick={() => navigate("/signup")}
           >
             Find your mentor
           </Button>
-          <Button variant="outline" onClick={() => navigate("/signup")}>
+
+          <Button
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => navigate("/signup")}
+          >
             Volunteer as a mentor
           </Button>
         </div>
@@ -36,7 +41,7 @@ export function HeroBand() {
             <span className="block text-[10px] font-semibold tracking-wider text-muted uppercase">
               Mentee
             </span>
-            <h3 className="font-display text-lg font-semibold text-fg">Sam</h3>
+            <p className="font-display text-lg font-semibold text-fg">Sam</p>
             <p className="text-xs text-muted">
               Career-switcher, aiming for frontend
             </p>
@@ -46,7 +51,7 @@ export function HeroBand() {
             <span className="block text-[10px] font-semibold tracking-wider text-muted uppercase">
               Mentor
             </span>
-            <h3 className="font-display text-lg font-semibold text-fg">Alex</h3>
+            <p className="font-display text-lg font-semibold text-fg">Alex</p>
             <p className="text-xs text-muted">Senior engineer, ten years in</p>
           </div>
         </div>

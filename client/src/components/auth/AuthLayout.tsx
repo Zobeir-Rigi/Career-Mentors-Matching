@@ -10,6 +10,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <main className="min-h-screen bg-bg text-fg">
       <div className="grid min-h-screen lg:grid-cols-2">
+        {/* Desktop branding */}
         <section className="hidden lg:flex lg:flex-col lg:bg-tint lg:px-14 lg:py-10">
           <Logo />
 
@@ -25,12 +26,21 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </p>
           </div>
         </section>
+
+        {/* Auth form */}
         <section className="relative flex min-h-screen items-center bg-surface px-6 py-12 sm:px-10 lg:px-16">
           <div className="absolute right-6 top-6 sm:right-10 sm:top-8">
             <ThemeToggle />
           </div>
+
           {/* Slot for the specific auth page (login, signup, etc.) */}
-          <div className="mx-auto w-full max-w-md">{children}</div>
+          <div className="mx-auto w-full max-w-md">
+            {/* Mobile logo */}
+            <div className="mb-10 pr-14 lg:hidden">
+              <Logo />
+            </div>
+            {children}
+          </div>
         </section>
       </div>
     </main>

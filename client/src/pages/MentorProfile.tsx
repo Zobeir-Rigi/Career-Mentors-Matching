@@ -236,7 +236,10 @@ export function MentorProfile() {
         <section className="space-y-4">
           <SectionHead sectionHead="About you" sectionDescription="" />
           <Card className="max-w-[738px] space-y-6">
-            <FormField label="Job title / headline">
+            <FormField
+              label="Job title / headline"
+              htmlFor="job-title-headline"
+            >
               <Input
                 placeholder="e.g. Senior Engineer at …"
                 value={currentJobTitle}
@@ -244,12 +247,19 @@ export function MentorProfile() {
               />
             </FormField>
 
-            <FormField label="Bio shown to matches">
-              <Textarea value={bio} onChange={(e) => setBio(e.target.value)} />
+            <FormField
+              label="Bio shown to matches"
+              htmlFor="bio-shown-to-matches"
+            >
+              <Textarea
+                id="bio-shown-to-matches"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField label="LinkedIn URL">
+              <FormField label="LinkedIn URL" htmlFor="linkedin-url">
                 <Input
                   placeholder="https://linkedin.com/in/…"
                   value={linkedinURL}
@@ -257,7 +267,11 @@ export function MentorProfile() {
                 />
               </FormField>
 
-              <FormField label="Scheduler link" optional="(optional)">
+              <FormField
+                label="Scheduler link"
+                htmlFor="schedule-url"
+                optional="(optional)"
+              >
                 <Input
                   placeholder="https://calendly.com/…"
                   value={scheduleURL || ""}
@@ -267,8 +281,9 @@ export function MentorProfile() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
-              <FormField label="Region">
+              <FormField label="Region" htmlFor="mentor-region">
                 <select
+                  id="mentor-region"
                   className="w-full rounded-md border border-line bg-surface px-4 py-2"
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
@@ -288,10 +303,14 @@ export function MentorProfile() {
 
               <div className="flex items-center gap-2 md:pt-6">
                 <Switch
+                  id="open-to-remote"
                   checked={openToRemote}
                   onCheckedChange={setOpenToRemote}
                 />
-                <label className="text-sm font-semibold">
+                <label
+                  htmlFor="open-to-remote"
+                  className="text-sm font-semibold"
+                >
                   Open to remote mentoring
                 </label>
               </div>
@@ -328,14 +347,16 @@ export function MentorProfile() {
             sectionHead="Capacity"
             sectionDescription="How many mentees you can take at once. You will never be proposed beyond it."
           />
-
-          <Input
-            className="max-w-[100px]"
-            type="number"
-            min={1}
-            value={capacity}
-            onChange={(e) => setCapacity(Number(e.target.value))}
-          />
+          <FormField label="Number of mentees" htmlFor="mentor-capacity">
+            <Input
+              id="mentor-capacity"
+              className="max-w-[100px]"
+              type="number"
+              min={1}
+              value={capacity}
+              onChange={(e) => setCapacity(Number(e.target.value))}
+            />
+          </FormField>
         </section>
         <section className="space-y-4">
           <SectionHead

@@ -2,8 +2,8 @@ import { Logo } from "./ui/Logo";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 md:flex-row">
+    <footer className="border-t border-border bg-bg">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-4 px-5 py-6 sm:px-8 md:flex-row lg:px-10">
         <Logo />
         <p className="text-sm text-muted">
           © 2026 CYF Mentoring. All rights reserved.
