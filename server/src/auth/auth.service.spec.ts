@@ -7,12 +7,26 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { PublicSignupRole, SignupDto } from './dto/signup.dto';
 
+jest.mock('./helpers/password-reset-token', () => ({
+  createPasswordResetToken: jest.fn(() => ({
+    token: 'reset-token',
+    tokenHash: 'hashed-reset-token',
+    expiresAt: new Date('2026-08-17T15:00:00.000Z'),
+  })),
+}));
+
+jest.mock('./helpers/hash-password', () => ({
+  hashPassword: jest.fn(() => Promise.resolve('hashed-new-password')),
+  verifyPassword: jest.fn(),
+}));
+
 describe('AuthService', () => {
   let service: AuthService;
 
   const prismaMock = {
     user: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
     },
     $transaction: jest.fn(),
@@ -20,6 +34,7 @@ describe('AuthService', () => {
 
   const mailServiceMock = {
     sendVerificationEmail: jest.fn(),
+    sendPasswordResetEmail: jest.fn(),
   };
 
   const jwtServiceMock = {
@@ -104,7 +119,7 @@ describe('AuthService', () => {
     prismaMock.$transaction.mockResolvedValue(createdUser);
 
     mailServiceMock.sendVerificationEmail.mockRejectedValue(
-      new Error('Resend unavailable'),
+      new Error('Email service unavailable'),
     );
 
     const result = await service.signup(dto);
@@ -117,5 +132,131 @@ describe('AuthService', () => {
     });
 
     expect(mailServiceMock.sendVerificationEmail).toHaveBeenCalled();
+  });
+
+  it('should create and store a password reset token for an existing user', async () => {
+    const user = {
+      id: 'user-id',
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(user);
+    prismaMock.user.update.mockResolvedValue(user);
+
+    mailServiceMock.sendPasswordResetEmail.mockResolvedValue(undefined);
+
+    const result = await service.forgotPassword('jane@example.com');
+
+    expect(prismaMock.user.findUnique).toHaveBeenCalledWith({
+      where: {
+        email: 'jane@example.com',
+      },
+    });
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: {
+        id: 'user-id',
+      },
+      data: {
+        passwordResetTokenHash: 'hashed-reset-token',
+        passwordResetExpiresAt: new Date('2026-08-17T15:00:00.000Z'),
+      },
+    });
+
+    expect(mailServiceMock.sendPasswordResetEmail).toHaveBeenCalledWith({
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+      token: 'reset-token',
+    });
+
+    expect(result).toEqual({
+      message:
+        'If an account exists for that email, a password reset link has been sent.',
+    });
+  });
+
+  it('should return a generic response when the email does not exist', async () => {
+    prismaMock.user.findUnique.mockResolvedValue(null);
+
+    const result = await service.forgotPassword('missing@example.com');
+
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendPasswordResetEmail).not.toHaveBeenCalled();
+
+    expect(result).toEqual({
+      message:
+        'If an account exists for that email, a password reset link has been sent.',
+    });
+  });
+
+  it('should still return a generic response when reset email sending fails', async () => {
+    const user = {
+      id: 'user-id',
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+    };
+
+    prismaMock.user.findUnique.mockResolvedValue(user);
+    prismaMock.user.update.mockResolvedValue(user);
+
+    mailServiceMock.sendPasswordResetEmail.mockRejectedValue(
+      new Error('Email service unavailable'),
+    );
+
+    const result = await service.forgotPassword('jane@example.com');
+
+    expect(result).toEqual({
+      message:
+        'If an account exists for that email, a password reset link has been sent.',
+    });
+  });
+
+  it('should reset the password when the token is valid', async () => {
+    const user = {
+      id: 'user-id',
+      passwordResetTokenHash: 'hashed-reset-token',
+      passwordResetExpiresAt: new Date(Date.now() + 60_000),
+    };
+
+    prismaMock.user.findFirst.mockResolvedValue(user);
+
+    prismaMock.user.update.mockResolvedValue({
+      ...user,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+    });
+
+    const result = await service.resetPassword(
+      'valid-token',
+      'NewPassword123!',
+    );
+
+    expect(prismaMock.user.findFirst).toHaveBeenCalledTimes(1);
+
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: {
+        id: 'user-id',
+      },
+      data: {
+        passwordHashed: 'hashed-new-password',
+        passwordResetTokenHash: null,
+        passwordResetExpiresAt: null,
+      },
+    });
+
+    expect(result).toEqual({
+      message: 'Password reset successfully.',
+    });
+  });
+
+  it('should reject an invalid or expired reset token', async () => {
+    prismaMock.user.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.resetPassword('invalid-token', 'NewPassword123!'),
+    ).rejects.toThrow('Password reset link is invalid or expired.');
+
+    expect(prismaMock.user.update).not.toHaveBeenCalled();
   });
 });

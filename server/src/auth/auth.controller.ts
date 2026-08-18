@@ -21,14 +21,15 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { UseGuards, Req } from '@nestjs/common';
 
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
-import { VerifyEmailDto } from './dto/verify-email.dto';
-import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResendVerificationDto, ForgotPasswordDto } from './dto/email.dto';
 import { AUTH_COOKIE_NAME, getAuthCookieOptions } from './helpers/auth-cookie';
-import { UseGuards, Req } from '@nestjs/common';
 import { JwtAuthGuard, type RequestWithUser } from './guards/jwt-auth.guard';
 
 @ApiTags('Authentication')
@@ -96,6 +97,37 @@ export class AuthController {
   })
   resendVerification(@Body() dto: ResendVerificationDto) {
     return this.authService.resendVerification(dto.email);
+  }
+
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Resend a password reset link',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns a generic response whether or not an eligible account exists.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid email format.',
+  })
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password using a valid reset token',
+  })
+  @ApiOkResponse({
+    description: 'Password reset successfully.',
+  })
+  @ApiBadRequestResponse({
+    description: 'Password reset link is invalid or expired.',
+  })
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 
   @Post('login')

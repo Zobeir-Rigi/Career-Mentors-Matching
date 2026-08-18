@@ -91,6 +91,15 @@ export function LoginForm() {
             required
           />
 
+          <div className="text-left">
+            <Link
+              to="/forgot-password"
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              Forgot password?
+            </Link>
+          </div>
+
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Logging in..." : "Login"}
           </Button>

@@ -1,19 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
 import { IsNormalisedEmail } from '../decorators/normalised-email-decorator';
 
-// Validate login data input
-export class LoginDto {
+export class EmailDto {
   @ApiProperty({
     example: 'test@example.com',
+    description: 'The email address to the user account.',
   })
   @IsNormalisedEmail()
   email!: string;
-
-  @ApiProperty({
-    example: 'Password123!',
-  })
-  @IsString()
-  @IsNotEmpty()
-  password!: string;
 }
+
+export class ResendVerificationDto extends EmailDto {}
+
+export class ForgotPasswordDto extends EmailDto {}

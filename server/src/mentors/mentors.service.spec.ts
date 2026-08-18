@@ -122,6 +122,8 @@ describe('MentorsService', () => {
     isEmailVerified: true,
     emailVerificationTokenHash: null,
     emailVerificationExpiresAt: null,
+    passwordResetTokenHash: null,
+    passwordResetExpiresAt: null,
     isActive: true,
     deactivatedAt: null,
   };
