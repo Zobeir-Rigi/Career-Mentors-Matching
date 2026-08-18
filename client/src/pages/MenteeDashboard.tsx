@@ -8,6 +8,7 @@ import { PastMatches } from "../components/ui/MentorshipStages/PastMatches";
 
 import { useAuth } from "@/lib/context/useAuth";
 import { patchMenteeProfile } from "@/services/menteeService";
+import { goalOptions } from "@/lib/ProfileOptions";
 
 export function MenteeDashboard() {
   const { profile, isLoading, refreshProfile } = useAuth();
@@ -57,35 +58,36 @@ export function MenteeDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-bg text-fg p-8 space-y-12">
+    <div className="min-h-screen bg-bg text-fg">
       <Header />
+      <main className="space-y-12 p-8">
+        <MentorshipStages isMatchReady={isMatchReady} />
 
-      <MentorshipStages isMatchReady={isMatchReady} />
-
-      {!isMatchReady && (
-        <p className="text-sm text-muted">
-          Complete your mentee profile before requesting a mentor match.
-        </p>
-      )}
-
-      <div>
-        <DisciplinesBand
-          header="Your goals"
-          smallerText="Pick what you want to grow in — this is what the matcher scores."
-          isSubmitButtonToRender={true}
-          selectedDisciplines={displayedGoals}
-          onSelectedDisciplinesChange={setSelectedGoals}
-          onSaveGoals={handleSaveGoals}
-          isSavingGoals={isSavingGoals}
-        />
-
-        {goalsError && (
-          <p className="mt-2 text-sm text-red-600">{goalsError}</p>
+        {!isMatchReady && (
+          <p className="text-sm text-muted">
+            Complete your mentee profile before requesting a mentor match.
+          </p>
         )}
-      </div>
 
-      <PastMatches />
+        <div>
+          <DisciplinesBand
+            header="Your goals"
+            smallerText="Pick what you want to grow in — this is what the matcher scores."
+            isSubmitButtonToRender={true}
+            disciplines={goalOptions}
+            selectedDisciplines={displayedGoals}
+            onSelectedDisciplinesChange={setSelectedGoals}
+            onSaveGoals={handleSaveGoals}
+            isSavingGoals={isSavingGoals}
+          />
 
+          {goalsError && (
+            <p className="mt-2 text-sm text-red-600">{goalsError}</p>
+          )}
+        </div>
+
+        <PastMatches />
+      </main>
       <Footer />
     </div>
   );

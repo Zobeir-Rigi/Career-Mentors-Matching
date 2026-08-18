@@ -1,25 +1,11 @@
 import { Chip } from "./ui/Chip";
 import { Button } from "./ui/Button";
 
-const disciplines: string[] = [
-  "Software Engineering",
-  "Data & Analytics",
-  "Data Engineering",
-  "DevOps, Cloud & Platform",
-  "Cybersecurity",
-  "QA & Testing",
-  "Product & Project Management",
-  "Business Analysis",
-  "UX & Design",
-  "Career Development & Interview Prep",
-  "Leadership & Management",
-];
-
 interface DisciplinesBandProps {
   header?: React.ReactNode;
   smallerText?: React.ReactNode;
   isSubmitButtonToRender?: boolean;
-
+  disciplines: string[];
   selectedDisciplines: string[];
   onSelectedDisciplinesChange: (disciplines: string[]) => void;
 
@@ -31,6 +17,7 @@ export const DisciplinesBand = ({
   header,
   smallerText,
   isSubmitButtonToRender,
+  disciplines,
   selectedDisciplines,
   onSelectedDisciplinesChange,
   onSaveGoals,
@@ -46,9 +33,9 @@ export const DisciplinesBand = ({
   return (
     <section
       aria-labelledby="disciplines-heading"
-      className="w-full bg-bg px-5 py-16 sm:px-8 lg:px-10"
+      className="w-full bg-bg py-16"
     >
-      <div className="container max-w-[1152px] mx-auto">
+      <div className="mx-auto w-full max-w-6xl px-5 sm:px-8 lg:px-10">
         <h2
           id="disciplines-heading"
           className="overshoot font-display font-semibold text-[30px] text-fg"

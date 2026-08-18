@@ -1,11 +1,13 @@
 import { cn } from "../../lib/utils";
 
 interface SwitchProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  id?: string;
   checked: boolean;
   onCheckedChange?: (checked: boolean) => void;
 }
 
 export function Switch({
+  id,
   checked,
   onCheckedChange,
   className,
@@ -13,6 +15,7 @@ export function Switch({
 }: SwitchProps) {
   return (
     <button
+      id={id}
       type="button"
       role="switch"
       aria-checked={checked}

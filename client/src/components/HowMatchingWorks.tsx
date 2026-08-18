@@ -1,11 +1,11 @@
 export function HowMatchingWorks() {
   return (
-    <section className="w-full bg-surface px-5 py-16 md:py-24 border-b border-line">
-      <div className="container max-w-[1152px] mx-auto">
+    <section className="w-full bg-surface py-16 md:py-24">
+      <div className="mx-auto w-full max-w-6xl px-5 sm:px-8 lg:px-10">
         <h2 className="overshoot font-display font-semibold text-[30px] text-fg mb-12">
           How matching works
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col items-start">
             <span className="font-display text-[46px] leading-none text-accent-soft font-normal mb-3">
               1
