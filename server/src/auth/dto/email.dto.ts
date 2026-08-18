@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail } from 'class-validator';
+import { IsNormalisedEmail } from '../decorators/normalised-email-decorator';
 
 export class EmailDto {
   @ApiProperty({
     example: 'test@example.com',
     description: 'The email address to the user account.',
   })
-  @IsEmail()
+  @IsNormalisedEmail()
   email!: string;
 }
 
