@@ -128,7 +128,7 @@ export class MenteeDashboardService {
     };
   }): MenteeDashboardCurrentMatchDto {
     const subStatus = this.deriveMatchSubStatus(match);
-    const canRevealEmail = subStatus !== 'proposed';
+    const canRevealContactDetails = subStatus !== 'proposed';
 
     const expiresAt = this.getEngagementDeadline(subStatus, match);
 
@@ -143,13 +143,15 @@ export class MenteeDashboardService {
         currentJobTitle: match.mentorProfile.currentJobTitle,
         bio: match.mentorProfile.bio,
         linkedinURL: match.mentorProfile.user.linkedinURL,
-        calendarLink: match.mentorProfile.user.scheduleURL,
+        calendarLink: canRevealContactDetails
+          ? match.mentorProfile.user.scheduleURL
+          : null,
 
         focusAreas: match.mentorProfile.mentorDisciplines.map(
           (item) => item.discipline.name,
         ),
 
-        email: canRevealEmail ? match.mentorProfile.user.email : null,
+        email: canRevealContactDetails ? match.mentorProfile.user.email : null,
       },
 
       countdown: {

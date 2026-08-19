@@ -5,18 +5,106 @@ import {
 } from '@nestjs/common';
 
 import { MatchStatus, WaitingStatus } from '@/generated/prisma/enums';
+import type { Prisma } from '@/generated/prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { MatchingAlgoService } from './matching-algo.service';
 
 import { CAPACITY_RELEVANT_STATUSES } from '@/common/constants/capacity-relevant-statuses';
 
+const PROPOSAL_EXPIRY_DAYS = 7;
+const MILLISECONDS_PER_DAY = 1000 * 60 * 60 * 24;
+
+type MenteeWithRelations = Prisma.MenteeProfileGetPayload<{
+  include: {
+    goalDisciplines: {
+      include: {
+        discipline: true;
+      };
+    };
+    wantedSkills: {
+      include: {
+        skill: true;
+      };
+    };
+    targetedIndustries: {
+      include: {
+        industry: true;
+      };
+    };
+  };
+}>;
+
+type MentorWithRelations = Prisma.MentorProfileGetPayload<{
+  include: {
+    user: {
+      select: {
+        fullName: true;
+      };
+    };
+    mentorDisciplines: {
+      include: {
+        discipline: true;
+      };
+    };
+    mentorSkills: {
+      include: {
+        skill: true;
+      };
+    };
+    mentorDomainIndustries: {
+      include: {
+        industry: true;
+      };
+    };
+  };
+}>;
 @Injectable()
 export class MatchingRequestService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly matchingAlgoService: MatchingAlgoService,
   ) {}
+
+  private buildMenteeSnapshot(mentee: MenteeWithRelations) {
+    return {
+      region: mentee.region,
+      openToRemote: mentee.openToRemote,
+      availability: mentee.availability,
+      meetingCadence: mentee.meetingCadence,
+      meetingStructure: mentee.meetingStructure,
+
+      disciplines: mentee.goalDisciplines.map((item) => item.discipline.name),
+
+      skills: mentee.wantedSkills.map((item) => item.skill.name),
+
+      industries: mentee.targetedIndustries.map((item) => item.industry.name),
+    };
+  }
+
+  private buildMentorSnapshot(mentor: MentorWithRelations) {
+    return {
+      fullName: mentor.user.fullName,
+      currentJobTitle: mentor.currentJobTitle,
+      region: mentor.region,
+      openToRemote: mentor.openToRemote,
+      availability: mentor.availability,
+      meetingCadence: mentor.meetingCadence,
+      meetingStructure: mentor.meetingStructure,
+
+      disciplines: mentor.mentorDisciplines.map((item) => item.discipline.name),
+
+      skills: mentor.mentorSkills.map((item) => item.skill.name),
+
+      industries: mentor.mentorDomainIndustries.map(
+        (item) => item.industry.name,
+      ),
+    };
+  }
+
+  private getProposalExpiry(): Date {
+    return new Date(Date.now() + PROPOSAL_EXPIRY_DAYS * MILLISECONDS_PER_DAY);
+  }
 
   async requestMatch(userId: string) {
     const mentee = await this.prisma.menteeProfile.findUnique({
@@ -141,39 +229,11 @@ export class MatchingRequestService {
       throw new NotFoundException('Matched mentor profile not found');
     }
 
-    const menteeSnapshot = {
-      region: mentee.region,
-      openToRemote: mentee.openToRemote,
-      availability: mentee.availability,
-      meetingCadence: mentee.meetingCadence,
-      meetingStructure: mentee.meetingStructure,
+    const menteeSnapshot = this.buildMenteeSnapshot(mentee);
 
-      disciplines: mentee.goalDisciplines.map((item) => item.discipline.name),
+    const mentorSnapshot = this.buildMentorSnapshot(mentor);
 
-      skills: mentee.wantedSkills.map((item) => item.skill.name),
-
-      industries: mentee.targetedIndustries.map((item) => item.industry.name),
-    };
-
-    const mentorSnapshot = {
-      fullName: mentor.user.fullName,
-      currentJobTitle: mentor.currentJobTitle,
-      region: mentor.region,
-      openToRemote: mentor.openToRemote,
-      availability: mentor.availability,
-      meetingCadence: mentor.meetingCadence,
-      meetingStructure: mentor.meetingStructure,
-
-      disciplines: mentor.mentorDisciplines.map((item) => item.discipline.name),
-
-      skills: mentor.mentorSkills.map((item) => item.skill.name),
-
-      industries: mentor.mentorDomainIndustries.map(
-        (item) => item.industry.name,
-      ),
-    };
-
-    const proposalExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const proposalExpiresAt = this.getProposalExpiry();
 
     /*
      * Create proposal and update waiting-list state together.
@@ -314,37 +374,11 @@ export class MatchingRequestService {
 
     const now = new Date();
 
-    const proposalExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const proposalExpiresAt = this.getProposalExpiry();
 
-    const menteeSnapshot = {
-      region: menteeWithRelations.region,
-      openToRemote: menteeWithRelations.openToRemote,
-      availability: menteeWithRelations.availability,
-      meetingCadence: menteeWithRelations.meetingCadence,
-      meetingStructure: menteeWithRelations.meetingStructure,
-      disciplines: menteeWithRelations.goalDisciplines.map(
-        (item) => item.discipline.name,
-      ),
-      skills: menteeWithRelations.wantedSkills.map((item) => item.skill.name),
-      industries: menteeWithRelations.targetedIndustries.map(
-        (item) => item.industry.name,
-      ),
-    };
+    const menteeSnapshot = this.buildMenteeSnapshot(menteeWithRelations);
 
-    const mentorSnapshot = {
-      fullName: mentor.user.fullName,
-      currentJobTitle: mentor.currentJobTitle,
-      region: mentor.region,
-      openToRemote: mentor.openToRemote,
-      availability: mentor.availability,
-      meetingCadence: mentor.meetingCadence,
-      meetingStructure: mentor.meetingStructure,
-      disciplines: mentor.mentorDisciplines.map((item) => item.discipline.name),
-      skills: mentor.mentorSkills.map((item) => item.skill.name),
-      industries: mentor.mentorDomainIndustries.map(
-        (item) => item.industry.name,
-      ),
-    };
+    const mentorSnapshot = this.buildMentorSnapshot(mentor);
 
     return this.prisma.$transaction(async (tx) => {
       await tx.matches.update({
