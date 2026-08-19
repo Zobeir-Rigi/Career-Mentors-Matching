@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
 import { MatchingModule } from './matching/matching.module';
+import { StaffModule } from './staff/staff.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { MatchingModule } from './matching/matching.module';
       },
     ]),
     MatchingModule,
+    StaffModule,
   ],
   providers: [
     {

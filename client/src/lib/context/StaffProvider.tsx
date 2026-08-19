@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, } from "react";
 import {
     StaffContext,
     type GlobalMatchingData,
@@ -6,7 +6,8 @@ import {
     type MentorData,
     type MenteeData,
     type Match,
-} from "./StaffContext";
+} from "@/lib/context/StaffContext";
+import { getMentees, getMentors } from "@/services/staffService";
 
 // Mock data
 const MOCK_GLOBAL_MATCHING_DATA: GlobalMatchingData = {
@@ -20,96 +21,152 @@ const MOCK_GLOBAL_MATCHING_DATA: GlobalMatchingData = {
 const MOCK_MENTEES_WAITING: MenteesWaitingData = [
     {
         fullName: "Ada Incomplete",
-        status: "MENTEE",
+        role: "MENTEE",
         email: "stage.history@example.dev",
         goals: ["Software Engineering", "Career Development", "Interview Prep"],
         goalsNotes: "Career-switcher aiming for a first tech role.",
-        joined: "22 Jul 2026",
-        location: "no region · open to remote",
+        createdAt: "22 Jul 2026",
+        region: "no region · open to remote",
         bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
         links: "None on file",
         availability: ["weekday evening", "weekend morning"],
+        matches: [
+            {
+                fullName: "Issy Geraghty 1",
+                createdAt: "22 Jul 2026 — ",
+                status: "REJECTED",
+                proposedBy: "Gbenga History",
+                declinedAt: "22 Jul 2026",
+                declinedBy: "Gbenga History",
+                score: "5",
+            },
+        ],
     },
     {
         fullName: "Chem Test",
-        status: "MENTEE",
+        role: "MENTEE",
         email: "stage.history@example.dev",
         goals: ["Software Engineering", "Career Development", "Interview Prep"],
         goalsNotes: "Career-switcher aiming for a first tech role.",
-        joined: "22 Jul 2026",
-        location: "no region · open to remote",
+        createdAt: "22 Jul 2026",
+        region: "no region · open to remote",
         bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
         links: "None on file",
         availability: ["weekday evening", "weekend morning"],
+        matches: [
+            {
+                fullName: "Issy Geraghty 2",
+                createdAt: "22 Jul 2026 — ",
+                status: "REJECTED",
+                proposedBy: "Gbenga History",
+                declinedAt: "22 Jul 2026",
+                declinedBy: "Gbenga History",
+                score: "5",
+            },
+        ],
     },
     {
         fullName: "Gate Test",
-        status: "MENTEE",
+        role: "MENTEE",
         email: "stage.history@example.dev",
         goals: ["Software Engineering", "Career Development", "Interview Prep"],
         goalsNotes: "Career-switcher aiming for a first tech role.",
-        joined: "22 Jul 2026",
-        location: "no region · open to remote",
+        createdAt: "22 Jul 2026",
+        region: "no region · open to remote",
         bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
         links: "None on file",
         availability: ["weekday evening", "weekend morning"],
+        matches: [
+            {
+                fullName: "Issy Geraghty 1",
+                createdAt: "22 Jul 2026 — ",
+                status: "REJECTED",
+                proposedBy: "Gbenga History",
+                declinedAt: "22 Jul 2026",
+                declinedBy: "Gbenga History",
+                score: "5",
+            },
+        ],
     },
     {
         fullName: "Gbenga History",
-        status: "MENTEE",
+        role: "MENTEE",
         email: "stage.history@example.dev",
         goals: ["Software Engineering", "Career Development", "Interview Prep"],
         goalsNotes: "Career-switcher aiming for a first tech role.",
-        joined: "22 Jul 2026",
-        location: "no region · open to remote",
+        createdAt: "22 Jul 2026",
+        region: "no region · open to remote",
         bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
         links: "None on file",
         availability: ["weekday evening", "weekend morning"],
+        matches: [
+            {
+                fullName: "Issy Geraghty 1",
+                createdAt: "22 Jul 2026 — ",
+                status: "REJECTED",
+                proposedBy: "Gbenga History",
+                declinedAt: "22 Jul 2026",
+                declinedBy: "Gbenga History",
+                score: "5",
+            },
+        ],
     },
 ];
-
-const MOCK_MENTOR_DATA: MentorData = {
-    fullName: "Ruta Radiya",
-    status: "MENTOR",
-    email: "ruta.radiya@mentor.example.dev",
-    disciplines: ["Software Engineering", "Career Development", "Interview Prep"],
-    capacity: "1/1",
-    joined: "21 Jul 2026",
-    location: "no region · open to remote",
-    bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
-    links: "None on file",
-    availability: [],
-};
 
 const MOCK_MENTOR_MATCHES: Match[] = [
     {
         fullName: "Demo Mentee",
-        proposed: "Proposed 21 Jul 2026",
+        createdAt: "Proposed 21 Jul 2026",
         status: "ACTIVE",
         proposedBy: "AUTO_MATCH",
     },
 ];
 
+const MOCK_MENTOR_DATA: MentorData = {
+    fullName: "Ruta Radiya",
+    role: "MENTOR",
+    email: "ruta.radiya@mentor.example.dev",
+    disciplines: ["Software Engineering", "Career Development", "Interview Prep"],
+    capacity: "1/1",
+    createdAt: "21 Jul 2026",
+    region: "no region · open to remote",
+    bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
+    links: "None on file",
+    availability: [],
+    matches: MOCK_MENTOR_MATCHES
+};
+
 const MOCK_MENTEE_DATA: MenteeData = {
     fullName: "Gbenga History",
-    status: "MENTEE",
+    role: "MENTEE",
     email: "stage.history@example.dev",
     goals: ["Software Engineering", "Career Development", "Interview Prep"],
     goalsNotes: "Career-switcher aiming for a first tech role.",
-    joined: "22 Jul 2026",
-    location: "no region · open to remote",
+    createdAt: "22 Jul 2026",
+    region: "no region · open to remote",
     bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
     links: "None on file",
     availability: ["weekday evening", "weekend morning"],
+    matches: [
+        {
+            fullName: "Issy Geraghty",
+            createdAt: "22 Jul 2026 — ",
+            status: "REJECTED",
+            proposedBy: "Gbenga History",
+            declinedAt: "22 Jul 2026",
+            declinedBy: "Gbenga History",
+            score: "5",
+        },
+    ]
 };
 
 const MOCK_MENTEE_MATCHES: Match[] = [
     {
         fullName: "Issy Geraghty",
-        proposed: "22 Jul 2026 — ",
+        createdAt: "22 Jul 2026 — ",
         status: "REJECTED",
         proposedBy: "Gbenga History",
-        declined: "22 Jul 2026",
+        declinedAt: "22 Jul 2026",
         declinedBy: "Gbenga History",
         score: "5",
     },
@@ -123,15 +180,50 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [menteeData] = useState<MenteeData | null>(MOCK_MENTEE_DATA);
     const [menteeMatches] = useState<Match[]>(MOCK_MENTEE_MATCHES);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    //const [menteesData] = useState<MenteesData | []>(MOCK_MENTEES_DATA);
 
+    const [mentorsData, setMentorsData] = useState<MentorData[]>([]);
+    const [menteesData, setMenteesData] = useState<MenteeData[]>([]);
     const refetch = async () => {
         setIsLoading(true);
         try {
-            // Future API Call replacing mock data
+            const response = await getMentors();
+            if (response?.data) {
+                setMentorsData(response.data?.mentors);
+            } else if (Array.isArray(response)) {
+                setMentorsData(response);
+            }
+        } catch (error: unknown) {
+            console.error("Failed to fetch mentors:", error);
+        } finally {
+            setIsLoading(false);
+        }
+        try {
+            const response = await getMentees();
+            if (response?.data) {
+                setMenteesData(response.data?.mentees);
+            } else if (Array.isArray(response)) {
+                setMenteesData(response);
+            }
+        } catch (error: unknown) {
+            console.error("Failed to fetch mentees:", error);
         } finally {
             setIsLoading(false);
         }
     };
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchData = async () => {
+            if (isMounted) {
+                await refetch();
+            }
+        };
+        fetchData();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <StaffContext.Provider
@@ -141,8 +233,10 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 mentorData,
                 mentorMatches,
                 menteeData,
+                menteesData,
                 menteeMatches,
                 isLoading,
+                mentorsData,
                 refetch,
             }}
         >
