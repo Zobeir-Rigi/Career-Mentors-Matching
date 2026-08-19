@@ -17,7 +17,7 @@ import {
   MeetingCadence,
   MeetingStructure,
 } from '../../generated/prisma/enums';
-import { Transform } from 'class-transformer';
+import { NormaliseUrl } from '@/common/decorators/normalised-url.decorator';
 
 export class CreateMentorDto {
   @ApiProperty({ example: 'Senior Software Engineer' })
@@ -62,18 +62,15 @@ export class CreateMentorDto {
   bio!: string;
 
   @ApiProperty({ example: 'https://linkedin.com/in/alexmorgan' })
+  @NormaliseUrl()
   @IsUrl()
   @IsNotEmpty()
   linkedinURL!: string;
 
   @ApiPropertyOptional({ example: 'https://calendly.com/alexmorgan' })
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    typeof value === 'string' && value.trim() === ''
-      ? undefined
-      : (value as string),
-  )
-  @IsUrl({ require_protocol: false })
+  @NormaliseUrl()
+  @IsUrl()
   scheduleURL?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['Software Engineering'] })

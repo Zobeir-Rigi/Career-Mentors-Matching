@@ -1,134 +1,91 @@
-import { cn } from "../../lib/utils";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { GoalsAndAvailability } from "./MentorshipStages/GoalsAndAvailability";
 import { StageTracker } from "./MentorshipStages/StageTracker";
 import { AfterMatchProposed } from "./MentorshipStages/afterMatchProposed";
-import type { MentorRecommendation } from "@/types/matching";
+
+import type {
+  MenteeDashboardCurrentMatch,
+  MenteeJourneyStage,
+} from "@/services/menteeDashboardService";
+
+type PendingAction = "accept" | "book" | "confirm" | "decline" | "end";
 
 interface MentorshipStagesProps {
   className?: string;
-  isMatchReady: boolean;
+  menteeName: string;
+  journeyStage: MenteeJourneyStage;
+  matchReady: boolean;
+  currentMatch: MenteeDashboardCurrentMatch | null;
+
+  onMatchRequested: () => void | Promise<void>;
+  onAccept: (matchId: string) => void | Promise<void>;
+  onBook: (matchId: string) => void | Promise<void>;
+  onConfirm: (matchId: string) => void | Promise<void>;
+  onDecline: (matchId: string) => void | Promise<void>;
+  onEnd: (matchId: string) => void | Promise<void>;
+
+  pendingAction: PendingAction | null;
 }
 
 export function MentorshipStages({
   className,
-  isMatchReady,
+  menteeName,
+  journeyStage,
+  matchReady,
+  currentMatch,
+  onMatchRequested,
+  onAccept,
+  onBook,
+  onConfirm,
+  onDecline,
+  onEnd,
+  pendingAction,
 }: MentorshipStagesProps) {
-  const steps = [
-    "complete-profile",
-    "incomplete-profile",
-    "match-proposed",
-    "chemistry-and-confirm",
-    "mentorship-booked",
-    "mentorship-confirmed-waiting",
-    "mentorship-active",
-  ];
-
-  const [recommendations, setRecommendations] = useState<
-    MentorRecommendation[]
-  >([]);
-
-  const [currentStep, setCurrentView] = useState(
-    isMatchReady ? steps[0] : steps[1],
-  );
-
-  const [currentStepNumber, setCurrentStep] = useState(isMatchReady ? 2 : 1);
-
-  const [circleStyles, setCircleStyles] = useState<Record<number, string>>({
-    1: isMatchReady
-      ? "bg-accent-soft border-accent-soft"
-      : "border-2 border-accent-soft",
-    2: isMatchReady ? "border-2 border-accent-soft" : "border-1 border-muted",
-    3: "border-1 border-muted",
-    4: "border-1 border-muted",
-  });
-
-  const [progressTextStyles, setProgressTextStyles] = useState<
-    Record<number, string>
-  >({
-    1: isMatchReady ? "line-through" : "",
-    2: "",
-    3: "",
-    4: "",
-  });
-
-  const [progressLinesStyles, setProgressLinesStyles] = useState<
-    Record<number, string>
-  >({
-    1: "bg-accent-soft border-accent-soft",
-    2: "border-line",
-    3: "border-line",
-  });
-
-  function handleStepChange(viewToRender: string, changeProgressBar = true) {
-    setCurrentView(viewToRender);
-
-    if (!changeProgressBar) return;
-
-    setCurrentStep(currentStepNumber + 1);
-
-    setCircleStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "bg-accent-soft border-accent-soft",
-      [currentStepNumber + 1]: "border-2 border-accent-soft",
-    }));
-
-    setProgressTextStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "line-through",
-      [currentStepNumber + 1]: "font-semibold",
-    }));
-
-    setProgressLinesStyles((prev) => ({
-      ...prev,
-      [currentStepNumber]: "bg-accent-soft border-accent-soft",
-    }));
-  }
-
   function renderHeroContent() {
-    switch (currentStep) {
-      case "complete-profile":
-      case "incomplete-profile":
+    switch (journeyStage) {
+      case "incomplete":
+      case "ready":
         return (
           <GoalsAndAvailability
-            isProfileComplete={isMatchReady}
-            onStepSubmit={handleStepChange}
-            onRecommendationsFound={setRecommendations}
+            isProfileComplete={matchReady}
+            onMatchRequested={onMatchRequested}
           />
         );
+
       case "match-proposed":
-      case "chemistry-and-confirm":
-      case "mentorship-booked":
-      case "mentorship-confirmed-waiting":
+      case "chemistry-confirm":
       case "mentorship-active":
+        if (!currentMatch) {
+          return null;
+        }
+
         return (
           <AfterMatchProposed
-            onStepSubmit={handleStepChange}
-            currentStep={currentStep}
-            steps={steps}
-            mentors={recommendations}
+            currentMatch={currentMatch}
+            menteeName={menteeName}
+            journeyStage={journeyStage}
+            onAccept={onAccept}
+            onBook={onBook}
+            onConfirm={onConfirm}
+            onDecline={onDecline}
+            onEnd={onEnd}
+            pendingAction={pendingAction}
           />
         );
-      default:
-        return "default";
     }
   }
 
   return (
-    <div className={cn("container max-w-[1152px] mx-auto", className)}>
-      <div className="container max-w-[1152px] mx-auto">
-        <h1 className="overshoot font-display font-semibold text-[36px] mb-6">
-          Your mentorship
-        </h1>
-        <StageTracker
-          circleStyles={circleStyles}
-          progressTextStyles={progressTextStyles}
-          progressLinesStyles={progressLinesStyles}
-        />
-        <div className="container max-w-[1152px] mx-auto bg-surface rounded-[10px] border border-line p-1 p-8">
-          {renderHeroContent()}
-        </div>
+    <section className={cn("mx-auto w-full max-w-6xl", className)}>
+      <h1 className="overshoot mb-8 font-display text-[36px] font-black leading-tight text-fg">
+        Your mentorship
+      </h1>
+
+      <StageTracker journeyStage={journeyStage} />
+
+      <div className="rounded-[10px] border border-line bg-surface p-6 sm:p-8">
+        {renderHeroContent()}
       </div>
-    </div>
+    </section>
   );
 }

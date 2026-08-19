@@ -14,6 +14,15 @@ export class MentorDashboardMenteeDto {
   @ApiProperty()
   fullName!: string;
 
+  @ApiProperty({ nullable: true })
+  currentJobTitle!: string | null;
+
+  @ApiProperty({ nullable: true })
+  bio!: string | null;
+
+  @ApiProperty({ nullable: true })
+  linkedinURL!: string | null;
+
   @ApiProperty({
     nullable: true,
     description: 'Short mentee focus/context shown on the mentor card.',

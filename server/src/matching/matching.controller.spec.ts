@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { MatchingController } from './matching.controller';
+
 import { MatchingAlgoService } from './services/matching-algo.service';
+import { MatchingRequestService } from './services/matching-request.service';
+
 import {
   JwtAuthGuard,
   type RequestWithUser,
@@ -46,6 +50,10 @@ describe('MatchingController', () => {
     },
   ];
 
+  const matchingRequestServiceMock = {
+    requestMatch: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [MatchingController],
@@ -55,6 +63,10 @@ describe('MatchingController', () => {
           useValue: {
             findBestMatches: jest.fn(),
           },
+        },
+        {
+          provide: MatchingRequestService,
+          useValue: matchingRequestServiceMock,
         },
       ],
     })
@@ -101,5 +113,24 @@ describe('MatchingController', () => {
     expect(result[0].profile).not.toHaveProperty('scheduleURL');
 
     expect(result[0].profile).toHaveProperty('linkedinURL');
+  });
+
+  describe('requestMatch', () => {
+    it('requests a match for the authenticated mentee', async () => {
+      const response = {
+        status: 'MATCHED' as const,
+        matchId: 'match-id',
+      };
+
+      matchingRequestServiceMock.requestMatch.mockResolvedValue(response);
+
+      const result = await controller.requestMatch(mockRequest);
+
+      expect(matchingRequestServiceMock.requestMatch).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+      );
+
+      expect(result).toEqual(response);
+    });
   });
 });
