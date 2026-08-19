@@ -43,4 +43,4 @@ import { StaffModule } from './staff/staff.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

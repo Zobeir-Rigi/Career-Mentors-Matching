@@ -4,14 +4,15 @@ import { StaffPageMatches } from "@/components/ui/Staff/StaffPageMatches";
 import type { MenteeData, MentorData } from "@/lib/context/StaffContext";
 import { useStaff } from "@/lib/context/StaffContext";
 import { useState } from "react";
+import { UsersList } from "./UsersList";
 
 export function MenteesPanel() {
-    const { menteeData, menteesData, isLoading } = useStaff();
-    const [selectedUser, setSelectedUser] = useState<MenteeData | MentorData | null>(menteeData);
+    const { menteesData, isLoading } = useStaff();
+    const [selectedUser, setSelectedUser] = useState<MenteeData | MentorData | null>(null);
     if (isLoading || !menteesData) {
         return <div>Loading mentees data...</div>;
     }
-    return (
+    return selectedUser ? (
         <div>
             <UserDetailsCard
                 userData={selectedUser}
@@ -22,5 +23,11 @@ export function MenteesPanel() {
                 matches={selectedUser?.matches}
             />
         </div>
-    );
+    ) : (
+        <div>
+            <div>
+                <UsersList userType={"Mentees"} usersData={menteesData} setSelectedUser={setSelectedUser} />
+            </div>
+        </div>
+    )
 }
