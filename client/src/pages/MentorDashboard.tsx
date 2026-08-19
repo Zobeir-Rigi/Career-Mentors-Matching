@@ -17,7 +17,8 @@ import { MentorProfileSummary } from "@/components/mentorDashboard/MentorProfile
 import { AcceptingMenteesToggle } from "@/components/ui/AcceptingMenteesToggle";
 import { MentorMenteeCard } from "@/components/mentorDashboard/MentorMenteeCard";
 import { isMentorProfileResponse } from "@/services/mentorService";
-// import { MentorStatusBadge } from "@/components/ui/MentorApprovalBadge";
+import { getApiErrorMessage } from "@/services/getApiErrorMessages";
+import { MentorStatusBadge } from "@/components/ui/MentorApprovalBadge";
 
 export function MentorDashboard() {
   type PendingAction = "confirm" | "decline" | "end";
@@ -43,16 +44,18 @@ export function MentorDashboard() {
     // Initial dashboard fetch
     async function fetchDashboard() {
       try {
+        setDashboardError(null);
+
         const data = await getMentorDashboard();
 
         if (!cancelled) {
           setDashboard(data);
         }
       } catch (error) {
-        console.error("Failed to load mentor dashboard:", error);
-
         if (!cancelled) {
-          setDashboardError("Unable to load your mentor dashboard.");
+          setDashboardError(
+            getApiErrorMessage(error, "Unable to load your mentor dashboard."),
+          );
         }
       } finally {
         if (!cancelled) {
@@ -75,8 +78,9 @@ export function MentorDashboard() {
       const data = await getMentorDashboard();
       setDashboard(data);
     } catch (error) {
-      console.error("Failed to refresh mentor dashboard:", error);
-      setDashboardError("Unable to refresh your mentor dashboard.");
+      setDashboardError(
+        getApiErrorMessage(error, "Unable to refresh your mentor dashboard."),
+      );
     }
   }
 
@@ -88,11 +92,17 @@ export function MentorDashboard() {
         engagementId,
         action: "decline",
       });
+      setDashboardError(null);
 
       await declineMentorEngagement(engagementId);
       await refreshDashboard();
     } catch (error) {
-      console.error("Failed to decline engagement:", error);
+      setDashboardError(
+        getApiErrorMessage(
+          error,
+          "Unable to decline this mentorship. Please try again.",
+        ),
+      );
     } finally {
       setPendingAction(null);
     }
@@ -106,11 +116,17 @@ export function MentorDashboard() {
         engagementId,
         action: "confirm",
       });
+      setDashboardError(null);
 
       await confirmMentorEngagement(engagementId);
       await refreshDashboard();
     } catch (error) {
-      console.error("Failed to confirm engagement:", error);
+      setDashboardError(
+        getApiErrorMessage(
+          error,
+          "Unable to confirm this mentorship. Please try again.",
+        ),
+      );
     } finally {
       setPendingAction(null);
     }
@@ -125,12 +141,18 @@ export function MentorDashboard() {
         engagementId,
         action: "end",
       });
+      setDashboardError(null);
 
       await endMentorEngagement(engagementId);
       // Re-fetch capacity and engagements instead of changing them locally.
       await refreshDashboard();
     } catch (error) {
-      console.error("Failed to end engagement:", error);
+      setDashboardError(
+        getApiErrorMessage(
+          error,
+          "Unable to end this mentorship. Please try again.",
+        ),
+      );
     } finally {
       setPendingAction(null);
     }
@@ -197,17 +219,17 @@ export function MentorDashboard() {
         <div className="mx-auto max-w-6xl px-4 py-8">
           <section className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-start">
             <div>
-              <h1 className="overshoot font-display font-semibold text-[36px]">
+              <h1 className="overshoot font-display font-black text-[36px]">
                 Your mentees
               </h1>
 
-              <p className="mt-4 text-muted">
+              <p className="mt-4 font-sans font-normal text-muted">
                 Thank you, {firstName} — every line below is a career you're
                 helping along.
               </p>
-              {/* <div className="mt-4">
+              <div className="mt-4">
               <MentorStatusBadge />
-            </div> */}
+            </div>
 
               <div className="mt-6">
                 <AcceptingMenteesToggle />

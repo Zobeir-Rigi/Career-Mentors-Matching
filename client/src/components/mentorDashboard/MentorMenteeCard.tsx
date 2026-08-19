@@ -50,7 +50,7 @@ function getStatusPresentation(
         badgeVariant: "accepted",
         message: `Waiting for the mentee to book the chemistry session.`,
         showEmail: true,
-        showConfirm: true,
+        showConfirm: false,
         showDecline: true,
         showEnd: false,
       };
@@ -70,7 +70,7 @@ function getStatusPresentation(
       return {
         badgeLabel: "Chemistry & confirm",
         badgeVariant: "accepted",
-        message: `Confirmed — waiting for the ${menteeName}.`,
+        message: `Confirmed — waiting for ${menteeName}.`,
         showEmail: true,
         showConfirm: false,
         showDecline: true,
@@ -125,12 +125,42 @@ export function MentorMenteeCard({
         </div>
 
         <div>
-          <p className="font-display text-xl font-semibold text-fg">
+          <p className="font-display text-xl font-black text-fg">
             {mentee.fullName}
           </p>
 
+          {mentee.currentJobTitle && (
+            <p className="mt-1 font-sans text-sm font-normal text-muted">
+              {mentee.currentJobTitle}
+            </p>
+          )}
+
+          {mentee.bio && (
+            <p className="mt-3 max-w-xl font-sans text-sm font-normal leading-6 text-fg">
+              {mentee.bio}
+            </p>
+          )}
+
           {mentee.focus && (
-            <p className="mt-1 text-xs text-muted">{mentee.focus}</p>
+            <p className="mt-2 font-sans text-sm font-normal text-muted">
+              {mentee.focus}
+            </p>
+          )}
+
+          {mentee.linkedinURL && (
+            <a
+              href={
+                mentee.linkedinURL.startsWith("http://") ||
+                mentee.linkedinURL.startsWith("https://")
+                  ? mentee.linkedinURL
+                  : `https://${mentee.linkedinURL}`
+              }
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-block text-sm font-bold text-accent underline decoration-accent-soft underline-offset-4 hover:text-accent-hover"
+            >
+              View LinkedIn profile
+            </a>
           )}
         </div>
       </div>
@@ -157,11 +187,14 @@ export function MentorMenteeCard({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          {countdown.daysLeft !== null && engagement.subStatus !== "active" && (
-            <p className="mt-1 text-sm text-muted">
-              {countdown.daysLeft} days left
-            </p>
-          )}
+          {(engagement.subStatus === "booked" ||
+            engagement.subStatus === "confirmed-waiting") &&
+            countdown.daysLeft !== null && (
+              <p className="mt-1 text-sm font-normal text-muted">
+                {countdown.daysLeft} {countdown.daysLeft === 1 ? "day" : "days"}{" "}
+                left
+              </p>
+            )}
 
           <p className="mt-1 text-sm text-muted">{presentation.message}</p>
         </div>

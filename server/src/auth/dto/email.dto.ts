@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNormalisedEmail } from '../decorators/normalised-email-decorator';
+import { IsNormalisedEmail } from '@/common/decorators/normalised-email-decorator';
 
 export class EmailDto {
   @ApiProperty({

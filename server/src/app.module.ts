@@ -2,12 +2,10 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-
 import { PrismaModule } from './prisma/prisma.module';
 import { HelloModule } from './hello/hello.module';
 import { HealthModule } from './health/health.module';
-
-import { MenteeProfileModule } from './mentee-profile/mentee-profile.module';
+import { MenteeProfileModule } from './mentee/mentee-profile.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
@@ -21,10 +19,11 @@ import { MatchingModule } from './matching/matching.module';
     PrismaModule,
     HelloModule,
     HealthModule,
-    MenteeProfileModule,
     AuthModule,
     MailModule,
+    MenteeProfileModule,
     MentorsModule,
+
     ThrottlerModule.forRoot([
       {
         name: 'default',
