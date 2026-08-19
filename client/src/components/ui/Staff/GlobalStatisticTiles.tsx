@@ -1,5 +1,5 @@
-import { Card } from "../Card";
-import { useStaff } from "./StaffContext";
+import { Card } from "@components/ui/Card";
+import { useStaff } from "@/lib/context/StaffContext";
 
 export function GlobalStatisticTiles() {
     const { globalMatchingData, isLoading } = useStaff();

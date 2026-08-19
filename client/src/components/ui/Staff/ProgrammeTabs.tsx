@@ -1,10 +1,10 @@
 // ProgrammeTabs.tsx
 import { useState } from "react";
-import { StaffProvider } from "./StaffProvider";
-import { OverviewPanel } from "./OverviewPanel";
-import { MentorsPanel } from "./MentorsPanel";
-import { MenteesPanel } from "./MenteesPanel";
-import { SettingsPanel } from "./SettingsPanel";
+import { StaffProvider } from "@/lib/context/StaffProvider";
+import { OverviewPanel } from "@/components/ui/Staff/OverviewPanel";
+import { MentorsPanel } from "@/components/ui/Staff/MentorsPanel";
+import { MenteesPanel } from "@/components/ui/Staff/MenteesPanel";
+import { SettingsPanel } from "@/components/ui/Staff/SettingsPanel";
 
 function ProgrammeTabsContent() {
     const tabs = ["Overview", "Mentors", "Mentees", "Settings"];
