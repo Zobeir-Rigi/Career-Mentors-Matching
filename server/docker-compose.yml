@@ -6,16 +6,15 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: mentor-matching
+      POSTGRES_DB: mentor_matching
     ports:
-      - "5435:5432"
+      - '5435:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d mentor-matching"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d mentor_matching']
       interval: 5s
       timeout: 5s
-      retries: 5 
+      retries: 5
 volumes:
   postgres_data:
-
