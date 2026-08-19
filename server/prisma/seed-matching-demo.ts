@@ -44,6 +44,11 @@ import {
   type SkillOption,
 } from './seeds/reference-data';
 
+import {
+  getRequiredId,
+  upsertFrontendReferenceData,
+} from './seeds/seed-reference-data';
+
 const LOCAL_COMPOSE_DATABASE_URL =
   'postgresql://postgres:postgres@localhost:5435/mentor_matching';
 
@@ -55,10 +60,6 @@ const prisma = new PrismaClient({ adapter });
 const DEMO_PASSWORD = process.env.MATCHING_DEMO_PASSWORD ?? 'MatchingDemo123!';
 
 const MATCHING_CONFIG_ID = '00000000-0000-4000-8000-000000000001';
-
-// ---------------------------------------------------------------------------
-// Exact frontend ProfileOptions.tsx values
-// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Matching configuration
@@ -258,54 +259,6 @@ function assertSeedUsesFrontendOptions() {
   }
 }
 
-async function upsertFrontendReferenceData() {
-  const disciplines = await Promise.all(
-    DISCIPLINE_OPTIONS.map((name) =>
-      prisma.discipline.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-      }),
-    ),
-  );
-
-  const skills = await Promise.all(
-    SKILL_OPTIONS.map((name) =>
-      prisma.skill.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-      }),
-    ),
-  );
-
-  const industries = await Promise.all(
-    INDUSTRY_OPTIONS.map((name) =>
-      prisma.industry.upsert({
-        where: { name },
-        update: {},
-        create: { name },
-      }),
-    ),
-  );
-
-  return {
-    disciplineIds: new Map(disciplines.map(({ id, name }) => [name, id])),
-    skillIds: new Map(skills.map(({ id, name }) => [name, id])),
-    industryIds: new Map(industries.map(({ id, name }) => [name, id])),
-  };
-}
-
-function getRequiredId(map: Map<string, string>, name: string): string {
-  const id = map.get(name);
-
-  if (!id) {
-    throw new Error(`Seed reference data missing for: ${name}`);
-  }
-
-  return id;
-}
-
 async function main() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('Refusing to run matching demo seed in production.');
@@ -337,7 +290,7 @@ async function main() {
 
   // Seed every current frontend reference value, not only the values used by
   // the demo mentors. This keeps the DB reference tables aligned with the UI.
-  const referenceData = await upsertFrontendReferenceData();
+  const referenceData = await upsertFrontendReferenceData(prisma);
 
   const seededMentorProfileIds: string[] = [];
 
