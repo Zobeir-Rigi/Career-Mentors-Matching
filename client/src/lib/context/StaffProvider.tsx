@@ -5,10 +5,9 @@ import {
     type MenteesWaitingData,
     type MentorData,
     type MenteeData,
-    type MenteesData,
     type Match,
 } from "@/lib/context/StaffContext";
-import { getMentors } from "@/services/staffService";
+import { getMentees, getMentors } from "@/services/staffService";
 
 // Mock data
 const MOCK_GLOBAL_MATCHING_DATA: GlobalMatchingData = {
@@ -137,55 +136,6 @@ const MOCK_MENTOR_DATA: MentorData = {
     matches: MOCK_MENTOR_MATCHES
 };
 
-const MOCK_MENTEES_DATA: MenteesData = [
-    {
-        fullName: "Gbenga History 1",
-        role: "MENTEE",
-        email: "stage.history@example.dev",
-        goals: ["Software Engineering", "Career Development", "Interview Prep"],
-        goalsNotes: "Career-switcher aiming for a first tech role.",
-        createdAt: "22 Jul 2026",
-        region: "no region · open to remote",
-        bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
-        links: "None on file",
-        availability: ["weekday evening", "weekend morning"],
-        matches: [
-            {
-                fullName: "Issy Geraghty 1",
-                createdAt: "22 Jul 2026 — ",
-                status: "REJECTED",
-                proposedBy: "Gbenga History",
-                declinedAt: "22 Jul 2026",
-                declinedBy: "Gbenga History",
-                score: "5",
-            },
-        ],
-    },
-    {
-        fullName: "Gbenga History 2",
-        role: "MENTEE",
-        email: "stage.history@example.dev",
-        goals: ["Software Engineering", "Career Development", "Interview Prep"],
-        goalsNotes: "Career-switcher aiming for a first tech role.",
-        createdAt: "22 Jul 2026",
-        region: "no region · open to remote",
-        bio: "Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.",
-        links: "None on file",
-        availability: ["weekday evening", "weekend morning"],
-        matches: [
-            {
-                fullName: "Issy Geraghty 2",
-                createdAt: "22 Jul 2026 — ",
-                status: "REJECTED",
-                proposedBy: "Gbenga History",
-                declinedAt: "22 Jul 2026",
-                declinedBy: "Gbenga History",
-                score: "5",
-            },
-        ]
-    }
-]
-
 const MOCK_MENTEE_DATA: MenteeData = {
     fullName: "Gbenga History",
     role: "MENTEE",
@@ -230,9 +180,10 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [menteeData] = useState<MenteeData | null>(MOCK_MENTEE_DATA);
     const [menteeMatches] = useState<Match[]>(MOCK_MENTEE_MATCHES);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [menteesData] = useState<MenteesData | []>(MOCK_MENTEES_DATA);
+    //const [menteesData] = useState<MenteesData | []>(MOCK_MENTEES_DATA);
 
     const [mentorsData, setMentorsData] = useState<MentorData[]>([]);
+    const [menteesData, setMenteesData] = useState<MenteeData[]>([]);
     const refetch = async () => {
         setIsLoading(true);
         try {
@@ -244,6 +195,18 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
         } catch (error: unknown) {
             console.error("Failed to fetch mentors:", error);
+        } finally {
+            setIsLoading(false);
+        }
+        try {
+            const response = await getMentees();
+            if (response?.data) {
+                setMenteesData(response.data?.mentees);
+            } else if (Array.isArray(response)) {
+                setMenteesData(response);
+            }
+        } catch (error: unknown) {
+            console.error("Failed to fetch mentees:", error);
         } finally {
             setIsLoading(false);
         }
