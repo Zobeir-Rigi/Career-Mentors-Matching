@@ -72,19 +72,19 @@ export function GoalsAndAvailability({
       <div className="mt-3 font-sans text-[16px] font-normal leading-6 text-center text-muted">
         {isProfileComplete ? (
           <p>
-            "You are all set — ask for a match and we will propose the best
-            available mentor."
+            You are all set — ask for a match and we will propose the best
+            available mentor.
           </p>
         ) : (
           <p>
-            Add your availability{" "}
+            Your profile is not complete yet.{" "}
             <Link
               to="/mentee/profile"
               className="font-bold text-accent underline decoration-accent-soft underline-offset-4 hover:text-accent-hover"
             >
-              in your profile
+              Complete your profile
             </Link>{" "}
-            — the matcher only proposes mentors whose time can work with yours.
+            before requesting a mentor match.
           </p>
         )}
       </div>

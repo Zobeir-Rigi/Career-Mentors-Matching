@@ -81,6 +81,22 @@ export function MentorshipStages({
         Your mentorship
       </h1>
 
+      {journeyStage === "incomplete" && (
+        <div className="mb-6">
+          <span className="inline-flex rounded-full bg-warn-tint px-3 py-1 text-xs font-semibold text-warn">
+            Profile incomplete
+          </span>
+        </div>
+      )}
+
+      {journeyStage === "ready" && (
+        <div className="mb-6">
+          <span className="inline-flex rounded-full bg-ok-tint px-3 py-1 text-xs font-semibold text-ok">
+            Ready for matching
+          </span>
+        </div>
+      )}
+
       <StageTracker journeyStage={journeyStage} />
 
       <div className="rounded-[10px] border border-line bg-surface p-6 sm:p-8">
