@@ -11,6 +11,11 @@ describe('createTestPrismaClient', () => {
     await prisma.$disconnect();
   });
 
+  it('loads the test environment', () => {
+    expect(process.env.NODE_ENV).toBe('test');
+    expect(process.env.DATABASE_URL).toContain('mentor_matching_test');
+  });
+
   it('connect to the test database and can query Prisma models', async () => {
     const userCount = await prisma.user.count();
 
