@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { GoalsAndAvailability } from "./MentorshipStages/GoalsAndAvailability";
 import { StageTracker } from "./MentorshipStages/StageTracker";
 import { AfterMatchProposed } from "./MentorshipStages/afterMatchProposed";
+import { StatusBadge } from "./StatusBadge";
 
 import type {
   MenteeDashboardCurrentMatch,
@@ -83,17 +84,13 @@ export function MentorshipStages({
 
       {journeyStage === "incomplete" && (
         <div className="mb-6">
-          <span className="inline-flex rounded-full bg-warn-tint px-3 py-1 text-xs font-semibold text-warn">
-            Profile incomplete
-          </span>
+          <StatusBadge variant="incomplete">Profile incomplete</StatusBadge>
         </div>
       )}
 
       {journeyStage === "ready" && (
         <div className="mb-6">
-          <span className="inline-flex rounded-full bg-ok-tint px-3 py-1 text-xs font-semibold text-ok">
-            Ready for matching
-          </span>
+          <StatusBadge variant="ready">Ready for matching</StatusBadge>
         </div>
       )}
 
