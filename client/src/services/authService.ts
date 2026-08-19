@@ -87,6 +87,23 @@ export async function resendVerification(
   return response.data;
 }
 
+export async function forgotPassword(email: string) {
+  const response = await api.post("/auth/forgot-password", {
+    email,
+  });
+
+  return response.data;
+}
+
+export async function resetPassword(token: string, password: string) {
+  const response = await api.post("/auth/reset-password", {
+    token,
+    password,
+  });
+
+  return response.data;
+}
+
 // Clear the authentication cookie
 export async function logout(): Promise<ApiMessageResponse> {
   const response = await api.post<ApiMessageResponse>("/auth/logout");

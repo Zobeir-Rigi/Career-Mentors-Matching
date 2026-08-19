@@ -1,8 +1,9 @@
-import { Button } from "../Button";
+import { Button } from "@components/ui/Button";
 
 export interface Match {
     fullName: string;
-    proposed: string;
+    createdAt: string;
+    declinedAt?: string | null;
     score?: number | string;
     status: string;
     proposedBy?: string;
@@ -13,6 +14,10 @@ interface StaffPageMatchesProps {
 }
 
 export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
+    async function handleEndMentorship() {
+        //api call to end mentorship
+        console.log('api call to end mentorship');
+    }
     return (
         <div className="mt-12">
             <h2 className="font-display text-4xl font-semibold overshoot">
@@ -29,16 +34,22 @@ export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
                                 <div>
                                     <p className="font-sans text-[15px] text-fg">{match.fullName}</p>
                                     <p className="font-sans text-[12px] text-muted">
-                                        {match.proposed}{match.score ? ` score · ${match.score}` : ``}
+                                        {match.createdAt
+                                            ? new Date(match.createdAt).toLocaleDateString('en-GB', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                            })
+                                            : ''}{match.score ? ` score · ${match.score}` : ``}
                                     </p>
                                 </div>
                                 <div className="flex flex-row items-center gap-2">
-                                    {match.status === "Active" ? (
+                                    {match.status === "ACTIVE" ? (
                                         <>
                                             <div className="flex h-[22px] items-center justify-center rounded-[11px] bg-ok-tint px-3">
                                                 <p className="font-sans text-[12px] leading-none text-ok">Active</p>
                                             </div>
-                                            <Button variant="outline">End mentorship</Button>
+                                            <Button onClick={() => handleEndMentorship()} variant="outline">End mentorship</Button>
                                         </>
                                     ) : (
                                         <div className="flex h-[22px] items-center justify-center rounded-[11px] bg-tint px-3">
@@ -51,7 +62,13 @@ export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
                             </div>
                             <div className="-mt-px h-px w-full bg-line mt-4" />
                             <div>
-                                <p className="font-sans text-[12px] text-muted">{match.proposed} --
+                                <p className="font-sans text-[12px] text-muted">{match.createdAt
+                                    ? new Date(match.createdAt).toLocaleDateString('en-GB', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                    })
+                                    : ''}{match.score ? ` score · ${match.score}` : ``} --
                                     <span className="text-[12px] text-fg font-semibold">{match.status === "ACTIVE" ? "ACTIVE" : "PROPOSED"}</span> -
                                     {match.proposedBy === "AUTO_MATCH"
                                         ? ` by the system · ${match.proposedBy}`
@@ -59,7 +76,13 @@ export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
                                 </p>
                                 {match.status === "REJECTED" && (
                                     <>
-                                        <p className="font-sans text-[12px] text-muted">{match.proposed} --
+                                        <p className="font-sans text-[12px] text-muted">{match.declinedAt
+                                            ? new Date(match.declinedAt).toLocaleDateString('en-GB', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric',
+                                            })
+                                            : ''} --
                                             <span className="text-[12px] text-MUTED font-semibold">PROPOSED</span> --
                                             <span className="text-[12px] text-fg font-semibold">{match.status}</span> -
                                             {match.proposedBy === "AUTO_MATCH"

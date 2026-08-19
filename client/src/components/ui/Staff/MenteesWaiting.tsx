@@ -1,6 +1,6 @@
-import { useStaff } from "./StaffContext";
-import { Card } from "../Card";
-import { Button } from "../Button";
+import { useStaff } from "@/lib/context/StaffContext";
+import { Card } from "@components/ui/Card";
+import { Button } from "@components/ui/Button";
 
 export function MenteesWaiting() {
     const { menteesWaitingData, isLoading } = useStaff();
