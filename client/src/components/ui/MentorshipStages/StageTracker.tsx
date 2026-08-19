@@ -1,39 +1,80 @@
-
+import type { MenteeJourneyStage } from "@/services/menteeDashboardService";
 
 interface StageTrackerProps {
-    circleStyles: Record<number, string>;
-    progressTextStyles: Record<number, string>;
-    progressLinesStyles: Record<number, string>;
+  journeyStage: MenteeJourneyStage;
 }
 
-export const StageTracker: React.FC<StageTrackerProps> = ({ circleStyles, progressTextStyles, progressLinesStyles }) => {
-    return (
-        <div className="container max-w-[1152px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-row items-center justify-between gap-y-6 lg:gap-y-0 mb-8">
-            <div className="flex flex-row justify-between items-center w-full lg:w-auto">
-                <div className="flex flex-row items-center">
-                    <p className={`rounded-[13px] w-[13px] h-[13px] border ${circleStyles[1]} p-0 mr-2`}></p>
-                    <p className={`font-display ${progressTextStyles[1]} text-[14px]`}>Goals & availability</p>
-                </div>
-                <div className={`ml-8 hidden lg:block w-[104px] border-t ${progressLinesStyles[1]} ml-2`}></div>
+const stages = [
+  "Goals & availability",
+  "Match proposed",
+  "Chemistry & confirm",
+  "Mentorship active",
+];
+
+function getCurrentStageNumber(journeyStage: MenteeJourneyStage): number {
+  switch (journeyStage) {
+    case "incomplete":
+    case "ready":
+      return 1;
+
+    case "match-proposed":
+      return 2;
+
+    case "chemistry-confirm":
+      return 3;
+
+    case "mentorship-active":
+      return 4;
+  }
+}
+
+export function StageTracker({ journeyStage }: StageTrackerProps) {
+  const currentStageNumber = getCurrentStageNumber(journeyStage);
+
+  return (
+    <div className="mb-8 grid grid-cols-1 gap-y-5 sm:grid-cols-2 lg:flex lg:items-center lg:justify-between">
+      {stages.map((stage, index) => {
+        const stageNumber = index + 1;
+
+        const isCompleted = stageNumber < currentStageNumber;
+
+        const isCurrent = stageNumber === currentStageNumber;
+
+        const circleStyle = isCompleted
+          ? "border-accent bg-accent"
+          : isCurrent
+            ? "border-2 border-accent bg-bg"
+            : "border border-line bg-bg";
+
+        const textStyle = isCompleted
+          ? "text-muted line-through"
+          : isCurrent
+            ? "font-bold text-fg"
+            : "font-normal text-muted";
+
+        const lineStyle =
+          stageNumber < currentStageNumber ? "border-accent" : "border-line";
+
+        return (
+          <div key={stage} className="flex w-full items-center lg:w-auto">
+            <div className="flex items-center">
+              <span
+                aria-hidden="true"
+                className={`mr-2 h-3.5 w-3.5 shrink-0 rounded-full border ${circleStyle}`}
+              />
+
+              <p className={`font-sans text-sm ${textStyle}`}>{stage}</p>
             </div>
-            <div className="flex flex-row justify-between items-center w-full lg:w-auto">
-                <div className="flex flex-row items-center">
-                    <p className={`rounded-[13px] w-[13px] h-[13px] border ${circleStyles[2]} p-0 mr-2`}></p>
-                    <p className={`font-display ${progressTextStyles[2]} text-[14px]`}>Match proposed</p>
-                </div>
-                <div className={`ml-8 hidden lg:block w-[104px] border-t ${progressLinesStyles[2]} ml-2`}></div>
-            </div>
-            <div className="flex flex-row justify-between items-center w-full lg:w-auto">
-                <div className="flex flex-row items-center">
-                    <p className={`rounded-[13px] w-[13px] h-[13px] border ${circleStyles[3]} p-0 mr-2`}></p>
-                    <p className={`font-display ${progressTextStyles[3]} text-[14px]`}>Chemistry & confirm</p>
-                </div>
-                <div className={`ml-8 hidden lg:block w-[104px] border-t ${progressLinesStyles[3]} ml-2`}></div>
-            </div>
-            <div className="flex flex-row items-center">
-                <p className={`rounded-[13px] w-[13px] h-[13px] border ${circleStyles[4]} p-0 mr-2`}></p>
-                <p className={`font-display ${progressTextStyles[4]} text-[14px]`}>Mentorship active</p>
-            </div>
-        </div>
-    );
+
+            {stageNumber < stages.length && (
+              <div
+                aria-hidden="true"
+                className={`ml-4 hidden w-20 border-t-2 lg:block xl:w-26 ${lineStyle}`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }

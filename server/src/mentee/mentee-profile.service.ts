@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { MenteeProfileResponseDto } from './dto/mentee-profile-response.dto';
 import { UpdateMenteeProfileDto } from './dto/update-mentee-profile.dto';
-
+import { isMenteeMatchReady } from './helpers/mentee-match-readiness';
 @Injectable()
 export class MenteeProfileService {
   constructor(private readonly prisma: PrismaService) {}
@@ -47,7 +47,7 @@ export class MenteeProfileService {
       meetingCadence: profile.meetingCadence ?? undefined,
       bio: profile.bio ?? undefined,
       meetingStructure: profile.meetingStructure ?? undefined,
-      matchReady: this.isMatchReady(profile),
+      matchReady: isMenteeMatchReady(profile),
 
       disciplineGoals: profile.goalDisciplines.map(
         (item) => item.discipline.name,
@@ -239,8 +239,7 @@ export class MenteeProfileService {
         availability: finalProfile.availability ?? [],
         meetingCadence: finalProfile.meetingCadence ?? undefined,
         meetingStructure: finalProfile.meetingStructure ?? undefined,
-        matchReady: this.isMatchReady(finalProfile),
-
+        matchReady: isMenteeMatchReady(finalProfile),
         disciplineGoals: finalProfile.goalDisciplines.map(
           (item) => item.discipline.name,
         ),
@@ -252,25 +251,5 @@ export class MenteeProfileService {
         ),
       };
     });
-  }
-
-  private isMatchReady(profile: {
-    region: unknown;
-    availability: readonly unknown[];
-    meetingCadence: unknown;
-    meetingStructure: unknown;
-    goalDisciplines: readonly unknown[];
-    wantedSkills: readonly unknown[];
-    targetedIndustries: readonly unknown[];
-  }): boolean {
-    return Boolean(
-      profile.region &&
-      profile.availability.length > 0 &&
-      profile.goalDisciplines.length > 0 &&
-      profile.wantedSkills.length > 0 &&
-      profile.targetedIndustries.length > 0 &&
-      profile.meetingCadence &&
-      profile.meetingStructure,
-    );
   }
 }

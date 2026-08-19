@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 import { PasswordDto } from './password.dto';
-import { IsNormalisedEmail } from '../decorators/normalised-email-decorator';
+import { IsNormalisedEmail } from '@/common/decorators/normalised-email-decorator';
 
 // Exclude Admin user type for registration.
 export enum PublicSignupRole {

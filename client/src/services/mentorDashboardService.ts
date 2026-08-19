@@ -10,6 +10,9 @@ export type MentorEngagementStatus =
 export interface MentorDashboardMentee {
   id: string;
   fullName: string;
+  currentJobTitle: string | null;
+  bio: string | null;
+  linkedinURL: string | null;
   focus: string | null;
   email: string | null;
 }

@@ -37,14 +37,12 @@ export class MentorDashboardService {
     match: { proposalExpiresAt: Date | null; confirmationDueAt: Date | null },
   ): Date | null {
     switch (subStatus) {
-      case 'proposed-awaiting-acceptance':
-        return match.proposalExpiresAt;
-
       case 'confirmed-waiting':
+      case 'booked':
         return match.confirmationDueAt;
 
+      case 'proposed-awaiting-acceptance':
       case 'awaiting-booking':
-      case 'booked':
       case 'active':
         return null;
     }
@@ -96,6 +94,7 @@ export class MentorDashboardService {
                     id: true,
                     fullName: true,
                     email: true,
+                    linkedinURL: true,
                   },
                 },
 
@@ -148,6 +147,9 @@ export class MentorDashboardService {
         mentee: {
           id: match.menteeProfile.id,
           fullName: match.menteeProfile.user.fullName,
+          currentJobTitle: match.menteeProfile.currentJobTitle,
+          bio: match.menteeProfile.bio,
+          linkedinURL: match.menteeProfile.user.linkedinURL,
           focus,
           email: canRevealEmail ? match.menteeProfile.user.email : null,
         },
