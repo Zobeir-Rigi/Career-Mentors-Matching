@@ -5,14 +5,18 @@ import {
   ApiResponse,
   ApiCookieAuth,
 } from '@nestjs/swagger';
+
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AdminGuard } from '@/auth/guards/admin.guard';
+
 import { StaffMenteesResponseDto } from './dto/staff-mentees-response.dto';
 import { StaffMentorsResponseDto } from './dto/staff-mentors-response.dto';
 import { StaffService } from './staff.service';
-@ApiTags('Mentors')
+
+@ApiTags('Admin')
 @ApiCookieAuth('accessToken')
-@UseGuards(JwtAuthGuard)
-@Controller('staff')
+@UseGuards(JwtAuthGuard, AdminGuard)
+@Controller('admin')
 export class StaffController {
   constructor(private readonly staffService: StaffService) {}
 
