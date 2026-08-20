@@ -80,6 +80,12 @@ export class MenteeEngagementService {
       return engagement;
     }
 
+    if (engagement.status !== MatchStatus.CHEMISTRY_CONFIRMED) {
+      throw new ConflictException(
+        'The mentor must accept the chemistry proposal before the session can be booked.',
+      );
+    }
+
     if (!engagement.menteeAcceptedAt) {
       throw new ConflictException(
         'The mentee must accept the proposal before booking the chemistry session.',
