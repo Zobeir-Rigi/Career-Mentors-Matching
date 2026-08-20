@@ -150,24 +150,27 @@ describe('MentorEngagementService', () => {
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
   });
 
-  it('confirms a booked engagement', async () => {
-    const now = new Date('2026-08-12T12:00:00.000Z');
+  it('confirms chemistry when the mentor accepts the proposal', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+    const scheduledCheckIn = new Date('2026-08-27T12:00:00.000Z');
 
     jest.useFakeTimers();
     jest.setSystemTime(now);
 
     const engagement = {
       id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_CONFIRMED,
-      menteeAcceptedAt: new Date('2026-08-10T12:00:00.000Z'),
-      chemistryBookedAt: new Date('2026-08-11T12:00:00.000Z'),
+      status: MatchStatus.CHEMISTRY_PENDING,
+      menteeAcceptedAt: new Date('2026-08-19T12:00:00.000Z'),
+      chemistryBookedAt: null,
       chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: null,
+      chemistryMenteeConfirmedAt: new Date('2026-08-19T12:00:00.000Z'),
     };
 
     const confirmedEngagement = {
       ...engagement,
+      status: MatchStatus.CHEMISTRY_CONFIRMED,
       chemistryMentorConfirmedAt: now,
+      scheduledCheckIn,
     };
 
     prismaMock.matches.findFirst.mockResolvedValue(engagement);
@@ -180,7 +183,10 @@ describe('MentorEngagementService', () => {
         id: 'engagement-id',
       },
       data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
         chemistryMentorConfirmedAt: now,
+        scheduledCheckIn,
+        proposalExpiresAt: null,
       },
     });
 
@@ -224,66 +230,6 @@ describe('MentorEngagementService', () => {
     );
 
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects confirmation before chemistry meeting is booked', async () => {
-    prismaMock.matches.findFirst.mockResolvedValue({
-      id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_PENDING,
-      menteeAcceptedAt: new Date(),
-      chemistryBookedAt: null,
-      chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: null,
-    });
-
-    const action = service.confirm('mentor-user-id', 'engagement-id');
-
-    await expect(action).rejects.toThrow(ConflictException);
-
-    await expect(action).rejects.toThrow(
-      'The chemistry meeting must be booked before mentorship can be confirmed.',
-    );
-
-    expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('activates mentorship when mentee has already confirmed', async () => {
-    const now = new Date('2026-08-12T12:00:00.000Z');
-
-    jest.useFakeTimers();
-    jest.setSystemTime(now);
-
-    const engagement = {
-      id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_CONFIRMED,
-      menteeAcceptedAt: new Date(),
-      chemistryBookedAt: new Date(),
-      chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: new Date(),
-    };
-
-    const activeEngagement = {
-      ...engagement,
-      chemistryMentorConfirmedAt: now,
-      status: MatchStatus.ACTIVE,
-    };
-
-    prismaMock.matches.findFirst.mockResolvedValue(engagement);
-    prismaMock.matches.update.mockResolvedValue(activeEngagement);
-
-    const result = await service.confirm('mentor-user-id', 'engagement-id');
-
-    expect(prismaMock.matches.update).toHaveBeenCalledWith({
-      where: {
-        id: 'engagement-id',
-      },
-      data: {
-        chemistryMentorConfirmedAt: now,
-        status: MatchStatus.ACTIVE,
-      },
-    });
-
-    expect(result).toEqual(activeEngagement);
   });
 
   it('ends an active mentorship', async () => {

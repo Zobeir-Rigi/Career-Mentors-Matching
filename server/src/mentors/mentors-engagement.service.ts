@@ -75,24 +75,19 @@ export class MentorEngagementService {
       );
     }
 
-    if (!engagement.chemistryBookedAt) {
-      throw new ConflictException(
-        'The chemistry meeting must be booked before mentorship can be confirmed.',
-      );
-    }
-
     const now = new Date();
 
-    const bothConfirmed = Boolean(engagement.chemistryMenteeConfirmedAt);
+    const scheduledCheckIn = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     return this.prisma.matches.update({
       where: {
         id: engagement.id,
       },
       data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
         chemistryMentorConfirmedAt: now,
-
-        ...(bothConfirmed && { status: MatchStatus.ACTIVE }),
+        scheduledCheckIn,
+        proposalExpiresAt: null,
       },
     });
   }
