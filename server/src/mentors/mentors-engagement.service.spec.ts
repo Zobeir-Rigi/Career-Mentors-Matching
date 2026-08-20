@@ -4,6 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { MentorEngagementService } from './mentors-engagement.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
+import { MailService } from '../mail/mail.service';
 
 describe('MentorEngagementService', () => {
   let service: MentorEngagementService;
@@ -15,6 +16,10 @@ describe('MentorEngagementService', () => {
     },
   };
 
+  const mailServiceMock = {
+    sendChemistryAcceptedEmail: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -22,6 +27,10 @@ describe('MentorEngagementService', () => {
         {
           provide: PrismaService,
           useValue: prismaMock,
+        },
+        {
+          provide: MailService,
+          useValue: mailServiceMock,
         },
       ],
     }).compile();
@@ -67,6 +76,27 @@ describe('MentorEngagementService', () => {
         id: 'engagement-id',
         mentorProfile: {
           userId: 'mentor-user-id',
+        },
+      },
+      include: {
+        menteeProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+        mentorProfile: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
         },
       },
     });
@@ -164,6 +194,17 @@ describe('MentorEngagementService', () => {
       chemistryBookedAt: null,
       chemistryMentorConfirmedAt: null,
       chemistryMenteeConfirmedAt: new Date('2026-08-19T12:00:00.000Z'),
+      menteeProfile: {
+        user: {
+          email: 'casey@example.com',
+          fullName: 'Casey Morgan',
+        },
+      },
+      mentorProfile: {
+        user: {
+          fullName: 'Amina Patel',
+        },
+      },
     };
 
     const confirmedEngagement = {
@@ -191,6 +232,69 @@ describe('MentorEngagementService', () => {
     });
 
     expect(result).toEqual(confirmedEngagement);
+    expect(mailServiceMock.sendChemistryAcceptedEmail).toHaveBeenCalledWith({
+      email: 'casey@example.com',
+      menteeFullName: 'Casey Morgan',
+      mentorFullName: 'Amina Patel',
+    });
+  });
+
+  it('still confirms chemistry when the acceptance email cannot be sent', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+    const scheduledCheckIn = new Date('2026-08-27T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    const engagement = {
+      id: 'engagement-id',
+      status: MatchStatus.CHEMISTRY_PENDING,
+      menteeAcceptedAt: new Date('2026-08-19T12:00:00.000Z'),
+      chemistryBookedAt: null,
+      chemistryMentorConfirmedAt: null,
+      chemistryMenteeConfirmedAt: new Date('2026-08-19T12:00:00.000Z'),
+      menteeProfile: {
+        user: {
+          email: 'casey@example.com',
+          fullName: 'Casey Morgan',
+        },
+      },
+      mentorProfile: {
+        user: {
+          fullName: 'Amina Patel',
+        },
+      },
+    };
+
+    const confirmedEngagement = {
+      ...engagement,
+      status: MatchStatus.CHEMISTRY_CONFIRMED,
+      chemistryMentorConfirmedAt: now,
+      scheduledCheckIn,
+    };
+
+    prismaMock.matches.findFirst.mockResolvedValue(engagement);
+    prismaMock.matches.update.mockResolvedValue(confirmedEngagement);
+
+    mailServiceMock.sendChemistryAcceptedEmail.mockRejectedValue(
+      new Error('SES unavailable'),
+    );
+
+    const result = await service.confirm('mentor-user-id', 'engagement-id');
+
+    expect(result).toEqual(confirmedEngagement);
+
+    expect(prismaMock.matches.update).toHaveBeenCalledWith({
+      where: {
+        id: 'engagement-id',
+      },
+      data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
+        chemistryMentorConfirmedAt: now,
+        scheduledCheckIn,
+        proposalExpiresAt: null,
+      },
+    });
   });
 
   it('is idempotent when mentor has already confirmed', async () => {

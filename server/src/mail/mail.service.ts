@@ -19,6 +19,12 @@ interface SendChemistryProposalEmailParams {
   menteeFullName: string;
 }
 
+interface SendChemistryAcceptedEmailParams {
+  email: string;
+  menteeFullName: string;
+  mentorFullName: string;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -205,6 +211,70 @@ export class MailService {
 
       throw new InternalServerErrorException(
         'Unable to send chemistry proposal email',
+      );
+    }
+  }
+
+  async sendChemistryAcceptedEmail({
+    email,
+    menteeFullName,
+    mentorFullName,
+  }: SendChemistryAcceptedEmailParams): Promise<void> {
+    const dashboardUrl = new URL('/mentee/dashboard', this.frontendUrl);
+
+    const menteeFirstName = menteeFullName.trim().split(/\s+/)[0];
+
+    const html = `
+    <h1>Your chemistry proposal was accepted</h1>
+    <p>Hi ${menteeFirstName},</p>
+    <p>${mentorFullName} has accepted your chemistry session proposal.</p>
+    <p>
+      Please log in to your mentee dashboard to view their contact details
+      and arrange your chemistry session.
+    </p>
+    <p>
+      Once you have booked the session, you can record that on your dashboard.
+    </p>
+    <p>
+      <a href="${dashboardUrl.toString()}">
+        View your mentor
+      </a>
+    </p>
+  `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Chemistry accepted email for ${email}: ${dashboardUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: {
+          Data: 'Your mentor accepted your chemistry proposal',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send chemistry accepted email: ', error);
+
+      throw new InternalServerErrorException(
+        'Unable to send chemistry accepted email',
       );
     }
   }

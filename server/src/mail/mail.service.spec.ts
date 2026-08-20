@@ -143,4 +143,40 @@ describe('MailService', () => {
 
     expect(sesSendMock).toHaveBeenCalledTimes(1);
   });
+
+  it('should send a chemistry accepted email to the mentee', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'chemistry-accepted-email-id',
+    });
+
+    await service.sendChemistryAcceptedEmail({
+      email: 'casey@example.com',
+      menteeFullName: 'Casey Morgan',
+      mentorFullName: 'Amina Patel',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
+
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'casey@example.com',
+    ]);
+
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Your mentor accepted your chemistry proposal',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('Hi Casey,');
+    expect(html).toContain('Amina Patel');
+    expect(html).toContain('http://localhost:5173/mentee/dashboard');
+
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
 });

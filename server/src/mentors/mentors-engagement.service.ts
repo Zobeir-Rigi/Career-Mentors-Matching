@@ -1,15 +1,22 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { MailService } from '../mail/mail.service';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class MentorEngagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MentorEngagementService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   //   Mentor only gets access to their dashboard
   private async findOwnedEngagement(userId: string, engagementId: string) {
@@ -18,6 +25,27 @@ export class MentorEngagementService {
         id: engagementId,
         mentorProfile: {
           userId,
+        },
+      },
+      include: {
+        menteeProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+        mentorProfile: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
         },
       },
     });
@@ -79,7 +107,7 @@ export class MentorEngagementService {
 
     const scheduledCheckIn = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    return this.prisma.matches.update({
+    const confirmedEngagement = await this.prisma.matches.update({
       where: {
         id: engagement.id,
       },
@@ -90,6 +118,21 @@ export class MentorEngagementService {
         proposalExpiresAt: null,
       },
     });
+
+    try {
+      await this.mailService.sendChemistryAcceptedEmail({
+        email: engagement.menteeProfile.user.email,
+        menteeFullName: engagement.menteeProfile.user.fullName,
+        mentorFullName: engagement.mentorProfile.user.fullName,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Chemistry accepted email could not be sent for match ${engagement.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
+    return confirmedEngagement;
   }
 
   async end(userId: string, engagementId: string) {
