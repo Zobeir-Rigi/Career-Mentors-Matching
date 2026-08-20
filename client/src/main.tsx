@@ -72,7 +72,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                 }
               />
             </Route>
-            <Route path="/staff" element={<Staff />} />
+            <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
+              <Route path="/staff" element={<Staff />} />
+            </Route>
           </Routes>
         </ThemeProvider>
       </AuthProvider>

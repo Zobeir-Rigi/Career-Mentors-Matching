@@ -36,7 +36,7 @@ export function LoginForm() {
       await refreshProfile(result.user);
 
       if (result.user.role === "ADMIN") {
-        navigate("/admin");
+        navigate("/staff");
       } else if (result.user.role === "MENTOR") {
         navigate("/mentor/profile");
       } else {
