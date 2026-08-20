@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
@@ -9,6 +10,7 @@ import type { Prisma } from '@/generated/prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { MatchingAlgoService } from './matching-algo.service';
+import { MailService } from '@/mail/mail.service';
 
 import { CAPACITY_RELEVANT_STATUSES } from '@/common/constants/capacity-relevant-statuses';
 
@@ -61,9 +63,12 @@ type MentorWithRelations = Prisma.MentorProfileGetPayload<{
 }>;
 @Injectable()
 export class MatchingRequestService {
+  private readonly logger = new Logger(MatchingRequestService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly matchingAlgoService: MatchingAlgoService,
+    private readonly mailService: MailService,
   ) {}
 
   private buildMenteeSnapshot(mentee: MenteeWithRelations) {
@@ -209,6 +214,11 @@ export class MatchingRequestService {
         userId,
       },
       include: {
+        user: {
+          select: {
+            fullName: true,
+          },
+        },
         goalDisciplines: {
           include: {
             discipline: true,
@@ -269,6 +279,7 @@ export class MatchingRequestService {
         user: {
           select: {
             fullName: true,
+            email: true,
           },
         },
         mentorDisciplines: {
@@ -299,7 +310,7 @@ export class MatchingRequestService {
     const menteeSnapshot = this.buildMenteeSnapshot(mentee);
     const mentorSnapshot = this.buildMentorSnapshot(mentor);
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       const match = await tx.matches.create({
         data: {
           menteeId: mentee.id,
@@ -333,6 +344,21 @@ export class MatchingRequestService {
         matchId: match.id,
       };
     });
+
+    try {
+      await this.mailService.sendChemistryProposalEmail({
+        email: mentor.user.email,
+        mentorFullName: mentor.user.fullName,
+        menteeFullName: mentee.user.fullName,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Chemistry proposal email could not be sent for match ${result.matchId}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
+    return result;
   }
 
   async switchProposal(userId: string, mentorId: string) {

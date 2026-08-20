@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { MailModule } from '../mail/mail.module';
 
 import { MatchingController } from './matching.controller';
 import { MatchingAlgoService } from './services/matching-algo.service';
@@ -9,7 +10,7 @@ import { MatchingRequestService } from './services/matching-request.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({}), MailModule],
   controllers: [MatchingController],
   providers: [
     MatchingAlgoService,

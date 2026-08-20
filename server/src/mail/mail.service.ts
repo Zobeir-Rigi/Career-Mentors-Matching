@@ -13,6 +13,12 @@ interface SendAuthEmailParams {
   token: string;
 }
 
+interface SendChemistryProposalEmailParams {
+  email: string;
+  mentorFullName: string;
+  menteeFullName: string;
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -139,6 +145,66 @@ export class MailService {
 
       throw new InternalServerErrorException(
         'Unable to send password reset email',
+      );
+    }
+  }
+
+  async sendChemistryProposalEmail({
+    email,
+    mentorFullName,
+    menteeFullName,
+  }: SendChemistryProposalEmailParams): Promise<void> {
+    const dashboardUrl = new URL('/mentor/dashboard', this.frontendUrl);
+
+    const mentorFirstName = mentorFullName.trim().split(/\s+/)[0];
+
+    const html = `
+    <h1>New chemistry session proposal</h1>
+    <p>Hi ${mentorFirstName},</p>
+    <p>${menteeFullName} would like to have a chemistry session with you.</p>
+    <p>
+      Please log in to your mentor dashboard to review the proposal and accept or decline it.
+    </p>
+    <p>
+      <a href="${dashboardUrl.toString()}">
+        Review chemistry proposal
+      </a>
+    </p>
+  `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Chemistry proposal email for ${email}: ${dashboardUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: {
+          Data: 'New chemistry session proposal',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send chemistry proposal email: ', error);
+
+      throw new InternalServerErrorException(
+        'Unable to send chemistry proposal email',
       );
     }
   }
