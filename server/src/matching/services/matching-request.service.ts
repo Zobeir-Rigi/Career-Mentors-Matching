@@ -194,12 +194,76 @@ export class MatchingRequestService {
     const bestMatch = recommendations[0];
 
     if (!bestMatch) {
-      throw new ConflictException('Unable to select a mentor match.');
+      throw new ConflictException('Unable to select a mentor recommendation.');
+    }
+
+    return {
+      status: 'RECOMMENDED' as const,
+      recommendation: bestMatch,
+    };
+  }
+
+  async proposeChemistry(userId: string, mentorId: string) {
+    const mentee = await this.prisma.menteeProfile.findUnique({
+      where: {
+        userId,
+      },
+      include: {
+        goalDisciplines: {
+          include: {
+            discipline: true,
+          },
+        },
+        wantedSkills: {
+          include: {
+            skill: true,
+          },
+        },
+        targetedIndustries: {
+          include: {
+            industry: true,
+          },
+        },
+      },
+    });
+
+    if (!mentee) {
+      throw new NotFoundException('Mentee profile not found');
+    }
+
+    const existingMatch = await this.prisma.matches.findFirst({
+      where: {
+        menteeId: mentee.id,
+        status: {
+          in: CAPACITY_RELEVANT_STATUSES,
+        },
+      },
+    });
+
+    if (existingMatch) {
+      throw new ConflictException(
+        'The mentee already has a current mentorship engagement.',
+      );
+    }
+
+    // Re-run matching immediately before creating the chemistry proposal.
+    // This makes sure the selected mentor is still eligible and has capacity.
+    const recommendations =
+      await this.matchingAlgoService.findBestMatches(userId);
+
+    const selectedRecommendation = recommendations.find(
+      (recommendation) => recommendation.mentorId === mentorId,
+    );
+
+    if (!selectedRecommendation) {
+      throw new ConflictException(
+        'This mentor is no longer available for matching.',
+      );
     }
 
     const mentor = await this.prisma.mentorProfile.findUnique({
       where: {
-        id: bestMatch.mentorId,
+        id: mentorId,
       },
       include: {
         user: {
@@ -226,18 +290,15 @@ export class MatchingRequestService {
     });
 
     if (!mentor) {
-      throw new NotFoundException('Matched mentor profile not found');
+      throw new NotFoundException('Mentor profile not found');
     }
 
-    const menteeSnapshot = this.buildMenteeSnapshot(mentee);
-
-    const mentorSnapshot = this.buildMentorSnapshot(mentor);
-
+    const now = new Date();
     const proposalExpiresAt = this.getProposalExpiry();
 
-    /*
-     * Create proposal and update waiting-list state together.
-     */
+    const menteeSnapshot = this.buildMenteeSnapshot(mentee);
+    const mentorSnapshot = this.buildMentorSnapshot(mentor);
+
     return this.prisma.$transaction(async (tx) => {
       const match = await tx.matches.create({
         data: {
@@ -247,9 +308,12 @@ export class MatchingRequestService {
           menteeSnapshot,
           mentorSnapshot,
 
-          scores: bestMatch.score,
+          scores: selectedRecommendation.score,
 
           status: MatchStatus.CHEMISTRY_PENDING,
+
+          menteeAcceptedAt: now,
+          chemistryMenteeConfirmedAt: now,
 
           proposalExpiresAt,
         },
@@ -265,7 +329,7 @@ export class MatchingRequestService {
       });
 
       return {
-        status: 'MATCHED' as const,
+        status: 'CHEMISTRY_PENDING' as const,
         matchId: match.id,
       };
     });

@@ -91,4 +91,26 @@ export class MatchingController {
       mentorId,
     );
   }
+
+  @Post('chemistry/:mentorId')
+  @ApiOperation({
+    summary: 'Propose a chemistry session with the selected mentor',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Chemistry proposal created successfully',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Selected mentor is no longer available for matching',
+  })
+  proposeChemistry(
+    @Req() req: RequestWithUser,
+    @Param('mentorId') mentorId: string,
+  ) {
+    return this.matchingRequestService.proposeChemistry(
+      req.user.userId,
+      mentorId,
+    );
+  }
 }
