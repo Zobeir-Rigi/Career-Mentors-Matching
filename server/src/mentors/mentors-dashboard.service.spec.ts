@@ -95,7 +95,7 @@ describe('MentorDashboardService', () => {
           chemistryMenteeConfirmedAt: null,
 
           proposalExpiresAt: new Date('2026-08-19T12:00:00Z'),
-          confirmationDueAt: null,
+          checkInExpiresAt: null,
 
           createdAt: new Date(),
 
@@ -160,7 +160,7 @@ describe('MentorDashboardService', () => {
           chemistryMenteeConfirmedAt: null,
 
           proposalExpiresAt: null,
-          confirmationDueAt: null,
+          checkInExpiresAt: null,
 
           createdAt: new Date(),
 

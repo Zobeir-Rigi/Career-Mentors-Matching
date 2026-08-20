@@ -69,7 +69,7 @@ export class MenteeDashboardService {
     subStatus: MenteeMatchSubStatus,
     match: {
       proposalExpiresAt: Date | null;
-      confirmationDueAt: Date | null;
+      checkInExpiresAt: Date | null;
     },
   ): Date | null {
     switch (subStatus) {
@@ -78,7 +78,7 @@ export class MenteeDashboardService {
 
       case 'booked':
       case 'confirmed-waiting':
-        return match.confirmationDueAt;
+        return match.checkInExpiresAt;
 
       case 'awaiting-booking':
       case 'active':
@@ -109,7 +109,7 @@ export class MenteeDashboardService {
     chemistryMentorConfirmedAt: Date | null;
     chemistryMenteeConfirmedAt: Date | null;
     proposalExpiresAt: Date | null;
-    confirmationDueAt: Date | null;
+    checkInExpiresAt: Date | null;
     mentorProfile: {
       id: string;
       currentJobTitle: string | null;

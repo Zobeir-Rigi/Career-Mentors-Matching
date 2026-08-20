@@ -34,12 +34,12 @@ export class MentorDashboardService {
 
   private getEngagementDeadline(
     subStatus: MentorEngagementSubStatus,
-    match: { proposalExpiresAt: Date | null; confirmationDueAt: Date | null },
+    match: { proposalExpiresAt: Date | null; checkInExpiresAt: Date | null },
   ): Date | null {
     switch (subStatus) {
       case 'confirmed-waiting':
       case 'booked':
-        return match.confirmationDueAt;
+        return match.checkInExpiresAt;
 
       case 'proposed-awaiting-acceptance':
       case 'awaiting-booking':

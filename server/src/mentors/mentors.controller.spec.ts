@@ -133,7 +133,7 @@ describe('MentorsController', () => {
     chemistryMenteeConfirmedAt: null,
 
     proposalExpiresAt: null,
-    confirmationDueAt: null,
+    checkInExpiresAt: null,
 
     scheduledCheckIn: null,
 
