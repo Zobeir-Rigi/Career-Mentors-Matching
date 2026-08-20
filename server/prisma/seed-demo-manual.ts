@@ -41,7 +41,10 @@ if (!connectionString) {
   );
 }
 
-if (process.env.ALLOW_DEMO_SEED !== 'true') {
+if (
+  process.env.NODE_ENV === 'production' &&
+  process.env.ALLOW_DEMO_SEED !== 'true'
+) {
   throw new Error(
     'Refusing to seed. Set ALLOW_DEMO_SEED=true only for the dedicated demo/staging database.',
   );

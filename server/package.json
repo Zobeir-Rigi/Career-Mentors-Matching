@@ -21,7 +21,7 @@
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "postinstall": "prisma generate",
-    "seed:matching-demo": "tsx prisma/seed-matching-demo.ts"
+    "seed:demo-manual": "tsx prisma/seed-demo-manual.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1110.0",
