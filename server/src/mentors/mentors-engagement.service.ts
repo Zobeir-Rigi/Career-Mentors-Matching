@@ -7,7 +7,7 @@ import {
 import { MailService } from '../mail/mail.service';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus } from '../generated/prisma/enums';
+import { MatchStatus, WaitingStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class MentorEngagementService {
@@ -71,14 +71,31 @@ export class MentorEngagementService {
       throw new ConflictException('Completed mentorship cannot be declined.');
     }
 
-    return this.prisma.matches.update({
-      where: {
-        id: engagement.id,
-      },
-      data: {
-        status: MatchStatus.DECLINED,
-        declinedAt: new Date(),
-      },
+    return this.prisma.$transaction(async (tx) => {
+      const declinedEngagement = await tx.matches.update({
+        where: {
+          id: engagement.id,
+        },
+        data: {
+          status: MatchStatus.DECLINED,
+          declinedAt: new Date(),
+        },
+      });
+
+      await tx.menteeWaitingList.upsert({
+        where: {
+          menteeId: engagement.menteeId,
+        },
+        update: {
+          status: WaitingStatus.WAITING,
+        },
+        create: {
+          menteeId: engagement.menteeId,
+          status: WaitingStatus.WAITING,
+        },
+      });
+
+      return declinedEngagement;
     });
   }
 

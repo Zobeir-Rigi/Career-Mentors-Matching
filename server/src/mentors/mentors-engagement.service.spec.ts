@@ -3,7 +3,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 
 import { MentorEngagementService } from './mentors-engagement.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus } from '../generated/prisma/enums';
+import { MatchStatus, WaitingStatus } from '../generated/prisma/enums';
 import { MailService } from '../mail/mail.service';
 
 describe('MentorEngagementService', () => {
@@ -14,6 +14,10 @@ describe('MentorEngagementService', () => {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
+    menteeWaitingList: {
+      upsert: jest.fn(),
+    },
+    $transaction: jest.fn(),
   };
 
   const mailServiceMock = {
@@ -56,6 +60,7 @@ describe('MentorEngagementService', () => {
 
     const engagement = {
       id: 'engagement-id',
+      menteeId: 'mentee-profile-id',
       status: MatchStatus.CHEMISTRY_PENDING,
       declinedAt: null,
     };
@@ -68,6 +73,10 @@ describe('MentorEngagementService', () => {
 
     prismaMock.matches.findFirst.mockResolvedValue(engagement);
     prismaMock.matches.update.mockResolvedValue(declinedEngagement);
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) =>
+        callback(prismaMock),
+    );
 
     const result = await service.decline('mentor-user-id', 'engagement-id');
 
@@ -112,6 +121,18 @@ describe('MentorEngagementService', () => {
     });
 
     expect(result).toEqual(declinedEngagement);
+    expect(prismaMock.menteeWaitingList.upsert).toHaveBeenCalledWith({
+      where: {
+        menteeId: 'mentee-profile-id',
+      },
+      update: {
+        status: WaitingStatus.WAITING,
+      },
+      create: {
+        menteeId: 'mentee-profile-id',
+        status: WaitingStatus.WAITING,
+      },
+    });
   });
 
   it('is idempotent when engagement is already declined', async () => {
