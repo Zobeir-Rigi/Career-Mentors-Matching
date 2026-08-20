@@ -9,9 +9,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { StaffMenteesResponseDto } from './dto/staff-mentees-response.dto';
 import { StaffMentorsResponseDto } from './dto/staff-mentors-response.dto';
 import { StaffService } from './staff.service';
+import { UserRole } from '@/auth/decorators/roles.decorator';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { RolesGuard } from '@/auth/guards/roles.guard';
+
 @ApiTags('Mentors')
 @ApiCookieAuth('accessToken')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(UserRole.ADMIN)
 @Controller('staff')
 export class StaffController {
   constructor(private readonly staffService: StaffService) {}
