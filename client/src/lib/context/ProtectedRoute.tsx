@@ -19,7 +19,7 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     const defaultRedirect =
       user.role === "ADMIN"
-        ? "/admin"
+        ? "/staff"
         : user.role === "MENTOR"
           ? "/mentor/profile"
           : "/mentee/profile";
