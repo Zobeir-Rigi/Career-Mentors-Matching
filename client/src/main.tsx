@@ -22,6 +22,7 @@ import { Staff } from "./pages/Staff";
 import { ThemeProvider } from "./lib/context/ThemeProvider";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
+import { NotFound } from "./pages/NotFound";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -75,6 +76,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
               <Route path="/staff" element={<Staff />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </ThemeProvider>
       </AuthProvider>
