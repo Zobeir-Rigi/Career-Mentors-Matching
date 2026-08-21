@@ -3,8 +3,8 @@ import { Card } from "@components/ui/Card";
 import { Button } from "@components/ui/Button";
 
 export function MenteesWaiting() {
-    const { menteesWaitingData, isLoading } = useStaff();
-    if (isLoading || !menteesWaitingData) {
+    const { menteesData, isLoading } = useStaff();
+    if (isLoading || !menteesData) {
         return <div>Loading mentees in waiting list...</div>;
     }
     async function handleProposeMatch() {
@@ -23,7 +23,7 @@ export function MenteesWaiting() {
             </div>
             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 {
-                    menteesWaitingData.map((mentee, index) => {
+                    menteesData.map((mentee, index) => {
                         return (
                             <Card key={index} className="max-w-[563px] flex flex-row items-center justify-between">
                                 <div>

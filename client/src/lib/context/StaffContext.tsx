@@ -52,13 +52,8 @@ export interface Match {
 
 export interface StaffContextType {
     globalMatchingData: GlobalMatchingData | null;
-    menteesWaitingData: MenteesWaitingData | null;
-    mentorData: MentorData | null;
     mentorsData: MentorsData | [];
-    mentorMatches: Match[];
-    menteeData: MenteeData | null;
     menteesData: MenteesData | [];
-    menteeMatches: Match[];
     isLoading: boolean;
     refetch: () => Promise<void>;
 }

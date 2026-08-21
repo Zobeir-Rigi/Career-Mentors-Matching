@@ -1,19 +1,11 @@
 import { api } from "@/services/api";
 
-export async function getMentees() {
+export async function getStaffData(endpoint: string) {
     try {
-        const response = await api.get("/staff/mentees");
+        const response = await api.get("/staff/" + endpoint);
         return response;
     } catch (error) {
-        console.log(error);
-    }
-}
-
-export async function getMentors() {
-    try {
-        const response = await api.get("/staff/mentors");
-        return response;
-    } catch (error) {
-        console.log(error);
+        console.error(`Error fetching staff data [${endpoint}]:`, error);
+        throw error;
     }
 }
