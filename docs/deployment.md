@@ -66,6 +66,17 @@ AUTH_COOKIE_MAX_AGE_MS=86400000
 EMAIL_PROVIDER=
 EMAIL_FROM=
 ```
+# Required when EMAIL_PROVIDER=ses
+
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_REGION=eu-west-1
+
+### Email Configuration
+
+When `EMAIL_PROVIDER=ses`, valid AWS SES credentials must be configured.
+
+If SES credentials are missing, user accounts will still be created successfully, but verification and password reset emails will not be sent.
 
 ## Deployment Process
 

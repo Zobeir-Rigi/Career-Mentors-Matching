@@ -72,8 +72,14 @@ https://xmlgxcre4zu1pq3mcl5pf7o7.trainees.hosting.cyf.academy/api/docs
 
 ### Start the Database
 
+The PostgreSQL database is configured in the `server` directory.
+
 ```bash
+cd server
 docker compose up -d
+```
+
+This uses the `docker-compose.yml` file located in the `server` directory.
 ```
 
 ### Backend Setup
