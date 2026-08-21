@@ -1,0 +1,565 @@
+import { Test, TestingModule } from '@nestjs/testing';
+
+import { MatchingRequestService } from './matching-request.service';
+import { MatchingAlgoService } from './matching-algo.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import {
+  MatchStatus,
+  Region,
+  Role,
+  WaitingStatus,
+} from '../../generated/prisma/enums';
+import type { Prisma } from '../../generated/prisma/client';
+import { MailService } from '../../mail/mail.service';
+
+describe('MatchingRequestService', () => {
+  let service: MatchingRequestService;
+
+  const prismaMock = {
+    user: {
+      findMany: jest.fn(),
+    },
+
+    menteeProfile: {
+      findUnique: jest.fn(),
+    },
+
+    matches: {
+      findFirst: jest.fn(),
+      create: jest.fn<Promise<unknown>, [Prisma.MatchesCreateArgs]>(),
+    },
+
+    mentorProfile: {
+      findUnique: jest.fn(),
+    },
+
+    menteeWaitingList: {
+      findUnique: jest.fn(),
+      upsert: jest.fn(),
+      update: jest.fn(),
+      updateMany: jest.fn(),
+    },
+
+    $transaction: jest.fn(),
+  };
+
+  const matchingAlgoServiceMock = {
+    findBestMatches: jest.fn(),
+  };
+
+  const mailServiceMock = {
+    sendChemistryProposalEmail: jest.fn(),
+    sendMenteeWaitingListAdminEmail: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        MatchingRequestService,
+        {
+          provide: PrismaService,
+          useValue: prismaMock,
+        },
+        {
+          provide: MatchingAlgoService,
+          useValue: matchingAlgoServiceMock,
+        },
+        {
+          provide: MailService,
+          useValue: mailServiceMock,
+        },
+      ],
+    }).compile();
+
+    service = module.get<MatchingRequestService>(MatchingRequestService);
+
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('returns the best recommendation without creating a match', async () => {
+    prismaMock.menteeProfile.findUnique.mockResolvedValue({
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+
+      user: {
+        fullName: 'Casey Morgan',
+        email: 'casey@example.com',
+      },
+
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+    });
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    const recommendation = {
+      mentorId: 'mentor-profile-id',
+      userId: 'mentor-user-id',
+      score: 92,
+
+      categoryScores: {
+        disciplines: 1,
+        skills: 1,
+        availability: 1,
+        location: 1,
+        industries: 1,
+        meetingStructure: 1,
+        meetingCadence: 1,
+      },
+
+      profile: {
+        fullName: 'Amina Patel',
+        currentJobTitle: 'Senior Software Engineer',
+        region: Region.LONDON,
+        openToRemote: true,
+        bio: 'Experienced mentor',
+        linkedinURL: 'https://linkedin.com/in/amina',
+      },
+    };
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([recommendation]);
+
+    const result = await service.requestMatch('mentee-user-id');
+
+    expect(result).toEqual({
+      status: 'RECOMMENDED',
+      recommendation,
+    });
+
+    expect(prismaMock.matches.create).not.toHaveBeenCalled();
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('notifies an active admin when no mentor can be recommended', async () => {
+    const now = new Date('2026-08-21T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    prismaMock.menteeProfile.findUnique.mockResolvedValue({
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+
+      user: {
+        fullName: 'Casey Morgan',
+        email: 'casey@example.com',
+      },
+
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+    });
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([]);
+
+    prismaMock.menteeWaitingList.findUnique.mockResolvedValue(null);
+
+    prismaMock.user.findMany.mockResolvedValue([
+      {
+        fullName: 'Demo Admin',
+        email: 'admin@example.com',
+        role: Role.ADMIN,
+      },
+    ]);
+
+    const result = await service.requestMatch('mentee-user-id');
+
+    expect(prismaMock.menteeWaitingList.upsert).toHaveBeenCalledWith({
+      where: {
+        menteeId: 'mentee-profile-id',
+      },
+
+      update: {
+        status: WaitingStatus.WAITING,
+        notifiedAdminAt: null,
+      },
+
+      create: {
+        menteeId: 'mentee-profile-id',
+        status: WaitingStatus.WAITING,
+      },
+    });
+
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith({
+      where: {
+        role: Role.ADMIN,
+        isActive: true,
+      },
+
+      select: {
+        email: true,
+        fullName: true,
+      },
+    });
+
+    expect(
+      mailServiceMock.sendMenteeWaitingListAdminEmail,
+    ).toHaveBeenCalledWith({
+      email: 'admin@example.com',
+      adminFullName: 'Demo Admin',
+      menteeFullName: 'Casey Morgan',
+      menteeEmail: 'casey@example.com',
+    });
+
+    expect(prismaMock.menteeWaitingList.update).toHaveBeenCalledWith({
+      where: {
+        menteeId: 'mentee-profile-id',
+      },
+
+      data: {
+        status: WaitingStatus.NOTIFIED,
+        notifiedAdminAt: now,
+      },
+    });
+
+    expect(result).toEqual({
+      status: 'WAITING',
+      matchId: null,
+    });
+  });
+
+  it('does not notify the admin again when the waiting entry is already notified', async () => {
+    prismaMock.menteeProfile.findUnique.mockResolvedValue({
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+
+      user: {
+        fullName: 'Casey Morgan',
+        email: 'casey@example.com',
+      },
+
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+    });
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([]);
+
+    prismaMock.menteeWaitingList.findUnique.mockResolvedValue({
+      status: WaitingStatus.NOTIFIED,
+    });
+
+    const result = await service.requestMatch('mentee-user-id');
+
+    expect(prismaMock.menteeWaitingList.upsert).not.toHaveBeenCalled();
+
+    expect(prismaMock.user.findMany).not.toHaveBeenCalled();
+
+    expect(
+      mailServiceMock.sendMenteeWaitingListAdminEmail,
+    ).not.toHaveBeenCalled();
+
+    expect(result).toEqual({
+      status: 'WAITING',
+      matchId: null,
+    });
+  });
+
+  it('leaves the mentee waiting when the admin email cannot be sent', async () => {
+    prismaMock.menteeProfile.findUnique.mockResolvedValue({
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+
+      user: {
+        fullName: 'Casey Morgan',
+        email: 'casey@example.com',
+      },
+
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+    });
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([]);
+
+    prismaMock.menteeWaitingList.findUnique.mockResolvedValue(null);
+
+    prismaMock.user.findMany.mockResolvedValue([
+      {
+        fullName: 'Demo Admin',
+        email: 'admin@example.com',
+      },
+    ]);
+
+    mailServiceMock.sendMenteeWaitingListAdminEmail.mockRejectedValue(
+      new Error('SES unavailable'),
+    );
+
+    const result = await service.requestMatch('mentee-user-id');
+
+    expect(result).toEqual({
+      status: 'WAITING',
+      matchId: null,
+    });
+
+    expect(prismaMock.menteeWaitingList.upsert).toHaveBeenCalled();
+
+    expect(prismaMock.menteeWaitingList.update).not.toHaveBeenCalled();
+  });
+
+  it('creates a chemistry-pending match when the mentee proposes chemistry', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    const proposalExpiresAt = new Date('2026-08-27T12:00:00.000Z');
+
+    const mentee = {
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+
+      user: {
+        fullName: 'Casey Morgan',
+      },
+    };
+
+    const mentor = {
+      id: 'mentor-profile-id',
+      userId: 'mentor-user-id',
+      currentJobTitle: 'Senior Software Engineer',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      capacity: 2,
+      mentorDisciplines: [],
+      mentorSkills: [],
+      mentorDomainIndustries: [],
+      matches: [],
+
+      user: {
+        fullName: 'Amina Patel',
+        email: 'amina@example.com',
+      },
+    };
+
+    prismaMock.menteeProfile.findUnique.mockResolvedValue(mentee);
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([
+      {
+        mentorId: mentor.id,
+        userId: mentor.userId,
+        score: 92,
+
+        categoryScores: {
+          disciplines: 1,
+          skills: 1,
+          availability: 1,
+          location: 1,
+          industries: 1,
+          meetingStructure: 1,
+          meetingCadence: 1,
+        },
+
+        profile: {
+          fullName: 'Amina Patel',
+          currentJobTitle: mentor.currentJobTitle,
+          region: mentor.region,
+          openToRemote: true,
+          bio: 'Experienced mentor',
+          linkedinURL: 'https://linkedin.com/in/amina',
+        },
+      },
+    ]);
+
+    prismaMock.mentorProfile.findUnique.mockResolvedValue(mentor);
+
+    const createdMatch = {
+      id: 'match-id',
+      menteeId: mentee.id,
+      mentorId: mentor.id,
+      status: MatchStatus.CHEMISTRY_PENDING,
+    };
+
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) => {
+        prismaMock.matches.create.mockResolvedValue(createdMatch);
+
+        return callback(prismaMock);
+      },
+    );
+
+    const result = await service.proposeChemistry(
+      'mentee-user-id',
+      'mentor-profile-id',
+    );
+
+    expect(prismaMock.matches.create).toHaveBeenCalledTimes(1);
+
+    const createArgs = prismaMock.matches.create.mock.calls[0]?.[0];
+
+    expect(createArgs?.data.menteeId).toBe('mentee-profile-id');
+
+    expect(createArgs?.data.mentorId).toBe('mentor-profile-id');
+
+    expect(createArgs?.data.status).toBe(MatchStatus.CHEMISTRY_PENDING);
+
+    expect(createArgs?.data.menteeAcceptedAt).toEqual(now);
+
+    expect(createArgs?.data.chemistryMenteeConfirmedAt).toEqual(now);
+
+    expect(createArgs?.data.proposalExpiresAt).toEqual(proposalExpiresAt);
+
+    expect(result).toEqual({
+      status: 'CHEMISTRY_PENDING',
+      matchId: 'match-id',
+    });
+
+    expect(mailServiceMock.sendChemistryProposalEmail).toHaveBeenCalledWith({
+      email: 'amina@example.com',
+      mentorFullName: 'Amina Patel',
+      menteeFullName: 'Casey Morgan',
+    });
+  });
+
+  it('still succeeds when the chemistry proposal email cannot be sent', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    const mentee = {
+      id: 'mentee-profile-id',
+      userId: 'mentee-user-id',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      goalDisciplines: [],
+      wantedSkills: [],
+      targetedIndustries: [],
+
+      user: {
+        fullName: 'Casey Morgan',
+      },
+    };
+
+    const mentor = {
+      id: 'mentor-profile-id',
+      userId: 'mentor-user-id',
+      currentJobTitle: 'Senior Software Engineer',
+      region: Region.LONDON,
+      openToRemote: true,
+      availability: [],
+      meetingCadence: null,
+      meetingStructure: null,
+      capacity: 2,
+      mentorDisciplines: [],
+      mentorSkills: [],
+      mentorDomainIndustries: [],
+      matches: [],
+
+      user: {
+        fullName: 'Amina Patel',
+        email: 'amina@example.com',
+      },
+    };
+
+    prismaMock.menteeProfile.findUnique.mockResolvedValue(mentee);
+
+    prismaMock.matches.findFirst.mockResolvedValue(null);
+
+    matchingAlgoServiceMock.findBestMatches.mockResolvedValue([
+      {
+        mentorId: mentor.id,
+        userId: mentor.userId,
+        score: 92,
+
+        categoryScores: {
+          disciplines: 1,
+          skills: 1,
+          availability: 1,
+          location: 1,
+          industries: 1,
+          meetingStructure: 1,
+          meetingCadence: 1,
+        },
+
+        profile: {
+          fullName: 'Amina Patel',
+          currentJobTitle: mentor.currentJobTitle,
+          region: mentor.region,
+          openToRemote: true,
+          bio: 'Experienced mentor',
+          linkedinURL: 'https://linkedin.com/in/amina',
+        },
+      },
+    ]);
+
+    prismaMock.mentorProfile.findUnique.mockResolvedValue(mentor);
+
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) => {
+        prismaMock.matches.create.mockResolvedValue({
+          id: 'match-id',
+          menteeId: mentee.id,
+          mentorId: mentor.id,
+          status: MatchStatus.CHEMISTRY_PENDING,
+        });
+
+        return callback(prismaMock);
+      },
+    );
+
+    mailServiceMock.sendChemistryProposalEmail.mockRejectedValue(
+      new Error('SES unavailable'),
+    );
+
+    const result = await service.proposeChemistry(
+      'mentee-user-id',
+      'mentor-profile-id',
+    );
+
+    expect(result).toEqual({
+      status: 'CHEMISTRY_PENDING',
+      matchId: 'match-id',
+    });
+
+    expect(prismaMock.matches.create).toHaveBeenCalledTimes(1);
+  });
+});

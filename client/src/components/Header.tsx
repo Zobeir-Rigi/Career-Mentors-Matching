@@ -30,6 +30,8 @@ export function Header() {
   const fullName = user?.fullName ?? "";
   const roleName = user?.role?.toLowerCase();
   const isAuthenticated = Boolean(user && user.role);
+  const hasProfileNavigation =
+    user?.role === "MENTEE" || user?.role === "MENTOR";
 
   const handleLogout = async () => {
     if (logout) {
@@ -60,7 +62,7 @@ export function Header() {
         </div>
 
         {/* Desktop navigation */}
-        {isAuthenticated && roleName && (
+        {isAuthenticated && roleName && hasProfileNavigation && (
           <nav
             className="hidden items-center gap-2 md:flex"
             aria-label="Main navigation"
@@ -141,7 +143,7 @@ export function Header() {
               </Button>
             </div>
 
-            {isAuthenticated && roleName && (
+            {isAuthenticated && roleName && hasProfileNavigation && (
               <nav className="mt-8 flex flex-col gap-2">
                 <NavLink
                   to={`/${roleName}/profile`}

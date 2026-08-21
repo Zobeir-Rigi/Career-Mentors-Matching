@@ -1,23 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
+import { CAPACITY_RELEVANT_STATUSES } from '@/common/constants/capacity-relevant-statuses';
+
 import { MatchStatus } from '../generated/prisma/enums';
 import { PrismaService } from '../prisma/prisma.service';
 
 import type {
-  MenteeJourneyStage,
-  MenteeMatchSubStatus,
   MenteeDashboardCurrentMatchDto,
   MenteeDashboardResponseDto,
+  MenteeJourneyStage,
+  MenteeMatchSubStatus,
 } from './dto/mentee-dashboard-response.dto';
+
 import { isMenteeMatchReady } from './helpers/mentee-match-readiness';
-import { CAPACITY_RELEVANT_STATUSES } from '@/common/constants/capacity-relevant-statuses';
 
 interface DashboardMatchState {
   status: MatchStatus;
-  menteeAcceptedAt: Date | null;
   chemistryBookedAt: Date | null;
-  chemistryMentorConfirmedAt: Date | null;
-  chemistryMenteeConfirmedAt: Date | null;
 }
 
 @Injectable()
@@ -28,60 +27,66 @@ export class MenteeDashboardService {
     matchReady: boolean,
     match: DashboardMatchState | null,
   ): MenteeJourneyStage {
-    if (match) {
-      if (match.status === MatchStatus.ACTIVE) {
-        return 'mentorship-active';
-      }
-
-      if (!match.menteeAcceptedAt) {
-        return 'match-proposed';
-      }
-
-      return 'chemistry-confirm';
+    if (!match) {
+      return matchReady ? 'ready' : 'incomplete';
     }
 
-    return matchReady ? 'ready' : 'incomplete';
+    switch (match.status) {
+      case MatchStatus.CHEMISTRY_PENDING:
+        return 'match-proposed';
+
+      case MatchStatus.CHEMISTRY_CONFIRMED:
+      case MatchStatus.MATCH_PENDING:
+        return 'chemistry-confirm';
+
+      case MatchStatus.ACTIVE:
+        return 'mentorship-active';
+
+      default:
+        return matchReady ? 'ready' : 'incomplete';
+    }
   }
 
   private deriveMatchSubStatus(
     match: DashboardMatchState,
   ): MenteeMatchSubStatus {
-    if (match.status === MatchStatus.ACTIVE) {
-      return 'active';
-    }
+    switch (match.status) {
+      case MatchStatus.CHEMISTRY_PENDING:
+        return 'proposed';
 
-    if (!match.menteeAcceptedAt) {
-      return 'proposed';
-    }
+      case MatchStatus.CHEMISTRY_CONFIRMED:
+        return match.chemistryBookedAt ? 'booked' : 'awaiting-booking';
 
-    if (!match.chemistryBookedAt) {
-      return 'awaiting-booking';
-    }
+      case MatchStatus.MATCH_PENDING:
+        return 'confirmed-waiting';
 
-    if (match.chemistryMenteeConfirmedAt && !match.chemistryMentorConfirmedAt) {
-      return 'confirmed-waiting';
-    }
+      case MatchStatus.ACTIVE:
+        return 'active';
 
-    return 'booked';
+      default:
+        throw new Error(
+          `Unsupported current match status: ${String(match.status)}`,
+        );
+    }
   }
 
-  private getEngagementDeadline(
-    subStatus: MenteeMatchSubStatus,
-    match: {
-      proposalExpiresAt: Date | null;
-      confirmationDueAt: Date | null;
-    },
-  ): Date | null {
-    switch (subStatus) {
-      case 'proposed':
+  private getEngagementDeadline(match: {
+    status: MatchStatus;
+    proposalExpiresAt: Date | null;
+    checkInExpiresAt: Date | null;
+  }): Date | null {
+    switch (match.status) {
+      case MatchStatus.CHEMISTRY_PENDING:
         return match.proposalExpiresAt;
 
-      case 'booked':
-      case 'confirmed-waiting':
-        return match.confirmationDueAt;
+      case MatchStatus.MATCH_PENDING:
+        return match.checkInExpiresAt;
 
-      case 'awaiting-booking':
-      case 'active':
+      case MatchStatus.CHEMISTRY_CONFIRMED:
+      case MatchStatus.ACTIVE:
+        return null;
+
+      default:
         return null;
     }
   }
@@ -104,12 +109,12 @@ export class MenteeDashboardService {
   private mapCurrentMatch(match: {
     id: string;
     status: MatchStatus;
-    menteeAcceptedAt: Date | null;
     chemistryBookedAt: Date | null;
-    chemistryMentorConfirmedAt: Date | null;
-    chemistryMenteeConfirmedAt: Date | null;
+    scheduledCheckIn: Date | null;
     proposalExpiresAt: Date | null;
-    confirmationDueAt: Date | null;
+    checkInExpiresAt: Date | null;
+    checkInMenteeAgreed: boolean | null;
+    checkInMentorAgreed: boolean | null;
     mentorProfile: {
       id: string;
       currentJobTitle: string | null;
@@ -128,12 +133,16 @@ export class MenteeDashboardService {
     };
   }): MenteeDashboardCurrentMatchDto {
     const subStatus = this.deriveMatchSubStatus(match);
-    const canRevealContactDetails = subStatus !== 'proposed';
 
-    const expiresAt = this.getEngagementDeadline(subStatus, match);
+    const canRevealContactDetails =
+      match.status !== MatchStatus.CHEMISTRY_PENDING;
+
+    const expiresAt = this.getEngagementDeadline(match);
 
     return {
       id: match.id,
+
+      status: match.status,
 
       subStatus,
 
@@ -143,6 +152,7 @@ export class MenteeDashboardService {
         currentJobTitle: match.mentorProfile.currentJobTitle,
         bio: match.mentorProfile.bio,
         linkedinURL: match.mentorProfile.user.linkedinURL,
+
         calendarLink: canRevealContactDetails
           ? match.mentorProfile.user.scheduleURL
           : null,
@@ -159,7 +169,14 @@ export class MenteeDashboardService {
         expiresAt,
       },
 
+      checkIn: {
+        menteeAgreed: match.checkInMenteeAgreed,
+        mentorAgreed: match.checkInMentorAgreed,
+      },
+
       chemistryBookedAt: match.chemistryBookedAt,
+
+      scheduledCheckIn: match.scheduledCheckIn,
     };
   }
 
@@ -211,6 +228,7 @@ export class MenteeDashboardService {
                     scheduleURL: true,
                   },
                 },
+
                 mentorDisciplines: {
                   include: {
                     discipline: {
@@ -223,6 +241,7 @@ export class MenteeDashboardService {
               },
             },
           },
+
           orderBy: {
             createdAt: 'desc',
           },
@@ -252,9 +271,11 @@ export class MenteeDashboardService {
       .map((match) => ({
         id: match.id,
         mentorName: match.mentorProfile.user.fullName,
+
         focusAreas: match.mentorProfile.mentorDisciplines.map(
           (item) => item.discipline.name,
         ),
+
         status: match.status,
         completedAt: match.completedAt,
         declinedAt: match.declinedAt,
@@ -267,7 +288,9 @@ export class MenteeDashboardService {
       journeyStage,
       matchReady,
       goals,
+
       currentMatch: currentMatch ? this.mapCurrentMatch(currentMatch) : null,
+
       pastMatches,
     };
   }

@@ -2,7 +2,9 @@ interface ThreadProps {
   className?: string;
 }
 
-export function Thread({ className = "w-48 h-12" }: ThreadProps) {
+export function Thread({
+  className = "w-48 h-12 sm:w-40 md:w-48",
+}: ThreadProps) {
   return (
     <svg viewBox="0 0 200 50" className={className} fill="none">
       <circle

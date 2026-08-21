@@ -262,8 +262,8 @@ model Matches {
   chemistryMentorConfirmedAt DateTime?
   chemistryMenteeConfirmedAt DateTime?
   proposalExpiresAt          DateTime?
-  confirmationDueAt          DateTime?
   scheduledCheckIn           DateTime?
+  checkInExpiresAt           DateTime?
   checkInMenteeAgreed        Boolean?
   checkInMentorAgreed        Boolean?
   status                     MatchStatus   @default(CHEMISTRY_PENDING)

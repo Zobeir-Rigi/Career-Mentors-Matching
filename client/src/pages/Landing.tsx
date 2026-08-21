@@ -11,7 +11,7 @@ export function Landing() {
     <div className="min-h-screen bg-bg text-fg space-y-12">
       <Header></Header>
       <main className="space-y-12">
-        <HeroBand />
+        <HeroBand disciplines={goalOptions} />
         <HowMatchingWorks />
         <DisciplinesBand
           header={`Mentors across ${goalOptions.length} disciplines`}

@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+import { MatchStatus } from '../../generated/prisma/enums';
+
 export type MentorEngagementSubStatus =
   | 'proposed-awaiting-acceptance'
   | 'awaiting-booking'
@@ -21,6 +23,16 @@ export class MentorDashboardMenteeDto {
   bio!: string | null;
 
   @ApiProperty({ nullable: true })
+  reasonsNote!: string | null;
+
+  @ApiProperty({ type: [String] })
+  goals!: string[];
+
+  @ApiProperty({
+    nullable: true,
+    description:
+      'Public LinkedIn profile shown while the mentor reviews the chemistry proposal.',
+  })
   linkedinURL!: string | null;
 
   @ApiProperty({
@@ -32,7 +44,7 @@ export class MentorDashboardMenteeDto {
   @ApiProperty({
     nullable: true,
     description:
-      'Null until the mentee has accepted the proposal; visible from awaiting-booking onward.',
+      'Private email hidden until the mentor accepts the chemistry proposal.',
   })
   email!: string | null;
 }
@@ -45,9 +57,20 @@ export class MentorDashboardCountdownDto {
   expiresAt!: Date | null;
 }
 
+export class MentorDashboardCheckInDto {
+  @ApiProperty({ nullable: true })
+  menteeAgreed!: boolean | null;
+
+  @ApiProperty({ nullable: true })
+  mentorAgreed!: boolean | null;
+}
+
 export class MentorDashboardEngagementDto {
   @ApiProperty()
   id!: string;
+
+  @ApiProperty({ enum: MatchStatus })
+  status!: MatchStatus;
 
   @ApiProperty({
     enum: [
@@ -60,11 +83,26 @@ export class MentorDashboardEngagementDto {
   })
   subStatus!: MentorEngagementSubStatus;
 
-  @ApiProperty({ type: MentorDashboardMenteeDto })
+  @ApiProperty({
+    type: MentorDashboardMenteeDto,
+  })
   mentee!: MentorDashboardMenteeDto;
 
-  @ApiProperty({ type: MentorDashboardCountdownDto })
+  @ApiProperty({
+    type: MentorDashboardCountdownDto,
+  })
   countdown!: MentorDashboardCountdownDto;
+
+  @ApiProperty({
+    type: MentorDashboardCheckInDto,
+  })
+  checkIn!: MentorDashboardCheckInDto;
+
+  @ApiProperty({ nullable: true })
+  chemistryBookedAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  scheduledCheckIn!: Date | null;
 }
 
 export class MentorDashboardCapacityDto {
@@ -90,15 +128,21 @@ export class MentorDashboardResponseDto {
   @ApiProperty()
   fullName!: string;
 
-  @ApiProperty({ type: MentorDashboardCapacityDto })
+  @ApiProperty({
+    type: MentorDashboardCapacityDto,
+  })
   capacity!: MentorDashboardCapacityDto;
 
   @ApiProperty()
   isAcceptingMentees!: boolean;
 
-  @ApiProperty({ type: [MentorDashboardEngagementDto] })
+  @ApiProperty({
+    type: [MentorDashboardEngagementDto],
+  })
   engagements!: MentorDashboardEngagementDto[];
 
-  @ApiProperty({ type: MentorDashboardProfileSummaryDto })
+  @ApiProperty({
+    type: MentorDashboardProfileSummaryDto,
+  })
   profileSummary!: MentorDashboardProfileSummaryDto;
 }

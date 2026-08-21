@@ -28,35 +28,6 @@ export class MenteeEngagementService {
     return engagement;
   }
 
-  async accept(userId: string, engagementId: string) {
-    const engagement = await this.findOwnedEngagement(userId, engagementId);
-
-    if (engagement.menteeAcceptedAt) {
-      return engagement;
-    }
-
-    if (engagement.status === MatchStatus.DECLINED) {
-      throw new ConflictException('A declined engagement cannot be accepted.');
-    }
-
-    if (engagement.status === MatchStatus.COMPLETED) {
-      throw new ConflictException('A completed mentorship cannot be accepted.');
-    }
-
-    if (engagement.status === MatchStatus.ACTIVE) {
-      return engagement;
-    }
-
-    return this.prisma.matches.update({
-      where: {
-        id: engagement.id,
-      },
-      data: {
-        menteeAcceptedAt: new Date(),
-      },
-    });
-  }
-
   async bookChemistry(userId: string, engagementId: string) {
     const engagement = await this.findOwnedEngagement(userId, engagementId);
 
@@ -80,6 +51,12 @@ export class MenteeEngagementService {
       return engagement;
     }
 
+    if (engagement.status !== MatchStatus.CHEMISTRY_CONFIRMED) {
+      throw new ConflictException(
+        'The mentor must accept the chemistry proposal before the session can be booked.',
+      );
+    }
+
     if (!engagement.menteeAcceptedAt) {
       throw new ConflictException(
         'The mentee must accept the proposal before booking the chemistry session.',
@@ -96,54 +73,67 @@ export class MenteeEngagementService {
     });
   }
 
-  async confirm(userId: string, engagementId: string) {
+  async respondToCheckIn(
+    userId: string,
+    engagementId: string,
+    agreed: boolean,
+  ) {
     const engagement = await this.findOwnedEngagement(userId, engagementId);
 
-    if (engagement.chemistryMenteeConfirmedAt) {
+    if (engagement.status !== MatchStatus.MATCH_PENDING) {
+      throw new ConflictException(
+        'Check-in response can only be submitted while mentorship confirmation is pending.',
+      );
+    }
+
+    if (engagement.checkInMenteeAgreed !== null) {
       return engagement;
-    }
-
-    if (engagement.status === MatchStatus.DECLINED) {
-      throw new ConflictException('A declined engagement cannot be confirmed.');
-    }
-
-    if (engagement.status === MatchStatus.COMPLETED) {
-      throw new ConflictException(
-        'A completed mentorship cannot be confirmed.',
-      );
-    }
-
-    if (engagement.status === MatchStatus.ACTIVE) {
-      return engagement;
-    }
-
-    if (!engagement.menteeAcceptedAt) {
-      throw new ConflictException(
-        'The proposal must be accepted before mentorship can be confirmed.',
-      );
-    }
-
-    if (!engagement.chemistryBookedAt) {
-      throw new ConflictException(
-        'The chemistry meeting must be booked before mentorship can be confirmed.',
-      );
     }
 
     const now = new Date();
 
-    const bothConfirmed = Boolean(engagement.chemistryMentorConfirmedAt);
+    return this.prisma.$transaction(async (tx) => {
+      if (!agreed) {
+        return tx.matches.update({
+          where: {
+            id: engagement.id,
+          },
+          data: {
+            checkInMenteeAgreed: false,
+            status: MatchStatus.DECLINED,
+            declinedAt: now,
+            checkInExpiresAt: null,
+          },
+        });
+      }
 
-    return this.prisma.matches.update({
-      where: {
-        id: engagement.id,
-      },
-      data: {
-        chemistryMenteeConfirmedAt: now,
+      await tx.matches.update({
+        where: {
+          id: engagement.id,
+        },
+        data: {
+          checkInMenteeAgreed: true,
+        },
+      });
 
-        ...(bothConfirmed && {
+      await tx.matches.updateMany({
+        where: {
+          id: engagement.id,
+          status: MatchStatus.MATCH_PENDING,
+          checkInMenteeAgreed: true,
+          checkInMentorAgreed: true,
+        },
+        data: {
           status: MatchStatus.ACTIVE,
-        }),
-      },
+          checkInExpiresAt: null,
+        },
+      });
+
+      return tx.matches.findUniqueOrThrow({
+        where: {
+          id: engagement.id,
+        },
+      });
     });
   }
 

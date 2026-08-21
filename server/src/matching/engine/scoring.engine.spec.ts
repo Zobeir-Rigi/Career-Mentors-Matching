@@ -20,8 +20,8 @@ import {
 describe('Scoring Engine', () => {
   describe('calculateArrayOverlapScore', () => {
     it.each([
-      [['TypeScript', 'React'], ['TypeScript', 'React', 'Node'], 1],
-      [['TypeScript', 'React', 'Python'], ['TypeScript', 'Node'], 1 / 3],
+      [['TypeScript', 'React'], ['TypeScript', 'React', 'Node'], 0.9375],
+      [['TypeScript', 'React', 'Python'], ['TypeScript', 'Node'], 0.75],
       [['Python', 'Django'], ['TypeScript', 'React'], 0],
       [[], ['TypeScript'], 1],
       [null, ['TypeScript'], 1],
@@ -44,7 +44,43 @@ describe('Scoring Engine', () => {
           ['TypeScript', 'TypeScript', 'React'],
           ['TypeScript'],
         ),
-      ).toBe(0.5);
+      ).toBe(0.75);
+    });
+
+    it('does not reduce a mentor score when the mentee adds unmatched acceptable preferences', () => {
+      const narrow = calculateArrayOverlapScore(['TypeScript'], ['TypeScript']);
+
+      const broader = calculateArrayOverlapScore(
+        ['TypeScript', 'React', 'Python', 'Java'],
+        ['TypeScript'],
+      );
+
+      expect(narrow).toBe(0.75);
+      expect(broader).toBe(0.75);
+    });
+
+    it('rewards each additional actual overlap', () => {
+      const oneOverlap = calculateArrayOverlapScore(
+        ['TypeScript', 'React', 'Python'],
+        ['TypeScript'],
+      );
+
+      const twoOverlaps = calculateArrayOverlapScore(
+        ['TypeScript', 'React', 'Python'],
+        ['TypeScript', 'React'],
+      );
+
+      const threeOverlaps = calculateArrayOverlapScore(
+        ['TypeScript', 'React', 'Python'],
+        ['TypeScript', 'React', 'Python'],
+      );
+
+      expect(oneOverlap).toBeCloseTo(0.75);
+      expect(twoOverlaps).toBeCloseTo(0.9375);
+      expect(threeOverlaps).toBeCloseTo(0.984375);
+
+      expect(twoOverlaps).toBeGreaterThan(oneOverlap);
+      expect(threeOverlaps).toBeGreaterThan(twoOverlaps);
     });
 
     it('is unaffected by extra mentor capabilities', () => {
@@ -236,10 +272,10 @@ describe('Scoring Engine', () => {
 
     it('computes every category from canonical IDs and preferences', () => {
       expect(computeAllCategoryScores(mentee, mentor)).toEqual({
-        disciplines: 0.5,
-        skills: 0.5,
+        disciplines: 0.75,
+        skills: 0.75,
         industries: 0,
-        availability: 0.5,
+        availability: 0.75,
         location: 0,
         meetingStructure: 0,
         meetingCadence: 1,

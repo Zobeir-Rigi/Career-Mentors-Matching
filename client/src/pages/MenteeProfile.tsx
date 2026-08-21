@@ -160,6 +160,11 @@ export function MenteeProfile() {
 
       await refreshProfile();
 
+      if (missingFields.length > 0) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
       navigate("/mentee/dashboard");
     } catch (error) {
       console.error("Failed to save profile", error);

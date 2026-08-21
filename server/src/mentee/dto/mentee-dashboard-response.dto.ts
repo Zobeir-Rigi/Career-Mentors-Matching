@@ -40,7 +40,7 @@ export class MenteeDashboardMentorDto {
   @ApiProperty({
     nullable: true,
     description:
-      "Mentor email exposed only for the mentee's own current engagement.",
+      'Mentor email exposed only after the mentor accepts the chemistry proposal.',
   })
   email!: string | null;
 }
@@ -53,9 +53,20 @@ export class MenteeDashboardCountdownDto {
   expiresAt!: Date | null;
 }
 
+export class MenteeDashboardCheckInDto {
+  @ApiProperty({ nullable: true })
+  menteeAgreed!: boolean | null;
+
+  @ApiProperty({ nullable: true })
+  mentorAgreed!: boolean | null;
+}
+
 export class MenteeDashboardCurrentMatchDto {
   @ApiProperty()
   id!: string;
+
+  @ApiProperty({ enum: MatchStatus })
+  status!: MatchStatus;
 
   @ApiProperty({
     enum: [
@@ -74,8 +85,14 @@ export class MenteeDashboardCurrentMatchDto {
   @ApiProperty({ type: MenteeDashboardCountdownDto })
   countdown!: MenteeDashboardCountdownDto;
 
+  @ApiProperty({ type: MenteeDashboardCheckInDto })
+  checkIn!: MenteeDashboardCheckInDto;
+
   @ApiProperty({ nullable: true })
   chemistryBookedAt!: Date | null;
+
+  @ApiProperty({ nullable: true })
+  scheduledCheckIn!: Date | null;
 }
 
 export class MenteeDashboardPastMatchDto {

@@ -11,6 +11,7 @@ import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
 import { MatchingModule } from './matching/matching.module';
 import { StaffModule } from './staff/staff.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { StaffModule } from './staff/staff.module';
     ]),
     MatchingModule,
     StaffModule,
+    ScheduleModule.forRoot(),
   ],
   providers: [
     {

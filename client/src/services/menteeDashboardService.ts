@@ -14,8 +14,16 @@ export type MenteeMatchSubStatus =
   | "confirmed-waiting"
   | "active";
 
+export type MenteeCurrentMatchStatus =
+  | "CHEMISTRY_PENDING"
+  | "CHEMISTRY_CONFIRMED"
+  | "MATCH_PENDING"
+  | "ACTIVE";
+
 export interface MenteeDashboardCurrentMatch {
   id: string;
+
+  status: MenteeCurrentMatchStatus;
 
   subStatus: MenteeMatchSubStatus;
 
@@ -35,7 +43,14 @@ export interface MenteeDashboardCurrentMatch {
     expiresAt: string | null;
   };
 
+  checkIn: {
+    menteeAgreed: boolean | null;
+    mentorAgreed: boolean | null;
+  };
+
   chemistryBookedAt: string | null;
+
+  scheduledCheckIn: string | null;
 }
 
 export interface MenteeDashboardPastMatch {
@@ -49,8 +64,11 @@ export interface MenteeDashboardPastMatch {
 
 export interface MenteeDashboardResponse {
   fullName: string;
+
   journeyStage: MenteeJourneyStage;
+
   matchReady: boolean;
+
   goals: string[];
 
   currentMatch: MenteeDashboardCurrentMatch | null;
@@ -58,23 +76,25 @@ export interface MenteeDashboardResponse {
   pastMatches: MenteeDashboardPastMatch[];
 }
 
-
-export async function getMenteeDashboard() {
-  const response = await api.get("/mentee-profile/dashboard");
+export async function getMenteeDashboard(): Promise<MenteeDashboardResponse> {
+  const response = await api.get<MenteeDashboardResponse>(
+    "/mentee-profile/dashboard",
+  );
 
   return response.data;
-}
-
-export async function acceptMenteeMatch(matchId: string): Promise<void> {
-  await api.patch(`/mentee-profile/engagements/${matchId}/accept`);
 }
 
 export async function bookMenteeChemistry(matchId: string): Promise<void> {
   await api.patch(`/mentee-profile/engagements/${matchId}/book`);
 }
 
-export async function confirmMenteeMatch(matchId: string): Promise<void> {
-  await api.patch(`/mentee-profile/engagements/${matchId}/confirm`);
+export async function respondToMenteeCheckIn(
+  matchId: string,
+  agreed: boolean,
+): Promise<void> {
+  await api.patch(`/mentee-profile/engagements/${matchId}/check-in`, {
+    agreed,
+  });
 }
 
 export async function declineMenteeMatch(matchId: string): Promise<void> {

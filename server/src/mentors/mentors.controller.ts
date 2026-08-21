@@ -27,6 +27,7 @@ import { CreateMentorDto } from './dto/create-mentor.dto';
 import { UpdateMentorDto } from './dto/update-mentor.dto';
 import { MentorProfileResponseDto } from './dto/mentor-profile-response.dto';
 import { MentorDashboardResponseDto } from './dto/mentor-dashboard-response.dto';
+import { CheckInResponseDto } from '../common/dto/check-in-response.dto';
 import { MentorEngagementService } from './mentors-engagement.service';
 
 @ApiTags('Mentors')
@@ -157,6 +158,26 @@ export class MentorsController {
     @Param('id') engagementId: string,
   ) {
     return this.mentorEngagementService.confirm(req.user.userId, engagementId);
+  }
+
+  @Patch('engagements/:id/check-in')
+  @ApiOperation({
+    summary: 'Submit mentor mentorship check-in response',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Mentor check-in response recorded.',
+  })
+  respondToCheckIn(
+    @Req() req: RequestWithUser,
+    @Param('id') engagementId: string,
+    @Body() dto: CheckInResponseDto,
+  ) {
+    return this.mentorEngagementService.respondToCheckIn(
+      req.user.userId,
+      engagementId,
+      dto.agreed,
+    );
   }
 
   @Patch('engagements/:id/end')
