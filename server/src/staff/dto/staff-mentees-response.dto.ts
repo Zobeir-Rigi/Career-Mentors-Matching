@@ -21,7 +21,21 @@ export class MenteeMatchDto {
   declinedAt!: string;
 }
 
+export class StaffMenteeMentorDto {
+  @ApiProperty()
+  mentorProfileId!: string;
+
+  @ApiProperty()
+  fullName!: string;
+
+  @ApiProperty()
+  email!: string;
+}
+
 export class StaffMenteeDto {
+  @ApiProperty()
+  menteeProfileId!: string;
+
   @ApiProperty({
     description: 'Full name of the mentor',
     example: 'Ruta Radiya',
@@ -62,6 +76,18 @@ export class StaffMenteeDto {
   links!: string;
 
   matches!: MenteeMatchDto[];
+
+  @ApiProperty({
+    type: StaffMenteeMentorDto,
+    nullable: true,
+  })
+  mentor!: StaffMenteeMentorDto | null;
+
+  @ApiProperty({
+    nullable: true,
+    description: 'Current match status',
+  })
+  status!: string | null;
 }
 
 export class StaffMenteesResponseDto {
@@ -70,4 +96,13 @@ export class StaffMenteesResponseDto {
     description: 'List of mentee profiles',
   })
   mentees!: StaffMenteeDto[];
+
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty()
+  page!: number;
+
+  @ApiProperty()
+  limit!: number;
 }

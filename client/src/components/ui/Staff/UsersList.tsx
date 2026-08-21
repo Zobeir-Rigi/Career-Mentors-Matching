@@ -1,145 +1,281 @@
-import type { MenteesData, MentorsData } from "@lib/context/StaffContext";
-import { useState } from "react";
+import type {
+  MenteeData,
+  MenteesData,
+  MentorData,
+  MentorsData,
+} from "@lib/context/StaffContext";
+
+import { useStaff } from "@/lib/context/StaffContext";
+import { updateMentorApproval } from "@/services/staffService";
+
+import { Input } from "../Input";
+import { Button } from "../Button";
 
 interface UsersListProps {
-    userType: string;
-    usersData?: MenteesData | MentorsData | [];
-    setSelectedUser: CallableFunction
+  userType: "Mentors" | "Mentees";
+  usersData: MenteesData | MentorsData;
+  total: number;
+  searchQuery: string;
+  page: number;
+  limit: number;
+  onPageChange: (page: number) => void;
+  onSearchChange: (value: string) => void;
+  setSelectedUser: (user: MenteeData | MentorData) => void;
 }
 
-export function UsersList({ userType, usersData, setSelectedUser }: UsersListProps) {
-    const [searchQuery, setSearchQuery] = useState("");
+type DirectoryUser = MentorData | MenteeData;
+type MentorApprovalStatus = MentorData["approvalStatus"];
 
-    const filteredUsers = usersData?.filter((user) => {
-        const query = searchQuery.toLowerCase().trim();
-        if (!query) return true;
+function isMentor(user: DirectoryUser): user is MentorData {
+  return "mentorProfileId" in user;
+}
 
-        const matchesName = user.fullName.toLowerCase().includes(query);
-        const matchesEmail = user.email.toLowerCase().includes(query);
-        const matchesDisciplinesOrGoals =
-            "disciplines" in user
-                ? user.disciplines.some((d) => d.toLowerCase().includes(query))
-                : user.goals.some((g) => g.toLowerCase().includes(query));
+function formatStatusLabel(status: string) {
+  return status
+    .toLowerCase()
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
 
-        return matchesName || matchesEmail || matchesDisciplinesOrGoals;
-    });
+export function UsersList({
+  userType,
+  usersData,
+  total,
+  searchQuery,
+  onSearchChange,
+  setSelectedUser,
+}: UsersListProps) {
+  const { refetch } = useStaff();
 
-    return (
-        <div>
-            <h1 className="font-display text-4xl font-semibold overshoot">
-                {`${userType} (${filteredUsers?.length ?? 0})`}
-            </h1>
+  const isMentorList = userType === "Mentors";
 
-            <div className="mb-6 mt-6 max-w-sm">
-                <label className="font-fg text-[14px] font-semibold">
-                    Search {userType.toLowerCase()}
-                </label>
-                <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={
-                        userType === "Mentors"
-                            ? "Name, email, or discipline"
-                            : "Name, email, or goals"
-                    }
-                    className="w-full bg-surface border border-line rounded-lg px-3.5 py-2 text-[14px] placeholder:text-muted"
-                />
+  async function handleApproval(
+    mentorProfileId: string,
+    approvalStatus: MentorApprovalStatus,
+  ) {
+    await updateMentorApproval(mentorProfileId, approvalStatus);
+    await refetch();
+  }
+
+  return (
+    <div>
+      <h1 className="overshoot font-display text-4xl font-black">
+        {userType} ({total})
+      </h1>
+
+      <div className="mb-6 mt-6 max-w-sm">
+        <Input
+          id={`${userType.toLowerCase()}-search`}
+          type="search"
+          label={`Search ${userType.toLowerCase()}`}
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={
+            isMentorList
+              ? "Name, email, or discipline"
+              : "Name, email, or goals"
+          }
+        />
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-lg border border-line bg-surface">
+        {/* TABLE HEADER */}
+        <div className="flex w-full items-center">
+          <div className="flex flex-1 items-center p-5">
+            <p className="w-[20%] truncate font-sans text-sm font-semibold text-fg">
+              Name
+            </p>
+
+            <p className="w-[25%] truncate pr-3 font-sans text-sm font-semibold text-fg">
+              {isMentorList ? "Job title" : "Goals"}
+            </p>
+
+            <p className="w-[15%] truncate pr-3 font-sans text-sm font-semibold text-fg">
+              {isMentorList ? "Capacity" : "Mentor"}
+            </p>
+
+            <p className="w-[25%] truncate pr-3 font-sans text-sm font-semibold text-fg">
+              {isMentorList ? "Mentees" : "Status"}
+            </p>
+          </div>
+
+          {isMentorList && (
+            <div className="w-[15%] pr-5">
+              <p className="truncate font-sans text-sm font-semibold text-fg">
+                Approval
+              </p>
             </div>
-
-            <div className="bg-surface border border-line rounded-[10px] mt-4 p-0">
-                <div>
-                    <div className="p-5 flex items-center">
-                        <p className="font-fg text-[14px] font-semibold w-[25%] truncate">Name</p>
-                        {userType == "Mentors" &&
-                            <p className="font-fg text-[14px] font-semibold w-[30%] truncate pr-3">Disciplines</p>
-                        }
-                        {userType == "Mentees" &&
-                            <p className="font-fg text-[14px] font-semibold w-[30%] truncate pr-3">Goals</p>
-                        }
-                        {userType == "Mentors" &&
-                            <p className="font-fg text-[14px] font-semibold w-[20%] truncate pr-3">Load</p>
-                        }
-                        {userType == "Mentees" &&
-                            <p className="font-fg text-[14px] font-semibold w-[20%] truncate pr-3">Mentor</p>
-                        }
-                        {userType == "Mentors" &&
-                            <p className="font-fg text-[14px] font-semibold w-[20%] truncate pr-3">Mentees</p>
-                        }
-                        {userType == "Mentees" &&
-                            <p className="font-fg text-[14px] font-semibold w-[20%] truncate pr-3">Status</p>
-                        }
-                    </div>
-                    <div className="-mt-px h-px w-full bg-line" />
-                </div>
-                {filteredUsers?.map((user, index) => {
-                    const matches = "matches" in user && Array.isArray(user.matches) ? user.matches : [];
-                    const lastMatch = matches.length > 0
-                        ? [...matches].sort(
-                            (a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-                        )[0] : null;
-
-                    return (
-                        <div key={user.email || index}>
-                            <div onClick={() => setSelectedUser(user)} className="p-5 flex items-center cursor-pointer">
-                                <p className="font-sans text-[13px] w-[25%] truncate">{user.fullName}</p>
-
-                                {"disciplines" in user && (
-                                    <p className="font-sans text-[13px] w-[30%] truncate pr-3">
-                                        {user.disciplines.join(", ")}
-                                    </p>
-                                )}
-
-                                {"goals" in user && (
-                                    <p className="font-sans text-[13px] w-[30%] truncate pr-3">
-                                        {user.goals.join(", ")}
-                                    </p>
-                                )}
-
-                                {"capacity" in user && (
-                                    <p className="font-sans text-[13px] w-[20%] truncate pr-3 flex items-center gap-1.5">
-                                        <span className="text-accent">
-                                            {matches.length}/{user?.capacity ?? 0}
-                                        </span>
-                                        <span>
-                                            {matches.length < Number(user?.capacity ?? 0) ? "open" : "full"}
-                                        </span>
-                                    </p>
-                                )}
-
-                                {"matches" in user && (
-                                    <p className="font-sans text-[13px] w-[20%] truncate pr-3">
-                                        {lastMatch?.fullName ? lastMatch.fullName : "—"}
-                                    </p>
-                                )}
-
-                                {userType === "Mentees" && (
-                                    <div className="w-[20%] pr-3">
-                                        {lastMatch?.status === "ACTIVE" ? (
-                                            <div className="flex h-[22px] w-fit items-center justify-center rounded-[11px] bg-ok-tint px-3">
-                                                <p className="font-sans text-[12px] leading-none text-ok">{lastMatch.status}</p>
-                                            </div>
-                                        ) : lastMatch?.status === "CHEMISTRY_CONFIRMED" ? (
-                                            <div className="flex h-[22px] w-fit items-center justify-center rounded-[11px] bg-tint px-3">
-                                                <p className="font-sans text-[12px] leading-none text-muted">{lastMatch.status}</p>
-                                            </div>
-                                        ) : lastMatch?.status ? (
-                                            <div className="flex h-[22px] w-fit items-center justify-center rounded-[11px] bg-tint px-3">
-                                                <p className="font-sans text-[12px] leading-none text-accent">{lastMatch.status}</p>
-                                            </div>
-                                        ) : (
-                                            <span className="font-sans text-[13px] text-muted">—</span>
-                                        )}
-                                    </div>
-                                )}
-
-                            </div>
-                            <div className="-mt-px h-px w-full bg-line" />
-                        </div>
-                    );
-                })}
-
-            </div>
+          )}
         </div>
-    )
+
+        <div className="h-px w-full bg-line" />
+
+        {/* EMPTY STATE */}
+        {usersData.length === 0 ? (
+          <p className="p-5 font-sans text-sm text-muted">
+            No {userType.toLowerCase()} found.
+          </p>
+        ) : (
+          usersData.map((user) => {
+            const mentor = isMentor(user);
+
+            return (
+              <div key={mentor ? user.mentorProfileId : user.menteeProfileId}>
+                <div className="flex w-full items-center">
+                  <Button
+                    type="button"
+                    variant="quiet"
+                    onClick={() => setSelectedUser(user)}
+                    className="flex h-auto flex-1 items-center justify-start rounded-none p-5 text-left hover:bg-tint"
+                  >
+                    {/* NAME */}
+                    <p className="w-[20%] truncate font-sans text-[13px] text-fg">
+                      {user.fullName}
+                    </p>
+
+                    {/* JOB TITLE / GOALS */}
+                    <p className="w-[25%] truncate pr-3 font-sans text-[13px] text-fg">
+                      {mentor ? (
+                        user.currentJobTitle || "—"
+                      ) : user.goals.length > 0 ? (
+                        <>
+                          {user.goals.slice(0, 2).join(", ")}
+                          {user.goals.length > 2 && (
+                            <span className="text-muted">
+                              {` +${user.goals.length - 2} more`}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </p>
+
+                    {/* CAPACITY / CURRENT MENTOR */}
+                    {mentor ? (
+                      <Capacity capacity={user.capacity} />
+                    ) : (
+                      <p className="w-[15%] truncate pr-3 font-sans text-[13px] text-fg">
+                        {user.mentor?.fullName ?? "—"}
+                      </p>
+                    )}
+
+                    {/* MATCHED MENTEES &  MATCH STATUS */}
+                    {mentor ? (
+                      <p className="w-[25%] truncate pr-3 font-sans text-[13px] text-fg">
+                        {user.matchedMentees.length > 0
+                          ? user.matchedMentees
+                              .map((mentee) => mentee.fullName)
+                              .join(", ")
+                          : "—"}
+                      </p>
+                    ) : (
+                      <div className="w-[25%] pr-3">
+                        <MatchStatus status={user.status} />
+                      </div>
+                    )}
+                  </Button>
+
+                  {mentor && (
+                    <div className="w-[15%] pr-5">
+                      <ApprovalSelect
+                        mentorProfileId={user.mentorProfileId}
+                        status={user.approvalStatus}
+                        onUpdate={handleApproval}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="h-px w-full bg-line" />
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
+function Capacity({ capacity }: { capacity: MentorData["capacity"] }) {
+  const capacityColour = capacity.isFull ? "text-error" : "text-ok";
+
+  return (
+    <div className="flex w-[15%] items-center gap-1.5 pr-3 font-sans text-[13px]">
+      <span className={capacityColour}>
+        {capacity.filled}/{capacity.total}
+      </span>
+
+      <span className={capacityColour}>
+        {capacity.isFull ? "full" : "open"}
+      </span>
+    </div>
+  );
+}
+
+/*
+ * Mentee match status
+ */
+function MatchStatus({ status }: { status: string | null }) {
+  if (!status) {
+    return <span className="font-sans text-[13px] text-muted">—</span>;
+  }
+
+  const className =
+    status === "ACTIVE" ? "bg-ok-tint text-ok" : "bg-tint text-accent";
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-3 py-1 font-sans text-xs ${className}`}
+    >
+      {formatStatusLabel(status)}
+    </span>
+  );
+}
+
+/*
+ * Mentor approval dropdown
+ * PENDING | ACCEPTED | DECLINED
+ */
+function ApprovalSelect({
+  mentorProfileId,
+  status,
+  onUpdate,
+}: {
+  mentorProfileId: string;
+  status: MentorApprovalStatus;
+  onUpdate: (
+    mentorProfileId: string,
+    status: MentorApprovalStatus,
+  ) => Promise<void>;
+}) {
+  async function handleChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const newStatus = event.target.value as MentorApprovalStatus;
+
+    if (newStatus === status) {
+      return;
+    }
+
+    await onUpdate(mentorProfileId, newStatus);
+  }
+
+  const statusColour =
+    status === "ACCEPTED"
+      ? "text-ok"
+      : status === "DECLINED"
+        ? "text-error"
+        : "text-accent";
+
+  return (
+    <select
+      value={status}
+      onChange={handleChange}
+      aria-label="Mentor approval status"
+      className={`w-full rounded-md border border-line bg-surface px-2 py-2 font-sans text-xs outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 ${statusColour}`}
+    >
+      <option value="PENDING">Pending</option>
+      <option value="ACCEPTED">Approved</option>
+      <option value="DECLINED">Declined</option>
+    </select>
+  );
 }

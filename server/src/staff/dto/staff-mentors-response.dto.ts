@@ -1,13 +1,53 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Region, AvailabilityOption } from '../../generated/prisma/enums';
-import { Type } from 'class-transformer';
+import {
+  Region,
+  AvailabilityOption,
+  ApprovalStatus,
+  MatchStatus,
+} from '../../generated/prisma/enums';
+
+export class StaffMatchedMenteeDto {
+  @ApiProperty()
+  menteeProfileId!: string;
+
+  @ApiProperty()
+  fullName!: string;
+
+  @ApiProperty()
+  email!: string;
+
+  @ApiProperty({
+    description: 'Matching score for this mentor-mentee relationship',
+    example: 92.5,
+  })
+  score!: number;
+}
+
+export class StaffMentorCapacityDto {
+  @ApiProperty({
+    description: 'Number of current capacity-relevant mentorship',
+    example: 1,
+  })
+  filled!: number;
+
+  @ApiProperty({
+    description: 'Maximum number of mentees this mentor can take',
+    example: 3,
+  })
+  total!: number;
+
+  @ApiProperty({
+    description: 'Whether the mentor has reached their capacity',
+    example: false,
+  })
+  isFull!: boolean;
+}
 
 export class MentorMatchDto {
   @ApiProperty({
-    example: 'ACTIVE',
-    enum: ['CHEMISTRY_PENDING', 'ACTIVE', 'COMPLETED', 'DECLINED'],
+    enum: { MatchStatus },
   })
-  status!: string;
+  status!: MatchStatus;
 
   @ApiProperty({ example: 90.2 })
   score!: number;
@@ -16,53 +56,67 @@ export class MentorMatchDto {
   fullName!: string;
 
   @ApiProperty({ example: '2026-08-16T23:31:51.512Z' })
-  createdAt!: string;
+  createdAt!: Date;
 
-  @ApiProperty({ example: '2026-08-16T23:31:51.512Z' })
-  declinedAt!: string;
+  @ApiProperty({ nullable: true, example: '2026-08-16T23:31:51.512Z' })
+  declinedAt!: Date | null;
 }
 
 export class StaffMentorDto {
+  @ApiProperty()
+  mentorProfileId!: string;
+
   @ApiProperty({
     description: 'Full name of the mentor',
     example: 'Ruta Radiya',
   })
   fullName!: string;
-  @ApiProperty({ type: [String], example: ['Software Engineering'] })
-  disciplines!: string[];
+
   @ApiProperty({
-    description: 'Role of the user',
-    example: 'MENTOR',
-  })
-  role!: string;
-  @ApiProperty({
-    description: 'Mentors email',
+    description: 'Mentor email address',
     example: 'ruta.radiya@mentor.example.dev',
   })
   email!: string;
-  @ApiProperty({ example: 3 })
-  capacity!: number;
-  @ApiProperty({ enum: Region, example: Region.LONDON })
-  region!: Region;
+
   @ApiProperty({
-    example:
-      'Full stack developer - 15 years of experience. Also. experienced in people coaching/mentoring.',
+    nullable: true,
+    example: 'Senior Software Engineer',
   })
-  bio!: string;
-  @ApiProperty({ example: '2026-08-16T21:49:39.650Z' })
-  createdAt!: string;
+  currentJobTitle!: string | null;
+
+  @ApiProperty({
+    enum: ApprovalStatus,
+    example: ApprovalStatus.ACCEPTED,
+  })
+  approvalStatus!: ApprovalStatus;
+
+  @ApiProperty({ type: [String], example: ['Software Engineering'] })
+  disciplines!: string[];
+
+  @ApiProperty({ type: StaffMentorCapacityDto })
+  capacity!: StaffMentorCapacityDto;
+
+  @ApiProperty({ enum: Region, nullable: true })
+  region!: Region | null;
+
   @ApiProperty({
     enum: AvailabilityOption,
     isArray: true,
-    example: [AvailabilityOption.WEEKDAY_EVENING],
   })
   availability!: AvailabilityOption[];
 
-  @ApiProperty({ example: 'https://www.linkedin.com/' })
-  links!: string;
+  @ApiProperty({ nullable: true })
+  bio!: string | null;
 
-  @ApiProperty({ type: () => [MentorMatchDto] })
-  @Type(() => MentorMatchDto)
+  @ApiProperty({ nullable: true })
+  linkedinURL!: string | null;
+
+  @ApiProperty()
+  createdAt!: Date;
+
+  @ApiProperty({
+    type: [MentorMatchDto],
+  })
   matches!: MentorMatchDto[];
 }
 
@@ -72,4 +126,13 @@ export class StaffMentorsResponseDto {
     description: 'List of mentor profiles',
   })
   mentors!: StaffMentorDto[];
+
+  @ApiProperty()
+  total!: number;
+
+  @ApiProperty()
+  page!: number;
+
+  @ApiProperty()
+  limit!: number;
 }
