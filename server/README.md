@@ -1,6 +1,16 @@
 # Mentor Matching Backend
 
-Backend API for the Mentor Matching application, built with **NestJS**, **Prisma ORM**, and **PostgreSQL**.
+Backend API for the Career Mentors Matching application, built with NestJS, Prisma ORM, and PostgreSQL.
+
+## Tech Stack
+
+- NestJS
+- TypeScript
+- Prisma ORM
+- PostgreSQL
+- Docker
+- Jest
+- Swagger
 
 ## Prerequisites
 
@@ -20,24 +30,22 @@ docker --version
 docker compose version
 ```
 
----
-
 ## Getting Started
 
-### 1. Clone the repository
+### Clone the Repository
 
 ```bash
-git clone <[repo](https://github.com/Zobeir-Rigi/Career-Mentors-Matching)>
-cd server
+git clone https://github.com/Zobeir-Rigi/Career-Mentors-Matching.git
+cd Career-Mentors-Matching/server
 ```
 
-### 2. Install dependencies
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Create your environment file
+### Create Your Environment File
 
 Copy the example environment file:
 
@@ -47,8 +55,6 @@ cp .env.example .env
 
 Update the values if necessary.
 
----
-
 ## Running PostgreSQL
 
 Start the local PostgreSQL database:
@@ -57,7 +63,7 @@ Start the local PostgreSQL database:
 docker compose up -d
 ```
 
-Verify it's running:
+Verify it is running:
 
 ```bash
 docker compose ps
@@ -68,8 +74,6 @@ To stop the database:
 ```bash
 docker compose down
 ```
-
----
 
 ## Prisma Setup
 
@@ -85,8 +89,6 @@ Run database migrations:
 npx prisma migrate dev
 ```
 
----
-
 ## Running the Application
 
 Start the development server:
@@ -97,33 +99,33 @@ npm run start:dev
 
 The API will be available at:
 
-```
+```text
 http://localhost:3000
 ```
 
-To build the project:
+### Swagger Documentation
+
+```text
+http://localhost:3000/api/docs
+```
+
+### Health Check
+
+```text
+http://localhost:3000/health
+```
+
+### Build the Application
 
 ```bash
 npm run build
 ```
 
-Run the compiled application:
+### Run the Production Build
 
 ```bash
 npm run start:prod
 ```
-
----
-
-## API Endpoints
-
-| Method | Endpoint    | Description                    |
-| ------ | ----------- | ------------------------------ |
-| GET    | `/hello`    | Returns a Hello World response |
-| GET    | `/health`   | Checks API and database health |
-| GET    | `/api/docs` | Swagger API documentation      |
-
----
 
 ## Testing
 
@@ -151,8 +153,6 @@ Run TypeScript type checking:
 npm run typecheck
 ```
 
----
-
 ## Code Quality
 
 Lint the project:
@@ -167,16 +167,21 @@ Automatically format the code:
 npm run format
 ```
 
----
-
 ## Project Structure
 
-```
+```text
 src/
-├── hello/
-├── health/
-├── prisma/
+├── auth/
+├── common/
 ├── generated/
+├── health/
+├── hello/
+├── mail/
+├── matching/
+├── mentee/
+├── mentors/
+├── prisma/
+├── staff/
 ├── app.module.ts
 └── main.ts
 
@@ -186,19 +191,6 @@ prisma/
 
 docker-compose.yml
 ```
-
----
-
-## Tech Stack
-
-- NestJS
-- Prisma ORM
-- PostgreSQL
-- Docker
-- Jest
-- Swagger
-
----
 
 ## Development Workflow
 
@@ -212,19 +204,13 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
----
-
 ## Useful Commands
 
-| Command              | Description                  |
-| -------------------- | ---------------------------- |
-| `npm run start:dev`  | Start development server     |
-| `npm run build`      | Build the application        |
-| `npm run start:prod` | Run the compiled application |
-| `npm test`           | Run all tests                |
-| `npm run test:cov`   | Generate coverage report     |
-| `npm run typecheck`  | Run TypeScript type checking |
-| `npm run lint`       | Lint the project             |
-| `npm run format`     | Format source files          |
-
----
+- `npm run start:dev` - Start the development server
+- `npm run build` - Build the application
+- `npm run start:prod` - Run the compiled application
+- `npm test` - Run all tests
+- `npm run test:cov` - Generate a coverage report
+- `npm run typecheck` - Run TypeScript type checking
+- `npm run lint` - Lint the project
+- `npm run format` - Format source files

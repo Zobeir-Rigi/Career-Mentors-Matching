@@ -1,42 +1,58 @@
-# mentor-matching-frontend
+# Mentor Matching Frontend
 
-Frontend for the CodeYourFuture mentor matching platform.
+Frontend for the CodeYourFuture Career Mentors Matching platform.
 
-Design documentation lives in [docs/design](docs/design):
+## Tech Stack
 
-- [DESIGN.md](docs/design/DESIGN.md) — design system and screen specs
-- [HANDOFF.md](docs/design/HANDOFF.md) — Penpot to React/Tailwind handoff guide
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
 
-# Getting started
+## Getting Started
 
-## Clone the repository
+### Clone the Repository
 
 ```bash
-git clone <[repo](https://github.com/Zobeir-Rigi/Career-Mentors-Matching)>
-cd client
+git clone https://github.com/Zobeir-Rigi/Career-Mentors-Matching.git
+cd Career-Mentors-Matching/client
 ```
 
-## How to install
+### How to Install
 
 ```bash
 npm install
 npm run dev
 ```
 
-## How to build for deployment
+### Environment Variables
+
+```env
+VITE_API_URL=http://localhost:3000
+```
+
+## How to Build for Deployment
 
 ```bash
 npm run build
 ```
 
-## Project structure
+## Design Assets
+
+Screenshots and design assets can be found in:
+
+```text
+docs/designs/screens
+```
+
+## Project Structure
 
 ```text
 client/src/
-├── pages/           # Route-level screens — one component per route, registered with the router
-├── components/      # Shared feature components, composed from the primitives in ui/
-│   └── ui/          # Small presentational UI primitives (Button, Card, Badge, Input, …)
-├── lib/             # Reusable functions and class utilities — pure TypeScript, no JSX
-├── index.css        # The complete theme config
-└── main.tsx         # App entry: router setup and theme bootstrapping
+├── pages/
+├── components/
+│   └── ui/
+├── lib/
+├── index.css
+└── main.tsx
 ```
