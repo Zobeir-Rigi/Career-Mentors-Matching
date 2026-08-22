@@ -10,12 +10,19 @@ export type MatchRequestResponse =
   | {
       status: "WAITING";
       matchId: null;
+    }
+  | {
+      status: "RECOMMENDED";
+      recommendation: MentorRecommendation;
     };
 
+export interface ChemistryProposalResponse {
+  status: "CHEMISTRY_PENDING";
+  matchId: string;
+}
+
 export async function requestMentorMatch(): Promise<MatchRequestResponse> {
-  const response = await api.post<MatchRequestResponse>(
-    "matching/request",
-  );
+  const response = await api.post<MatchRequestResponse>("/matching/request");
 
   return response.data;
 }
@@ -30,11 +37,11 @@ export async function getMentorRecommendations(): Promise<
   return response.data;
 }
 
-export async function switchMentorProposal(
+export async function proposeChemistry(
   mentorId: string,
-): Promise<MatchRequestResponse> {
-  const response = await api.patch<MatchRequestResponse>(
-    `/matching/proposal/${mentorId}`,
+): Promise<ChemistryProposalResponse> {
+  const response = await api.post<ChemistryProposalResponse>(
+    `/matching/chemistry/${mentorId}`,
   );
 
   return response.data;

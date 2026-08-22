@@ -1,27 +1,54 @@
 import { cn } from "@/lib/utils";
+
 import { GoalsAndAvailability } from "./MentorshipStages/GoalsAndAvailability";
 import { StageTracker } from "./MentorshipStages/StageTracker";
 import { AfterMatchProposed } from "./MentorshipStages/afterMatchProposed";
+import { StatusBadge } from "./StatusBadge";
 
 import type {
   MenteeDashboardCurrentMatch,
   MenteeJourneyStage,
 } from "@/services/menteeDashboardService";
 
-type PendingAction = "accept" | "book" | "confirm" | "decline" | "end";
+import type { MentorRecommendation } from "@/types/matching";
+
+type PendingAction = "book" | "check-in" | "decline" | "end";
 
 interface MentorshipStagesProps {
   className?: string;
+
   menteeName: string;
+
   journeyStage: MenteeJourneyStage;
+
   matchReady: boolean;
+
   currentMatch: MenteeDashboardCurrentMatch | null;
 
-  onMatchRequested: () => void | Promise<void>;
-  onAccept: (matchId: string) => void | Promise<void>;
+  recommendation: MentorRecommendation | null;
+
+  alternativeRecommendations: MentorRecommendation[];
+
+  matchingMessage: string | null;
+
+  matchingError: string | null;
+
+  isFindingMentor: boolean;
+
+  isProposingChemistry: boolean;
+
+  onFindMentor: () => void | Promise<void>;
+
+  onProposeChemistry: (mentorId: string) => void | Promise<void>;
+
+  onRejectRecommendation: () => void;
+
   onBook: (matchId: string) => void | Promise<void>;
-  onConfirm: (matchId: string) => void | Promise<void>;
+
+  onCheckIn: (matchId: string, agreed: boolean) => void | Promise<void>;
+
   onDecline: (matchId: string) => void | Promise<void>;
+
   onEnd: (matchId: string) => void | Promise<void>;
 
   pendingAction: PendingAction | null;
@@ -33,10 +60,17 @@ export function MentorshipStages({
   journeyStage,
   matchReady,
   currentMatch,
-  onMatchRequested,
-  onAccept,
+  recommendation,
+  alternativeRecommendations,
+  matchingMessage,
+  matchingError,
+  isFindingMentor,
+  isProposingChemistry,
+  onFindMentor,
+  onProposeChemistry,
+  onRejectRecommendation,
   onBook,
-  onConfirm,
+  onCheckIn,
   onDecline,
   onEnd,
   pendingAction,
@@ -47,8 +81,17 @@ export function MentorshipStages({
       case "ready":
         return (
           <GoalsAndAvailability
+            menteeName={menteeName}
             isProfileComplete={matchReady}
-            onMatchRequested={onMatchRequested}
+            recommendation={recommendation}
+            alternativeRecommendations={alternativeRecommendations}
+            isFindingMentor={isFindingMentor}
+            isProposingChemistry={isProposingChemistry}
+            message={matchingMessage}
+            error={matchingError}
+            onFindMentor={onFindMentor}
+            onProposeChemistry={onProposeChemistry}
+            onRejectRecommendation={onRejectRecommendation}
           />
         );
 
@@ -63,10 +106,8 @@ export function MentorshipStages({
           <AfterMatchProposed
             currentMatch={currentMatch}
             menteeName={menteeName}
-            journeyStage={journeyStage}
-            onAccept={onAccept}
             onBook={onBook}
-            onConfirm={onConfirm}
+            onCheckIn={onCheckIn}
             onDecline={onDecline}
             onEnd={onEnd}
             pendingAction={pendingAction}
@@ -81,9 +122,24 @@ export function MentorshipStages({
         Your mentorship
       </h1>
 
-      <StageTracker journeyStage={journeyStage} />
+      {journeyStage === "incomplete" && (
+        <div className="mb-6">
+          <StatusBadge variant="incomplete">Profile incomplete</StatusBadge>
+        </div>
+      )}
 
-      <div className="rounded-[10px] border border-line bg-surface p-6 sm:p-8">
+      {journeyStage === "ready" && !recommendation && (
+        <div className="mb-6">
+          <StatusBadge variant="ready">Ready for matching</StatusBadge>
+        </div>
+      )}
+
+      <StageTracker
+        journeyStage={journeyStage}
+        hasRecommendation={Boolean(recommendation)}
+      />
+
+      <div className="rounded-[10px] border border-line bg-surface p-5 sm:p-8">
         {renderHeroContent()}
       </div>
     </section>

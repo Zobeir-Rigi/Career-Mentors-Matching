@@ -1,69 +1,85 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { MatchStatus } from '../generated/prisma/enums';
 import { CAPACITY_RELEVANT_STATUSES } from '../common/constants/capacity-relevant-statuses';
+import { MatchStatus } from '../generated/prisma/enums';
+import { PrismaService } from '../prisma/prisma.service';
 
 import type { MentorEngagementSubStatus } from './dto/mentor-dashboard-response.dto';
+
+interface DashboardMatchState {
+  status: MatchStatus;
+  chemistryBookedAt: Date | null;
+}
 
 @Injectable()
 export class MentorDashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  //   get the sub-status to match FE
-  private deriveSubStatus(match: {
-    status: MatchStatus;
-    menteeAcceptedAt: Date | null;
-    chemistryBookedAt: Date | null;
-    chemistryMentorConfirmedAt: Date | null;
-    chemistryMenteeConfirmedAt: Date | null;
-  }): MentorEngagementSubStatus {
-    if (match.status === MatchStatus.ACTIVE) return 'active';
+  private deriveSubStatus(
+    match: DashboardMatchState,
+  ): MentorEngagementSubStatus {
+    switch (match.status) {
+      case MatchStatus.CHEMISTRY_PENDING:
+        return 'proposed-awaiting-acceptance';
 
-    if (!match.menteeAcceptedAt) return 'proposed-awaiting-acceptance';
+      case MatchStatus.CHEMISTRY_CONFIRMED:
+        return match.chemistryBookedAt ? 'booked' : 'awaiting-booking';
 
-    if (!match.chemistryBookedAt) return 'awaiting-booking';
+      case MatchStatus.MATCH_PENDING:
+        return 'confirmed-waiting';
 
-    if (!match.chemistryMentorConfirmedAt) return 'booked';
+      case MatchStatus.ACTIVE:
+        return 'active';
 
-    if (match.chemistryMentorConfirmedAt && !match.chemistryMenteeConfirmedAt)
-      return 'confirmed-waiting';
-
-    return 'active';
+      default:
+        throw new Error(
+          `Unsupported mentor dashboard match status: ${String(match.status)}`,
+        );
+    }
   }
 
-  private getEngagementDeadline(
-    subStatus: MentorEngagementSubStatus,
-    match: { proposalExpiresAt: Date | null; confirmationDueAt: Date | null },
-  ): Date | null {
-    switch (subStatus) {
-      case 'confirmed-waiting':
-      case 'booked':
-        return match.confirmationDueAt;
+  private getEngagementDeadline(match: {
+    status: MatchStatus;
+    proposalExpiresAt: Date | null;
+    checkInExpiresAt: Date | null;
+  }): Date | null {
+    switch (match.status) {
+      case MatchStatus.CHEMISTRY_PENDING:
+        return match.proposalExpiresAt;
 
-      case 'proposed-awaiting-acceptance':
-      case 'awaiting-booking':
-      case 'active':
+      case MatchStatus.MATCH_PENDING:
+        return match.checkInExpiresAt;
+
+      case MatchStatus.CHEMISTRY_CONFIRMED:
+      case MatchStatus.ACTIVE:
+        return null;
+
+      default:
         return null;
     }
   }
 
-  //   helper for countdown
   private getDaysLeft(expiresAt: Date | null): number | null {
-    if (!expiresAt) return null;
+    if (!expiresAt) {
+      return null;
+    }
 
     const millisecondsPerDay = 1000 * 60 * 60 * 24;
-    const diff = expiresAt.getTime() - Date.now();
 
-    if (diff <= 0) return 0;
+    const difference = expiresAt.getTime() - Date.now();
 
-    return Math.ceil(diff / millisecondsPerDay);
+    if (difference <= 0) {
+      return 0;
+    }
+
+    return Math.ceil(difference / millisecondsPerDay);
   }
 
-  //   dashboard query
   async getDashboard(userId: string) {
     const mentor = await this.prisma.mentorProfile.findUnique({
-      where: { userId },
+      where: {
+        userId,
+      },
 
       include: {
         user: {
@@ -124,9 +140,9 @@ export class MentorDashboardService {
     const engagements = mentor.matches.map((match) => {
       const subStatus = this.deriveSubStatus(match);
 
-      const expiresAt = this.getEngagementDeadline(subStatus, match);
+      const expiresAt = this.getEngagementDeadline(match);
 
-      const canRevealEmail = subStatus !== 'proposed-awaiting-acceptance';
+      const canRevealEmail = match.status !== MatchStatus.CHEMISTRY_PENDING;
 
       const disciplineGoals = match.menteeProfile.goalDisciplines.map(
         (item) => item.discipline.name,
@@ -142,15 +158,36 @@ export class MentorDashboardService {
       return {
         id: match.id,
 
+        status: match.status,
+
         subStatus,
 
         mentee: {
           id: match.menteeProfile.id,
+
           fullName: match.menteeProfile.user.fullName,
+
           currentJobTitle: match.menteeProfile.currentJobTitle,
+
           bio: match.menteeProfile.bio,
+
+          reasonsNote: match.menteeProfile.reasonsNote,
+
+          goals: disciplineGoals,
+
+          /*
+           * LinkedIn is profile context rather
+           * than private chemistry contact data,
+           * so the mentor can use it when deciding.
+           */
           linkedinURL: match.menteeProfile.user.linkedinURL,
+
           focus,
+
+          /*
+           * Email remains private until
+           * the mentor accepts chemistry.
+           */
           email: canRevealEmail ? match.menteeProfile.user.email : null,
         },
 
@@ -158,6 +195,16 @@ export class MentorDashboardService {
           daysLeft: this.getDaysLeft(expiresAt),
           expiresAt,
         },
+
+        checkIn: {
+          menteeAgreed: match.checkInMenteeAgreed,
+
+          mentorAgreed: match.checkInMentorAgreed,
+        },
+
+        chemistryBookedAt: match.chemistryBookedAt,
+
+        scheduledCheckIn: match.scheduledCheckIn,
       };
     });
 
@@ -178,6 +225,7 @@ export class MentorDashboardService {
         disciplines: mentor.mentorDisciplines.map(
           (item) => item.discipline.name,
         ),
+
         bio: mentor.bio ?? '',
       },
     };

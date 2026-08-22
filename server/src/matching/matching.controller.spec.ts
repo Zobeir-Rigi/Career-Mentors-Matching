@@ -52,6 +52,7 @@ describe('MatchingController', () => {
 
   const matchingRequestServiceMock = {
     requestMatch: jest.fn(),
+    proposeChemistry: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -116,10 +117,10 @@ describe('MatchingController', () => {
   });
 
   describe('requestMatch', () => {
-    it('requests a match for the authenticated mentee', async () => {
+    it('requests a mentor recommendation for the authenticated mentee', async () => {
       const response = {
-        status: 'MATCHED' as const,
-        matchId: 'match-id',
+        status: 'RECOMMENDED' as const,
+        recommendation: mockRecommendations[0],
       };
 
       matchingRequestServiceMock.requestMatch.mockResolvedValue(response);
@@ -128,6 +129,29 @@ describe('MatchingController', () => {
 
       expect(matchingRequestServiceMock.requestMatch).toHaveBeenCalledWith(
         MOCK_USER_ID,
+      );
+
+      expect(result).toEqual(response);
+    });
+  });
+
+  describe('proposeChemistry', () => {
+    it('creates a chemistry proposal for the selected mentor', async () => {
+      const response = {
+        status: 'CHEMISTRY_PENDING' as const,
+        matchId: 'match-id',
+      };
+
+      matchingRequestServiceMock.proposeChemistry.mockResolvedValue(response);
+
+      const result = await controller.proposeChemistry(
+        mockRequest,
+        'mentor-profile-id',
+      );
+
+      expect(matchingRequestServiceMock.proposeChemistry).toHaveBeenCalledWith(
+        MOCK_USER_ID,
+        'mentor-profile-id',
       );
 
       expect(result).toEqual(response);

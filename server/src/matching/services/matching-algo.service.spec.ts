@@ -202,7 +202,12 @@ describe('MatchingAlgoService', () => {
 
   describe('findBestMatches', () => {
     it('calculates, filters and ranks multiple mentors above threshold', async () => {
-      const topMentor = makeMentor({ id: 'mentor-top' }); // 100
+      mockMatchingDataService.fetchActiveConfig.mockResolvedValue({
+        ...standardConfig,
+        minScoreThreshold: 45,
+      });
+
+      const topMentor = makeMentor({ id: 'mentor-top' }); // 80
       const secondMentor = makeMentor({
         id: 'mentor-second',
         region: Region.OTHER,
@@ -213,7 +218,7 @@ describe('MatchingAlgoService', () => {
             skillId: 'skill-x',
             skill: { id: 'skill-x', name: 'JavaScript' },
           },
-        ], // skills = 0; everything else matches => 75
+        ], // skills = 0; everything else contributes => 61
       });
 
       mockMatchingDataService.fetchEligibleCandidates.mockResolvedValue([
@@ -225,13 +230,19 @@ describe('MatchingAlgoService', () => {
 
       expect(results).toHaveLength(2);
       expect(results[0].mentorId).toBe('mentor-top');
-      expect(results[0].score).toBe(100);
+      expect(results[0].score).toBe(80);
       expect(results[1].mentorId).toBe('mentor-second');
-      expect(results[1].score).toBe(75);
+      expect(results[1].score).toBe(61);
     });
 
     it('includes a mentor whose score is exactly the threshold', async () => {
-      // discipline 25 + availability 20 + location 10 + meetingStructure 5 = 60
+      mockMatchingDataService.fetchActiveConfig.mockResolvedValue({
+        ...standardConfig,
+        minScoreThreshold: 49,
+      });
+
+      // discipline 18.75 + availability 15 + location 10
+      // + meetingStructure 5 = 48.75, rounded to 49
       const thresholdMentor = makeMentor({
         id: 'mentor-threshold',
         mentorSkills: [
@@ -257,7 +268,7 @@ describe('MatchingAlgoService', () => {
 
       const results = await service.findBestMatches('mentee-1');
       expect(results).toHaveLength(1);
-      expect(results[0].score).toBe(60);
+      expect(results[0].score).toBe(49);
     });
 
     it('drops a mentor below threshold', async () => {
@@ -350,7 +361,7 @@ describe('MatchingAlgoService', () => {
 
       const results = await service.findBestMatches('mentee-1');
       expect(results).toHaveLength(1);
-      expect(results[0].score).toBe(100);
+      expect(results[0].score).toBe(80);
     });
 
     it('falls back safely when config weights are malformed', async () => {
@@ -363,7 +374,7 @@ describe('MatchingAlgoService', () => {
       ]);
 
       const results = await service.findBestMatches('mentee-1');
-      expect(results[0].score).toBe(100);
+      expect(results[0].score).toBe(80);
     });
 
     it('uses a safe default threshold when configured threshold is invalid', async () => {

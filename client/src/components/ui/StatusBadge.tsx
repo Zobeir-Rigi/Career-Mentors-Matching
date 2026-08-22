@@ -1,5 +1,11 @@
 interface StatusBadgeProps {
-  variant: "proposed" | "accepted" | "active" | "closed";
+  variant:
+    | "proposed"
+    | "accepted"
+    | "active"
+    | "closed"
+    | "incomplete"
+    | "ready";
   children: React.ReactNode;
 }
 
@@ -8,6 +14,8 @@ const variantClasses = {
   accepted: "text-warn bg-warn-tint",
   active: "text-ok bg-ok-tint",
   closed: "text-muted bg-line/60",
+  incomplete: "text-warm bg-warn-tint",
+  ready: "text-ok bg-ok-tint",
 };
 
 export function StatusBadge({ variant, children }: StatusBadgeProps) {

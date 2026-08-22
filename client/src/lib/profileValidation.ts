@@ -27,7 +27,10 @@ export function checkEmptyFields(
   profileData: Record<string, unknown>,
 ): string[] {
   const FIELD_LABELS = getFieldLabels(role);
-  const OPTIONAL_FIELDS = new Set(["scheduleURL"]);
+  const OPTIONAL_FIELDS =
+    role === "mentee"
+      ? new Set(["currentJobTitle", "scheduleURL"])
+      : new Set(["scheduleURL"]);
   return Object.entries(profileData).reduce((acc, [key, value]) => {
     if (OPTIONAL_FIELDS.has(key)) return acc;
     if (typeof value === "string") {

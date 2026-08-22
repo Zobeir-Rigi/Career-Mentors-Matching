@@ -2,6 +2,7 @@ import type { MenteeJourneyStage } from "@/services/menteeDashboardService";
 
 interface StageTrackerProps {
   journeyStage: MenteeJourneyStage;
+  hasRecommendation?: boolean;
 }
 
 const stages = [
@@ -11,11 +12,16 @@ const stages = [
   "Mentorship active",
 ];
 
-function getCurrentStageNumber(journeyStage: MenteeJourneyStage): number {
+function getCurrentStageNumber(
+  journeyStage: MenteeJourneyStage,
+  hasRecommendation: boolean,
+): number {
   switch (journeyStage) {
     case "incomplete":
-    case "ready":
       return 1;
+
+    case "ready":
+      return hasRecommendation ? 2 : 1;
 
     case "match-proposed":
       return 2;
@@ -28,8 +34,14 @@ function getCurrentStageNumber(journeyStage: MenteeJourneyStage): number {
   }
 }
 
-export function StageTracker({ journeyStage }: StageTrackerProps) {
-  const currentStageNumber = getCurrentStageNumber(journeyStage);
+export function StageTracker({
+  journeyStage,
+  hasRecommendation = false,
+}: StageTrackerProps) {
+  const currentStageNumber = getCurrentStageNumber(
+    journeyStage,
+    hasRecommendation,
+  );
 
   return (
     <div className="mb-8 grid grid-cols-1 gap-y-5 sm:grid-cols-2 lg:flex lg:items-center lg:justify-between">
@@ -60,8 +72,10 @@ export function StageTracker({ journeyStage }: StageTrackerProps) {
             <div className="flex items-center">
               <span
                 aria-hidden="true"
-                className={`mr-2 h-3.5 w-3.5 shrink-0 rounded-full border ${circleStyle}`}
-              />
+                className={`mr-2 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] font-black ${circleStyle}`}
+              >
+                {isCompleted ? "✓" : ""}
+              </span>
 
               <p className={`font-sans text-sm ${textStyle}`}>{stage}</p>
             </div>

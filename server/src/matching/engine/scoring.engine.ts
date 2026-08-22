@@ -46,10 +46,18 @@ export function isScoringCategoryKey(
 }
 
 /**
- * Scores how much of the mentee's requested set the mentor can satisfy.
+ * Scores multi-select preferences by the number of actual overlaps.
+ *
  * An empty mentee set means "no restriction", so it scores 1.
- * Duplicate values are ignored so malformed duplicate relation rows cannot
- * distort the score.
+ *
+ * Additional unmatched mentee preferences do not reduce the score.
+ * Each additional actual overlap improves the score with diminishing returns:
+ *
+ * 0 overlaps = 0
+ * 1 overlap  = 0.5
+ * 2 overlaps = 0.75
+ * 3 overlaps = 0.875
+ * 4 overlaps = 0.9375
  */
 export function calculateArrayOverlapScore(
   menteeItems: readonly string[] | undefined | null,
@@ -60,14 +68,20 @@ export function calculateArrayOverlapScore(
   if (menteeSet.size === 0) return 1;
 
   const mentorSet = new Set(mentorItems ?? []);
+
   if (mentorSet.size === 0) return 0;
 
   let matchCount = 0;
+
   for (const item of menteeSet) {
-    if (mentorSet.has(item)) matchCount += 1;
+    if (mentorSet.has(item)) {
+      matchCount += 1;
+    }
   }
 
-  return matchCount / menteeSet.size;
+  if (matchCount === 0) return 0;
+
+  return 1 - Math.pow(0.25, matchCount);
 }
 
 /**

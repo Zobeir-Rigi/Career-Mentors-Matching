@@ -1,4 +1,4 @@
-import { Controller, Post, Req, UseGuards, Param, Patch } from '@nestjs/common';
+import { Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
 
 import {
   ApiCookieAuth,
@@ -47,12 +47,12 @@ export class MatchingController {
 
   @Post('request')
   @ApiOperation({
-    summary: 'Request the best available mentor match',
+    summary: 'Request the best available mentor recommendation',
   })
   @ApiResponse({
     status: 200,
     description:
-      'Creates a mentor proposal or places a mentee on a waiting list',
+      'Returns the best available mentor recommendation, an existing engagement, or waiting-list status.',
   })
   @ApiResponse({
     status: 401,
@@ -60,33 +60,33 @@ export class MatchingController {
   })
   @ApiResponse({
     status: 404,
-    description: 'Mentee or matched mentor profile not found',
+    description: 'Mentee profile not found',
   })
   async requestMatch(@Req() req: RequestWithUser) {
     return this.matchingRequestService.requestMatch(req.user.userId);
   }
 
-  @Patch('proposal/:mentorId')
+  @Post('chemistry/:mentorId')
   @ApiOperation({
-    summary: 'Replace the current mentor proposal',
+    summary: 'Propose a chemistry session with the selected mentor',
   })
   @ApiResponse({
-    status: 200,
-    description: 'Current proposal replaced successfully.',
+    status: 201,
+    description: 'Chemistry proposal created successfully',
   })
   @ApiResponse({
     status: 404,
-    description: 'Mentee or current proposal not found.',
+    description: 'Mentee or mentor profile not found',
   })
   @ApiResponse({
     status: 409,
-    description: 'Proposal cannot be replaced from its current state.',
+    description: 'Selected mentor is no longer available for matching',
   })
-  switchProposal(
+  proposeChemistry(
     @Req() req: RequestWithUser,
     @Param('mentorId') mentorId: string,
   ) {
-    return this.matchingRequestService.switchProposal(
+    return this.matchingRequestService.proposeChemistry(
       req.user.userId,
       mentorId,
     );

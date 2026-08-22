@@ -1,29 +1,33 @@
 import { useEffect, useState } from "react";
 
-import { useAuth } from "@/lib/context/useAuth";
-
-import {
-  getMentorDashboard,
-  declineMentorEngagement,
-  confirmMentorEngagement,
-  endMentorEngagement,
-  type MentorDashboardResponse,
-} from "@/services/mentorDashboardService";
-
+import { AcceptingMenteesToggle } from "@/components/ui/AcceptingMenteesToggle";
 import { Header } from "@/components/Header";
 import { MentorCapacityCard } from "@/components/mentorDashboard/MentorCapacityCard";
 import { MentorEmptyState } from "@/components/mentorDashboard/MentorEmptyState";
-import { MentorProfileSummary } from "@/components/mentorDashboard/MentorProfileSummary";
-import { AcceptingMenteesToggle } from "@/components/ui/AcceptingMenteesToggle";
 import { MentorMenteeCard } from "@/components/mentorDashboard/MentorMenteeCard";
-import { isMentorProfileResponse } from "@/services/mentorService";
-import { getApiErrorMessage } from "@/services/getApiErrorMessages";
+import { MentorProfileSummary } from "@/components/mentorDashboard/MentorProfileSummary";
 import { MentorStatusBadge } from "@/components/ui/MentorApprovalBadge";
 
-export function MentorDashboard() {
-  type PendingAction = "confirm" | "decline" | "end";
+import { useAuth } from "@/lib/context/useAuth";
 
+import { getApiErrorMessage } from "@/services/getApiErrorMessages";
+
+import {
+  acceptMentorChemistry,
+  declineMentorEngagement,
+  endMentorEngagement,
+  getMentorDashboard,
+  respondToMentorCheckIn,
+  type MentorDashboardResponse,
+} from "@/services/mentorDashboardService";
+
+import { isMentorProfileResponse } from "@/services/mentorService";
+
+type PendingAction = "accept" | "check-in" | "decline" | "end";
+
+export function MentorDashboard() {
   const { profile, isLoading } = useAuth();
+
   const mentorProfile = isMentorProfileResponse(profile) ? profile : null;
 
   const [dashboard, setDashboard] = useState<MentorDashboardResponse | null>(
@@ -31,8 +35,9 @@ export function MentorDashboard() {
   );
 
   const [dashboardLoading, setDashboardLoading] = useState(true);
+
   const [dashboardError, setDashboardError] = useState<string | null>(null);
-  // Track which engagement is running and prevents double-submit by confirming..., declining..., or ending...
+
   const [pendingAction, setPendingAction] = useState<{
     engagementId: string;
     action: PendingAction;
@@ -41,7 +46,6 @@ export function MentorDashboard() {
   useEffect(() => {
     let cancelled = false;
 
-    // Initial dashboard fetch
     async function fetchDashboard() {
       try {
         setDashboardError(null);
@@ -63,6 +67,7 @@ export function MentorDashboard() {
         }
       }
     }
+
     void fetchDashboard();
 
     return () => {
@@ -70,12 +75,12 @@ export function MentorDashboard() {
     };
   }, []);
 
-  // We just refresh the latest dashboard state and not load entire page
   async function refreshDashboard() {
     try {
       setDashboardError(null);
 
       const data = await getMentorDashboard();
+
       setDashboard(data);
     } catch (error) {
       setDashboardError(
@@ -84,17 +89,49 @@ export function MentorDashboard() {
     }
   }
 
+  async function handleAccept(engagementId: string) {
+    if (pendingAction) {
+      return;
+    }
+
+    try {
+      setPendingAction({
+        engagementId,
+        action: "accept",
+      });
+
+      setDashboardError(null);
+
+      await acceptMentorChemistry(engagementId);
+
+      await refreshDashboard();
+    } catch (error) {
+      setDashboardError(
+        getApiErrorMessage(
+          error,
+          "Unable to accept this chemistry proposal. Please try again.",
+        ),
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
   async function handleDecline(engagementId: string) {
-    if (pendingAction) return;
+    if (pendingAction) {
+      return;
+    }
 
     try {
       setPendingAction({
         engagementId,
         action: "decline",
       });
+
       setDashboardError(null);
 
       await declineMentorEngagement(engagementId);
+
       await refreshDashboard();
     } catch (error) {
       setDashboardError(
@@ -108,23 +145,27 @@ export function MentorDashboard() {
     }
   }
 
-  async function handleConfirm(engagementId: string) {
-    if (pendingAction) return;
+  async function handleCheckIn(engagementId: string, agreed: boolean) {
+    if (pendingAction) {
+      return;
+    }
 
     try {
       setPendingAction({
         engagementId,
-        action: "confirm",
+        action: "check-in",
       });
+
       setDashboardError(null);
 
-      await confirmMentorEngagement(engagementId);
+      await respondToMentorCheckIn(engagementId, agreed);
+
       await refreshDashboard();
     } catch (error) {
       setDashboardError(
         getApiErrorMessage(
           error,
-          "Unable to confirm this mentorship. Please try again.",
+          "Unable to save your mentorship response. Please try again.",
         ),
       );
     } finally {
@@ -133,18 +174,20 @@ export function MentorDashboard() {
   }
 
   async function handleEnd(engagementId: string) {
-    // Prevent a second action while one is already running.
-    if (pendingAction) return;
+    if (pendingAction) {
+      return;
+    }
 
     try {
       setPendingAction({
         engagementId,
         action: "end",
       });
+
       setDashboardError(null);
 
       await endMentorEngagement(engagementId);
-      // Re-fetch capacity and engagements instead of changing them locally.
+
       await refreshDashboard();
     } catch (error) {
       setDashboardError(
@@ -158,7 +201,6 @@ export function MentorDashboard() {
     }
   }
 
-  // Wait until both the existing profile and the new dashboard data load.
   if (isLoading || dashboardLoading) {
     return (
       <>
@@ -171,7 +213,6 @@ export function MentorDashboard() {
     );
   }
 
-  // Existing mentor profile failed / does not exist.
   if (!mentorProfile) {
     return (
       <>
@@ -186,11 +227,11 @@ export function MentorDashboard() {
     );
   }
 
-  // New mentor dashboard request failed.
   if (dashboardError || !dashboard) {
     return (
       <>
         <Header />
+
         <main className="mx-auto max-w-6xl px-4 py-8">
           <p role="alert" className="text-error">
             {dashboardError ?? "Unable to load your mentor dashboard."}
@@ -200,8 +241,8 @@ export function MentorDashboard() {
     );
   }
 
-  // PROFILE owns mentor identity/profile data.
   const fullName = mentorProfile.user?.fullName ?? "Mentor";
+
   const firstName = fullName.trim().split(/\s+/)[0];
 
   const engagements = dashboard.engagements;
@@ -215,11 +256,12 @@ export function MentorDashboard() {
   return (
     <div>
       <Header />
+
       <main>
         <div className="mx-auto max-w-6xl px-4 py-8">
           <section className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-start">
             <div>
-              <h1 className="overshoot font-display font-black text-[36px]">
+              <h1 className="overshoot font-display text-[36px] font-black">
                 Your mentees
               </h1>
 
@@ -227,36 +269,45 @@ export function MentorDashboard() {
                 Thank you, {firstName} — every line below is a career you're
                 helping along.
               </p>
+
               <div className="mt-4">
-              <MentorStatusBadge />
-            </div>
+                <MentorStatusBadge />
+              </div>
 
               <div className="mt-6">
                 <AcceptingMenteesToggle />
               </div>
             </div>
 
-            {/* Dynamic capacity comes from dashboard endpoint */}
             <MentorCapacityCard
               filled={dashboard.capacity.filled}
               total={dashboard.capacity.total}
             />
           </section>
 
-          {/* show empty state if no engagement */}
+          {dashboardError && (
+            <div
+              role="alert"
+              className="mt-6 rounded-lg border-l-4 border-error bg-error-tint px-4 py-3"
+            >
+              <p className="text-sm text-error">{dashboardError}</p>
+            </div>
+          )}
+
           {engagements.length === 0 ? (
             <MentorEmptyState
               isAcceptingMentees={dashboard.isAcceptingMentees}
             />
           ) : (
-            <div className="mx-auto max-w-6xl py-8">
+            <div className="mx-auto max-w-6xl space-y-6 py-8">
               {engagements.map((engagement) => (
                 <MentorMenteeCard
                   key={engagement.id}
                   engagement={engagement}
                   mentorName={fullName}
+                  onAccept={handleAccept}
+                  onCheckIn={handleCheckIn}
                   onDecline={handleDecline}
-                  onConfirm={handleConfirm}
                   onEnd={handleEnd}
                   pendingAction={
                     pendingAction?.engagementId === engagement.id

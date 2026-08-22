@@ -2,23 +2,24 @@ import {
   Body,
   Controller,
   Get,
-  Put,
+  Param,
   Patch,
+  Put,
   Req,
   UseGuards,
-  Param,
 } from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOkResponse,
-  ApiTags,
   ApiOperation,
-  ApiUnauthorizedResponse,
   ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import type { RequestWithUser } from '../auth/guards/jwt-auth.guard';
+import { CheckInResponseDto } from '../common/dto/check-in-response.dto';
 
 import { MenteeProfileResponseDto } from './dto/mentee-profile-response.dto';
 import { UpdateMenteeProfileDto } from './dto/update-mentee-profile.dto';
@@ -87,29 +88,6 @@ export class MenteeProfileController {
     return this.menteeDashboardService.getDashboard(request.user.userId);
   }
 
-  @Patch('engagements/:id/accept')
-  @ApiOperation({
-    summary: 'Accept a proposed mentor match',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Mentor match accepted successfully.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Engagement not found for this mentee.',
-  })
-  @ApiResponse({
-    status: 409,
-    description: 'Engagement cannot be accepted from its current state.',
-  })
-  acceptEngagement(
-    @Req() req: RequestWithUser,
-    @Param('id') engagementId: string,
-  ) {
-    return this.menteeEngagementService.accept(req.user.userId, engagementId);
-  }
-
   @Patch('engagements/:id/book')
   @ApiOperation({
     summary: 'Mark the chemistry session as booked',
@@ -136,13 +114,13 @@ export class MenteeProfileController {
     );
   }
 
-  @Patch('engagements/:id/confirm')
+  @Patch('engagements/:id/check-in')
   @ApiOperation({
-    summary: 'Confirm mentorship after the chemistry session',
+    summary: 'Submit mentee mentorship check-in response',
   })
   @ApiResponse({
     status: 200,
-    description: 'Mentorship confirmation recorded successfully.',
+    description: 'Mentee check-in response recorded.',
   })
   @ApiResponse({
     status: 404,
@@ -150,18 +128,24 @@ export class MenteeProfileController {
   })
   @ApiResponse({
     status: 409,
-    description: 'Engagement cannot be confirmed from its current state.',
+    description:
+      'Check-in response cannot be submitted from the current state.',
   })
-  confirmEngagement(
+  respondToCheckIn(
     @Req() req: RequestWithUser,
     @Param('id') engagementId: string,
+    @Body() dto: CheckInResponseDto,
   ) {
-    return this.menteeEngagementService.confirm(req.user.userId, engagementId);
+    return this.menteeEngagementService.respondToCheckIn(
+      req.user.userId,
+      engagementId,
+      dto.agreed,
+    );
   }
 
   @Patch('engagements/:id/decline')
   @ApiOperation({
-    summary: 'Decline a current mentor proposal',
+    summary: 'Decline a current mentor engagement',
   })
   @ApiResponse({
     status: 200,

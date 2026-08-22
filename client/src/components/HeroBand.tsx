@@ -2,7 +2,11 @@ import { Button } from "./ui/Button";
 import { Thread } from "./ui/Thread";
 import { useNavigate } from "react-router-dom";
 
-export function HeroBand() {
+interface HeroBandProps {
+  disciplines: string[];
+}
+
+export function HeroBand({ disciplines }: HeroBandProps) {
   const navigate = useNavigate();
   return (
     <div className="mx-auto grid w-full max-w-6xl grid-cols-1 items-center gap-12 px-5 py-12 sm:px-8 md:grid-cols-2 lg:gap-16 lg:px-10 lg:py-16">
@@ -16,7 +20,7 @@ export function HeroBand() {
         <p className="mt-6 max-w-xl font-sans text-base font-normal leading-7 text-muted sm:text-[17px]">
           CYF pairs trainees with volunteer tech professionals — matched on your
           goals, checked for chemistry, and confirmed by both sides. Sixty-plus
-          mentors across eleven disciplines.
+          mentors across {disciplines.length} disciplines.
         </p>
         <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Button

@@ -1,17 +1,23 @@
 import {
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 
+import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class MentorEngagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(MentorEngagementService.name);
 
-  //   Mentor only gets access to their dashboard
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
+
   private async findOwnedEngagement(userId: string, engagementId: string) {
     const engagement = await this.prisma.matches.findFirst({
       where: {
@@ -20,18 +26,42 @@ export class MentorEngagementService {
           userId,
         },
       },
+      include: {
+        menteeProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+        mentorProfile: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!engagement) {
       throw new NotFoundException('Mentor engagement not found');
     }
+
     return engagement;
   }
 
   async decline(userId: string, engagementId: string) {
     const engagement = await this.findOwnedEngagement(userId, engagementId);
 
-    if (engagement.status === MatchStatus.DECLINED) return engagement;
+    if (engagement.status === MatchStatus.DECLINED) {
+      return engagement;
+    }
 
     if (engagement.status === MatchStatus.ACTIVE) {
       throw new ConflictException(
@@ -54,10 +84,76 @@ export class MentorEngagementService {
     });
   }
 
+  async respondToCheckIn(
+    userId: string,
+    engagementId: string,
+    agreed: boolean,
+  ) {
+    const engagement = await this.findOwnedEngagement(userId, engagementId);
+
+    if (engagement.status !== MatchStatus.MATCH_PENDING) {
+      throw new ConflictException(
+        'Check-in response can only be submitted while mentorship confirmation is pending.',
+      );
+    }
+
+    if (engagement.checkInMentorAgreed !== null) {
+      return engagement;
+    }
+
+    const now = new Date();
+
+    return this.prisma.$transaction(async (tx) => {
+      if (!agreed) {
+        return tx.matches.update({
+          where: {
+            id: engagement.id,
+          },
+          data: {
+            checkInMentorAgreed: false,
+            status: MatchStatus.DECLINED,
+            declinedAt: now,
+            checkInExpiresAt: null,
+          },
+        });
+      }
+
+      await tx.matches.update({
+        where: {
+          id: engagement.id,
+        },
+        data: {
+          checkInMentorAgreed: true,
+        },
+      });
+
+      await tx.matches.updateMany({
+        where: {
+          id: engagement.id,
+          status: MatchStatus.MATCH_PENDING,
+          checkInMenteeAgreed: true,
+          checkInMentorAgreed: true,
+        },
+        data: {
+          status: MatchStatus.ACTIVE,
+          checkInExpiresAt: null,
+        },
+      });
+
+      return tx.matches.findUniqueOrThrow({
+        where: {
+          id: engagement.id,
+        },
+      });
+    });
+  }
+
   async confirm(userId: string, engagementId: string) {
     const engagement = await this.findOwnedEngagement(userId, engagementId);
 
-    if (engagement.chemistryMentorConfirmedAt) return engagement;
+    if (engagement.chemistryMentorConfirmedAt) {
+      return engagement;
+    }
 
     if (engagement.status === MatchStatus.DECLINED) {
       throw new ConflictException('A declined engagement cannot be confirmed');
@@ -67,7 +163,9 @@ export class MentorEngagementService {
       throw new ConflictException('A completed mentorship cannot be confirmed');
     }
 
-    if (engagement.status === MatchStatus.ACTIVE) return engagement;
+    if (engagement.status === MatchStatus.ACTIVE) {
+      return engagement;
+    }
 
     if (!engagement.menteeAcceptedAt) {
       throw new ConflictException(
@@ -75,32 +173,44 @@ export class MentorEngagementService {
       );
     }
 
-    if (!engagement.chemistryBookedAt) {
-      throw new ConflictException(
-        'The chemistry meeting must be booked before mentorship can be confirmed.',
-      );
-    }
-
     const now = new Date();
 
-    const bothConfirmed = Boolean(engagement.chemistryMenteeConfirmedAt);
+    const scheduledCheckIn = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    return this.prisma.matches.update({
+    const confirmedEngagement = await this.prisma.matches.update({
       where: {
         id: engagement.id,
       },
       data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
         chemistryMentorConfirmedAt: now,
-
-        ...(bothConfirmed && { status: MatchStatus.ACTIVE }),
+        scheduledCheckIn,
+        proposalExpiresAt: null,
       },
     });
+
+    try {
+      await this.mailService.sendChemistryAcceptedEmail({
+        email: engagement.menteeProfile.user.email,
+        menteeFullName: engagement.menteeProfile.user.fullName,
+        mentorFullName: engagement.mentorProfile.user.fullName,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Chemistry accepted email could not be sent for match ${engagement.id}`,
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
+
+    return confirmedEngagement;
   }
 
   async end(userId: string, engagementId: string) {
     const engagement = await this.findOwnedEngagement(userId, engagementId);
 
-    if (engagement.status === MatchStatus.COMPLETED) return engagement;
+    if (engagement.status === MatchStatus.COMPLETED) {
+      return engagement;
+    }
 
     if (engagement.status === MatchStatus.DECLINED) {
       throw new ConflictException('A declined engagement cannot be ended.');

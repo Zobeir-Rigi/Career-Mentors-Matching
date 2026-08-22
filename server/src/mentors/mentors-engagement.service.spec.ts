@@ -4,6 +4,7 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { MentorEngagementService } from './mentors-engagement.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
+import { MailService } from '../mail/mail.service';
 
 describe('MentorEngagementService', () => {
   let service: MentorEngagementService;
@@ -11,8 +12,15 @@ describe('MentorEngagementService', () => {
   const prismaMock = {
     matches: {
       findFirst: jest.fn(),
+      findUniqueOrThrow: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
+    $transaction: jest.fn(),
+  };
+
+  const mailServiceMock = {
+    sendChemistryAcceptedEmail: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -22,6 +30,10 @@ describe('MentorEngagementService', () => {
         {
           provide: PrismaService,
           useValue: prismaMock,
+        },
+        {
+          provide: MailService,
+          useValue: mailServiceMock,
         },
       ],
     }).compile();
@@ -47,6 +59,7 @@ describe('MentorEngagementService', () => {
 
     const engagement = {
       id: 'engagement-id',
+      menteeId: 'mentee-profile-id',
       status: MatchStatus.CHEMISTRY_PENDING,
       declinedAt: null,
     };
@@ -67,6 +80,27 @@ describe('MentorEngagementService', () => {
         id: 'engagement-id',
         mentorProfile: {
           userId: 'mentor-user-id',
+        },
+      },
+      include: {
+        menteeProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+        mentorProfile: {
+          include: {
+            user: {
+              select: {
+                fullName: true,
+              },
+            },
+          },
         },
       },
     });
@@ -96,7 +130,6 @@ describe('MentorEngagementService', () => {
     const result = await service.decline('mentor-user-id', 'engagement-id');
 
     expect(result).toEqual(engagement);
-
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
   });
 
@@ -150,24 +183,38 @@ describe('MentorEngagementService', () => {
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
   });
 
-  it('confirms a booked engagement', async () => {
-    const now = new Date('2026-08-12T12:00:00.000Z');
+  it('confirms chemistry when the mentor accepts the proposal', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+    const scheduledCheckIn = new Date('2026-08-27T12:00:00.000Z');
 
     jest.useFakeTimers();
     jest.setSystemTime(now);
 
     const engagement = {
       id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_CONFIRMED,
-      menteeAcceptedAt: new Date('2026-08-10T12:00:00.000Z'),
-      chemistryBookedAt: new Date('2026-08-11T12:00:00.000Z'),
+      status: MatchStatus.CHEMISTRY_PENDING,
+      menteeAcceptedAt: new Date('2026-08-19T12:00:00.000Z'),
+      chemistryBookedAt: null,
       chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: null,
+      chemistryMenteeConfirmedAt: new Date('2026-08-19T12:00:00.000Z'),
+      menteeProfile: {
+        user: {
+          email: 'casey@example.com',
+          fullName: 'Casey Morgan',
+        },
+      },
+      mentorProfile: {
+        user: {
+          fullName: 'Amina Patel',
+        },
+      },
     };
 
     const confirmedEngagement = {
       ...engagement,
+      status: MatchStatus.CHEMISTRY_CONFIRMED,
       chemistryMentorConfirmedAt: now,
+      scheduledCheckIn,
     };
 
     prismaMock.matches.findFirst.mockResolvedValue(engagement);
@@ -180,11 +227,78 @@ describe('MentorEngagementService', () => {
         id: 'engagement-id',
       },
       data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
         chemistryMentorConfirmedAt: now,
+        scheduledCheckIn,
+        proposalExpiresAt: null,
       },
     });
 
     expect(result).toEqual(confirmedEngagement);
+
+    expect(mailServiceMock.sendChemistryAcceptedEmail).toHaveBeenCalledWith({
+      email: 'casey@example.com',
+      menteeFullName: 'Casey Morgan',
+      mentorFullName: 'Amina Patel',
+    });
+  });
+
+  it('still confirms chemistry when the acceptance email cannot be sent', async () => {
+    const now = new Date('2026-08-20T12:00:00.000Z');
+    const scheduledCheckIn = new Date('2026-08-27T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    const engagement = {
+      id: 'engagement-id',
+      status: MatchStatus.CHEMISTRY_PENDING,
+      menteeAcceptedAt: new Date('2026-08-19T12:00:00.000Z'),
+      chemistryBookedAt: null,
+      chemistryMentorConfirmedAt: null,
+      chemistryMenteeConfirmedAt: new Date('2026-08-19T12:00:00.000Z'),
+      menteeProfile: {
+        user: {
+          email: 'casey@example.com',
+          fullName: 'Casey Morgan',
+        },
+      },
+      mentorProfile: {
+        user: {
+          fullName: 'Amina Patel',
+        },
+      },
+    };
+
+    const confirmedEngagement = {
+      ...engagement,
+      status: MatchStatus.CHEMISTRY_CONFIRMED,
+      chemistryMentorConfirmedAt: now,
+      scheduledCheckIn,
+    };
+
+    prismaMock.matches.findFirst.mockResolvedValue(engagement);
+    prismaMock.matches.update.mockResolvedValue(confirmedEngagement);
+
+    mailServiceMock.sendChemistryAcceptedEmail.mockRejectedValue(
+      new Error('SES unavailable'),
+    );
+
+    const result = await service.confirm('mentor-user-id', 'engagement-id');
+
+    expect(result).toEqual(confirmedEngagement);
+
+    expect(prismaMock.matches.update).toHaveBeenCalledWith({
+      where: {
+        id: 'engagement-id',
+      },
+      data: {
+        status: MatchStatus.CHEMISTRY_CONFIRMED,
+        chemistryMentorConfirmedAt: now,
+        scheduledCheckIn,
+        proposalExpiresAt: null,
+      },
+    });
   });
 
   it('is idempotent when mentor has already confirmed', async () => {
@@ -224,66 +338,6 @@ describe('MentorEngagementService', () => {
     );
 
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects confirmation before chemistry meeting is booked', async () => {
-    prismaMock.matches.findFirst.mockResolvedValue({
-      id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_PENDING,
-      menteeAcceptedAt: new Date(),
-      chemistryBookedAt: null,
-      chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: null,
-    });
-
-    const action = service.confirm('mentor-user-id', 'engagement-id');
-
-    await expect(action).rejects.toThrow(ConflictException);
-
-    await expect(action).rejects.toThrow(
-      'The chemistry meeting must be booked before mentorship can be confirmed.',
-    );
-
-    expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('activates mentorship when mentee has already confirmed', async () => {
-    const now = new Date('2026-08-12T12:00:00.000Z');
-
-    jest.useFakeTimers();
-    jest.setSystemTime(now);
-
-    const engagement = {
-      id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_CONFIRMED,
-      menteeAcceptedAt: new Date(),
-      chemistryBookedAt: new Date(),
-      chemistryMentorConfirmedAt: null,
-      chemistryMenteeConfirmedAt: new Date(),
-    };
-
-    const activeEngagement = {
-      ...engagement,
-      chemistryMentorConfirmedAt: now,
-      status: MatchStatus.ACTIVE,
-    };
-
-    prismaMock.matches.findFirst.mockResolvedValue(engagement);
-    prismaMock.matches.update.mockResolvedValue(activeEngagement);
-
-    const result = await service.confirm('mentor-user-id', 'engagement-id');
-
-    expect(prismaMock.matches.update).toHaveBeenCalledWith({
-      where: {
-        id: 'engagement-id',
-      },
-      data: {
-        chemistryMentorConfirmedAt: now,
-        status: MatchStatus.ACTIVE,
-      },
-    });
-
-    expect(result).toEqual(activeEngagement);
   });
 
   it('ends an active mentorship', async () => {
@@ -346,6 +400,7 @@ describe('MentorEngagementService', () => {
     const action = service.end('mentor-user-id', 'engagement-id');
 
     await expect(action).rejects.toThrow(ConflictException);
+
     await expect(action).rejects.toThrow(
       'A declined engagement cannot be ended.',
     );
@@ -362,10 +417,62 @@ describe('MentorEngagementService', () => {
     const action = service.end('mentor-user-id', 'engagement-id');
 
     await expect(action).rejects.toThrow(ConflictException);
+
     await expect(action).rejects.toThrow(
       'Only an active mentorship can be ended.',
     );
 
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
+  });
+
+  it('declines mentorship when mentor rejects the final check-in', async () => {
+    const now = new Date('2026-09-01T12:00:00.000Z');
+
+    jest.useFakeTimers();
+    jest.setSystemTime(now);
+
+    const engagement = {
+      id: 'engagement-id',
+      menteeId: 'mentee-profile-id',
+      status: MatchStatus.MATCH_PENDING,
+      checkInMenteeAgreed: true,
+      checkInMentorAgreed: null,
+    };
+
+    const declinedEngagement = {
+      ...engagement,
+      status: MatchStatus.DECLINED,
+      checkInMentorAgreed: false,
+      declinedAt: now,
+    };
+
+    prismaMock.matches.findFirst.mockResolvedValue(engagement);
+
+    prismaMock.$transaction.mockImplementation(
+      async (callback: (tx: typeof prismaMock) => Promise<unknown>) =>
+        callback(prismaMock),
+    );
+
+    prismaMock.matches.update.mockResolvedValue(declinedEngagement);
+
+    const result = await service.respondToCheckIn(
+      'mentor-user-id',
+      'engagement-id',
+      false,
+    );
+
+    expect(prismaMock.matches.update).toHaveBeenCalledWith({
+      where: {
+        id: 'engagement-id',
+      },
+      data: {
+        checkInMentorAgreed: false,
+        status: MatchStatus.DECLINED,
+        declinedAt: now,
+        checkInExpiresAt: null,
+      },
+    });
+
+    expect(result).toEqual(declinedEngagement);
   });
 });
