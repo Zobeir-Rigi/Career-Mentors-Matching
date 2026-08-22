@@ -7,11 +7,12 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { AUTH_COOKIE_NAME } from '../helpers/auth-cookie';
+import { Role } from '@/generated/prisma/enums';
 
 export interface AuthenticatedUser {
   userId: string;
   email: string;
-  role: string;
+  role: Role;
 }
 
 export interface RequestWithUser extends Request {
@@ -34,7 +35,7 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<{
         sub: string;
         email: string;
-        role: string;
+        role: Role;
       }>(token, {
         secret: process.env.JWT_SECRET ?? 'your-secret-key',
       });

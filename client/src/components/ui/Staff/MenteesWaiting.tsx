@@ -3,39 +3,68 @@ import { Card } from "@components/ui/Card";
 import { Button } from "@components/ui/Button";
 
 export function MenteesWaiting() {
-    const { menteesWaitingData, isLoading } = useStaff();
-    if (isLoading || !menteesWaitingData) {
-        return <div>Loading mentees in waiting list...</div>;
-    }
-    async function handleProposeMatch() {
-        //scaffold for backend integration
-        console.log("Api request for a match.")
-    }
-    return (
-        <div className="mt-8">
-            <div>
-                <h1 className="font-display text-4xl font-semibold overshoot">
-                    Waiting for a mentor
-                </h1>
-                <p className="max-w-2xl text-muted mt-2">
-                    Each button runs the matcher for that mentee — same scoring, same capacity checks.
+  const { menteesWaitingData, isLoading } = useStaff();
+
+  if (isLoading) {
+    return <div>Loading mentees in waiting list...</div>;
+  }
+
+  return (
+    <section className="mt-8">
+      <div>
+        <h2 className="overshoot font-display text-4xl font-semibold text-fg">
+          Waiting for a mentor
+        </h2>
+
+        <p className="mt-2 max-w-2xl font-sans text-sm text-muted">
+          These mentees do not currently have a suitable mentor available.
+        </p>
+      </div>
+
+      {menteesWaitingData.length === 0 ? (
+        <Card className="mt-4">
+          <p className="font-sans text-sm text-muted">
+            No mentees are currently waiting for a mentor.
+          </p>
+        </Card>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          {menteesWaitingData.map((mentee) => (
+            <Card
+              key={mentee.id}
+              className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0">
+                <p className="font-sans text-base font-bold text-fg">
+                  {mentee.fullName}
                 </p>
-            </div>
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                {
-                    menteesWaitingData.map((mentee, index) => {
-                        return (
-                            <Card key={index} className="max-w-[563px] flex flex-row items-center justify-between">
-                                <div>
-                                    <p className="font-sans text-[16px] font-semibold text-fg">{mentee.fullName}</p>
-                                    <p className="font-sans text-[12px] text-muted">{mentee.goals[0]}</p>
-                                </div>
-                                <Button onClick={() => handleProposeMatch()} className="ml-2" variant="outline">Propose match</Button>
-                            </Card>
-                        );
-                    })
-                }
-            </div>
+
+                <p className="mt-1 font-sans text-xs text-muted">
+                  {mentee.goals.length > 0
+                    ? mentee.goals.join(", ")
+                    : "No goals recorded"}
+                </p>
+
+                <p className="mt-2 font-sans text-xs text-muted">
+                  Waiting since{" "}
+                  {new Date(mentee.waitingSince).toLocaleDateString("en-GB")}
+                </p>
+
+                <a
+                  href={`mailto:${mentee.email}`}
+                  className="mt-2 inline-block font-sans text-sm font-bold text-accent underline underline-offset-4"
+                >
+                  Email
+                </a>
+              </div>
+
+              <Button type="button" variant="outline" disabled>
+                Propose match
+              </Button>
+            </Card>
+          ))}
         </div>
-    );
+      )}
+    </section>
+  );
 }

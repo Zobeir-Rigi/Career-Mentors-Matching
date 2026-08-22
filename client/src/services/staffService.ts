@@ -1,19 +1,49 @@
-import { api } from "@/services/api";
+import { api } from "./api";
 
-export async function getMentees() {
-    try {
-        const response = await api.get("/staff/mentees");
-        return response;
-    } catch (error) {
-        console.log(error);
-    }
+import type {
+  GlobalMatchingData,
+  MenteeData,
+  MentorData,
+} from "@/lib/context/StaffContext";
+
+type MentorApprovalStatus = "PENDING" | "ACCEPTED" | "DECLINED";
+
+export interface StaffDirectoryParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+export interface MentorsResponse {
+  mentors: MentorData[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-export async function getMentors() {
-    try {
-        const response = await api.get("/staff/mentors");
-        return response;
-    } catch (error) {
-        console.log(error);
-    }
+export interface MenteesResponse {
+  mentees: MenteeData[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export function getMentees(params: StaffDirectoryParams = {}) {
+  return api.get<MenteesResponse>("/admin/mentees", { params });
+}
+
+export function getMentors(params: StaffDirectoryParams = {}) {
+  return api.get<MentorsResponse>("/admin/mentors", { params });
+}
+
+export function getOverview() {
+  return api.get<GlobalMatchingData>("/admin/overview");
+}
+
+export function updateMentorApproval(
+  mentorProfileId: string,
+  approvalStatus: MentorApprovalStatus,
+) {
+  return api.patch(`/admin/mentors/${mentorProfileId}/approval`, {
+    approvalStatus,
+  });
 }

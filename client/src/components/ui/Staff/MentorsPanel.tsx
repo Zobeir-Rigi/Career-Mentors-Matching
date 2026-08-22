@@ -6,20 +6,47 @@ import { useStaff } from "@/lib/context/StaffContext";
 import { useState } from "react";
 
 export function MentorsPanel() {
-    const { mentorsData, isLoading } = useStaff();
-    const [selectedUser, setSelectedUser] = useState<MenteeData | MentorData | null>(null);
+  const {
+    mentorsData,
+    isLoading,
+    mentorTotal,
+    mentorSearch,
+    mentorPage,
+    mentorLimit,
+    setMentorSearch,
+    setMentorPage,
+  } = useStaff();
 
-    if (isLoading || !mentorsData) {
-        return <div>Loading mentors data...</div>;
-    }
-    return selectedUser ? (
-        <div>
-            <UserDetailsCard userData={selectedUser} setSelectedUser={setSelectedUser} />
-            <StaffPageMatches matches={selectedUser?.matches} />
-        </div>
-    ) : (
-        <div>
-            <UsersList userType={"Mentors"} usersData={mentorsData} setSelectedUser={setSelectedUser} />
-        </div>
-    );
+  const [selectedUser, setSelectedUser] = useState<
+    MenteeData | MentorData | null
+  >(null);
+
+  if (isLoading) {
+    return <div>Loading mentors data...</div>;
+  }
+
+  return selectedUser ? (
+    <div>
+      <UserDetailsCard
+        userData={selectedUser}
+        setSelectedUser={setSelectedUser}
+      />
+
+      <StaffPageMatches matches={selectedUser.matches} />
+    </div>
+  ) : (
+    <div>
+      <UsersList
+        userType="Mentors"
+        usersData={mentorsData}
+        total={mentorTotal}
+        searchQuery={mentorSearch}
+        onSearchChange={setMentorSearch}
+        page={mentorPage}
+        limit={mentorLimit}
+        onPageChange={setMentorPage}
+        setSelectedUser={setSelectedUser}
+      />
+    </div>
+  );
 }
