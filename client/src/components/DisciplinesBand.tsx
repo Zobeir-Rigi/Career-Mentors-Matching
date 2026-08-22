@@ -12,6 +12,7 @@ interface DisciplinesBandProps {
   onSelectedDisciplinesChange: (disciplines: string[]) => void;
   onSaveGoals?: () => void | Promise<void>;
   isSavingGoals?: boolean;
+  isInteractive?: boolean;
 }
 
 export const DisciplinesBand = ({
@@ -23,8 +24,10 @@ export const DisciplinesBand = ({
   onSelectedDisciplinesChange,
   onSaveGoals,
   isSavingGoals = false,
+  isInteractive = true,
 }: DisciplinesBandProps) => {
   function handleChipClick(discipline: string) {
+    if (!isInteractive) return;
     const updatedDisciplines = selectedDisciplines.includes(discipline)
       ? selectedDisciplines.filter((item) => item !== discipline)
       : [...selectedDisciplines, discipline];
@@ -57,7 +60,7 @@ export const DisciplinesBand = ({
               key={discipline}
               label={discipline}
               isSelected={selectedDisciplines.includes(discipline)}
-              onClick={() => handleChipClick(discipline)}
+              onClick={isInteractive ? () => handleChipClick(discipline) : undefined}
             />
           ))}
         </div>

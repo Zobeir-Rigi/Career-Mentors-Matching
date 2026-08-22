@@ -21,7 +21,8 @@ export function Landing() {
           isSubmitButtonToRender={false}
           disciplines={goalOptions}
           selectedDisciplines={[]}
-          onSelectedDisciplinesChange={() => {}}
+          onSelectedDisciplinesChange={() => { }}
+          isInteractive={false}
         />
         <VolunteerAnHour />
       </main>
