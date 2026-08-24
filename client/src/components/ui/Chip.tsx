@@ -1,7 +1,7 @@
 interface ChipProps {
   label: string;
   isSelected: boolean;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export function Chip({ label, isSelected, onClick }: ChipProps) {
@@ -11,6 +11,14 @@ export function Chip({ label, isSelected, onClick }: ChipProps) {
   const stateStyles = isSelected
     ? "bg-accent text-on-accent hover:bg-accent-hover"
     : "bg-surface border-[1.5px] border-line bg-surface text-fg hover:border-accent hover:bg-tint";
+
+  if (!onClick) {
+    return (
+      <span className={`${baseStyles} ${stateStyles} select-none`.trim()}>
+        {label}
+      </span>
+    );
+  }
 
   return (
     <button
