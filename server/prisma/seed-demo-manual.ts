@@ -794,8 +794,16 @@ async function seedMentor(
 ): Promise<string> {
   const user = await upsertUser(seed, passwordHashed);
 
+  const seededAt = new Date();
+
   const notifiedAdminAt =
-    seed.approvalStatus === ApprovalStatus.PENDING ? new Date() : null;
+    seed.approvalStatus === ApprovalStatus.PENDING ? seededAt : null;
+
+  const profileReceivedEmailSentAt =
+    seed.approvalStatus === ApprovalStatus.PENDING ? seededAt : null;
+
+  const approvalDecisionEmailSentAt =
+    seed.approvalStatus === ApprovalStatus.ACCEPTED ? seededAt : null;
 
   const createData = {
     userId: user.id,
@@ -810,6 +818,8 @@ async function seedMentor(
     isAcceptingMentees: seed.isAcceptingMentees,
     approvalStatus: seed.approvalStatus,
     notifiedAdminAt,
+    profileReceivedEmailSentAt,
+    approvalDecisionEmailSentAt,
   } satisfies Prisma.MentorProfileUncheckedCreateInput;
 
   const updateData = {
@@ -824,6 +834,8 @@ async function seedMentor(
     isAcceptingMentees: seed.isAcceptingMentees,
     approvalStatus: seed.approvalStatus,
     notifiedAdminAt,
+    profileReceivedEmailSentAt,
+    approvalDecisionEmailSentAt,
   } satisfies Prisma.MentorProfileUncheckedUpdateInput;
 
   const profile = await prisma.mentorProfile.upsert({
@@ -969,7 +981,7 @@ async function main() {
     {
       role: 'ADMIN',
       email: ADMIN.email,
-      state: 'Admin/staff view',
+      state: 'Admin view',
     },
     ...MENTORS.map((mentor) => ({
       role: 'MENTOR',

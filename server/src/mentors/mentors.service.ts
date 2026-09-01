@@ -8,7 +8,10 @@ import {
   MeetingCadence,
   MeetingStructure,
   Region,
+  Role,
 } from '../generated/prisma/enums';
+import { MailService } from '@/mail/mail.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface MentorProfileWithRelations {
   id: string;
@@ -24,6 +27,8 @@ export interface MentorProfileWithRelations {
   isAcceptingMentees: boolean;
   approvalStatus: ApprovalStatus;
   notifiedAdminAt: Date | null;
+  profileReceivedEmailSentAt: Date | null;
+  approvalDecisionEmailSentAt: Date | null;
   user?: {
     id: string;
     fullName: string;
@@ -40,7 +45,132 @@ export interface MentorProfileWithRelations {
 }
 @Injectable()
 export class MentorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
+
+  private async getActiveAdmins() {
+    return this.prisma.user.findMany({
+      where: {
+        role: Role.ADMIN,
+        isActive: true,
+      },
+      select: {
+        email: true,
+        fullName: true,
+      },
+    });
+  }
+
+  private async notifyAdminsMentorReadyForReview({
+    mentorFullName,
+    mentorEmail,
+  }: {
+    mentorFullName: string;
+    mentorEmail: string;
+  }): Promise<boolean> {
+    const admins = await this.getActiveAdmins();
+
+    if (admins.length === 0) {
+      return false;
+    }
+
+    try {
+      await Promise.all(
+        admins.map((admin) =>
+          this.mailService.sendAdminMentorReadyForReviewEmail({
+            email: admin.email,
+            adminFullName: admin.fullName,
+            mentorFullName,
+            mentorEmail,
+          }),
+        ),
+      );
+
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private async notifyAdminsIfMentorReady(
+    profile: MentorProfileWithRelations,
+  ): Promise<Date | null> {
+    const isComplete = this.isProfileComplete(profile);
+
+    if (
+      !isComplete ||
+      profile.approvalStatus !== ApprovalStatus.PENDING ||
+      profile.notifiedAdminAt
+    ) {
+      return profile.notifiedAdminAt;
+    }
+
+    if (!profile.user) {
+      return null;
+    }
+
+    const adminNotified = await this.notifyAdminsMentorReadyForReview({
+      mentorFullName: profile.user.fullName,
+      mentorEmail: profile.user.email,
+    });
+
+    if (!adminNotified) {
+      return null;
+    }
+
+    const notifiedAt = new Date();
+
+    await this.prisma.mentorProfile.update({
+      where: {
+        id: profile.id,
+      },
+      data: {
+        notifiedAdminAt: notifiedAt,
+      },
+    });
+
+    return notifiedAt;
+  }
+
+  private async notifyMentorProfileReceived(
+    profile: MentorProfileWithRelations,
+  ): Promise<Date | null> {
+    if (
+      !this.isProfileComplete(profile) ||
+      profile.approvalStatus !== ApprovalStatus.PENDING ||
+      profile.profileReceivedEmailSentAt
+    ) {
+      return profile.profileReceivedEmailSentAt;
+    }
+
+    if (!profile.user) {
+      return null;
+    }
+
+    try {
+      await this.mailService.sendMentorProfileReceivedEmail({
+        email: profile.user.email,
+        fullName: profile.user.fullName,
+      });
+
+      const sentAt = new Date();
+
+      await this.prisma.mentorProfile.update({
+        where: {
+          id: profile.id,
+        },
+        data: {
+          profileReceivedEmailSentAt: sentAt,
+        },
+      });
+
+      return sentAt;
+    } catch {
+      return null;
+    }
+  }
 
   // 1. Checks if all mandatory fields are filled out
   public isProfileComplete(profile: MentorProfileWithRelations): boolean {
@@ -110,7 +240,7 @@ export class MentorsService {
       ...profileData
     } = dto;
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: userId },
         data: { linkedinURL, scheduleURL },
@@ -221,18 +351,6 @@ export class MentorsService {
 
       // Check if profile is newly complete and needs admin notification stamp
       const isComplete = this.isProfileComplete(updatedProfile);
-      if (
-        isComplete &&
-        !updatedProfile.notifiedAdminAt &&
-        updatedProfile.approvalStatus === 'PENDING'
-      ) {
-        const now = new Date();
-        await tx.mentorProfile.update({
-          where: { id: updatedProfile.id },
-          data: { notifiedAdminAt: now },
-        });
-        updatedProfile.notifiedAdminAt = now;
-      }
 
       return {
         ...updatedProfile,
@@ -240,6 +358,21 @@ export class MentorsService {
         isMatchReady: this.isMatchReady(updatedProfile),
       };
     });
+
+    const profileReceivedEmailSentAt =
+      await this.notifyMentorProfileReceived(result);
+
+    if (profileReceivedEmailSentAt) {
+      result.profileReceivedEmailSentAt = profileReceivedEmailSentAt;
+    }
+
+    const notifiedAt = await this.notifyAdminsIfMentorReady(result);
+
+    if (notifiedAt) {
+      result.notifiedAdminAt = notifiedAt;
+    }
+
+    return result;
   }
 
   async updateProfile(userId: string, dto: UpdateMentorDto) {
@@ -278,17 +411,18 @@ export class MentorsService {
 
     // Check if profile is newly complete and needs admin notification stamp
     const isComplete = this.isProfileComplete(profile);
-    if (
-      isComplete &&
-      !profile.notifiedAdminAt &&
-      profile.approvalStatus === 'PENDING'
-    ) {
-      const now = new Date();
-      await this.prisma.mentorProfile.update({
-        where: { id: profile.id },
-        data: { notifiedAdminAt: now },
-      });
-      profile.notifiedAdminAt = now;
+
+    const profileReceivedEmailSentAt =
+      await this.notifyMentorProfileReceived(profile);
+
+    if (profileReceivedEmailSentAt) {
+      profile.profileReceivedEmailSentAt = profileReceivedEmailSentAt;
+    }
+
+    const notifiedAdminAt = await this.notifyAdminsIfMentorReady(profile);
+
+    if (notifiedAdminAt) {
+      profile.notifiedAdminAt = notifiedAdminAt;
     }
 
     return {
@@ -296,6 +430,50 @@ export class MentorsService {
       isProfileComplete: isComplete,
       isMatchReady: this.isMatchReady(profile),
     };
+  }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async retryPendingAdminNotifications(): Promise<void> {
+    const profiles = await this.prisma.mentorProfile.findMany({
+      where: {
+        approvalStatus: ApprovalStatus.PENDING,
+        notifiedAdminAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+            linkedinURL: true,
+            scheduleURL: true,
+          },
+        },
+        mentorDisciplines: {
+          include: {
+            discipline: true,
+          },
+        },
+        mentorSkills: {
+          include: {
+            skill: true,
+          },
+        },
+        mentorDomainIndustries: {
+          include: {
+            industry: true,
+          },
+        },
+      },
+    });
+
+    for (const profile of profiles) {
+      const notifiedAdminAt = await this.notifyAdminsIfMentorReady(profile);
+
+      if (notifiedAdminAt) {
+        profile.notifiedAdminAt = notifiedAdminAt;
+      }
+    }
   }
 
   async deleteProfile(userId: string) {

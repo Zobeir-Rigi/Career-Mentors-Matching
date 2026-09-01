@@ -6,7 +6,7 @@ import {
   MatchStatus,
 } from '../../generated/prisma/enums';
 
-export class StaffMatchedMenteeDto {
+export class AdminMatchedMenteeDto {
   @ApiProperty()
   menteeProfileId!: string;
 
@@ -23,7 +23,7 @@ export class StaffMatchedMenteeDto {
   score!: number;
 }
 
-export class StaffMentorCapacityDto {
+export class AdminMentorCapacityDto {
   @ApiProperty({
     description: 'Number of current capacity-relevant mentorship',
     example: 1,
@@ -62,7 +62,7 @@ export class MentorMatchDto {
   declinedAt!: Date | null;
 }
 
-export class StaffMentorDto {
+export class AdminMentorDto {
   @ApiProperty()
   mentorProfileId!: string;
 
@@ -93,8 +93,8 @@ export class StaffMentorDto {
   @ApiProperty({ type: [String], example: ['Software Engineering'] })
   disciplines!: string[];
 
-  @ApiProperty({ type: StaffMentorCapacityDto })
-  capacity!: StaffMentorCapacityDto;
+  @ApiProperty({ type: AdminMentorCapacityDto })
+  capacity!: AdminMentorCapacityDto;
 
   @ApiProperty({ enum: Region, nullable: true })
   region!: Region | null;
@@ -120,12 +120,12 @@ export class StaffMentorDto {
   matches!: MentorMatchDto[];
 }
 
-export class StaffMentorsResponseDto {
+export class AdminMentorsResponseDto {
   @ApiProperty({
-    type: [StaffMentorDto],
+    type: [AdminMentorDto],
     description: 'List of mentor profiles',
   })
-  mentors!: StaffMentorDto[];
+  mentors!: AdminMentorDto[];
 
   @ApiProperty()
   total!: number;

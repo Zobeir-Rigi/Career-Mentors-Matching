@@ -1,7 +1,7 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
-export class StaffDirectoryQueryDto {
+export class AdminDirectoryQueryDto {
   @IsOptional()
   @IsString()
   search?: string;

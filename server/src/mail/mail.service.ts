@@ -6,11 +6,23 @@ import {
 import { ConfigService } from '@nestjs/config';
 
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import { ApprovalStatus } from '@/generated/prisma/enums';
 
 interface SendAuthEmailParams {
   email: string;
   fullName: string;
   token: string;
+}
+
+interface SendMentorProfileReceivedParams {
+  email: string;
+  fullName: string;
+}
+
+interface SendMentorApprovalDecisionEmailParams {
+  email: string;
+  fullName: string;
+  approvalStatus: Extract<ApprovalStatus, 'ACCEPTED' | 'DECLINED'>;
 }
 
 interface SendChemistryProposalEmailParams {
@@ -30,6 +42,20 @@ interface SendMentorshipCheckInEmailParams {
   fullName: string;
   counterpartFullName: string;
   recipientRole: 'mentor' | 'mentee';
+}
+
+interface SendMatchExpiredEmailParams {
+  email: string;
+  fullName: string;
+  counterpartFullName: string;
+  recipientRole: 'mentor' | 'mentee';
+}
+
+interface sendAdminMentorReadyForReviewEmailParams {
+  email: string;
+  adminFullName: string;
+  mentorFullName: string;
+  mentorEmail: string;
 }
 
 interface SendMenteeWaitingListAdminEmailParams {
@@ -68,11 +94,11 @@ export class MailService {
 
     verificationUrl.searchParams.set('token', token);
 
-    const firstName = fullName.trim().split(/\s+/)[0];
+    const recipientFullName = fullName.trim();
 
     const html = `
       <h1>Verify your email</h1>
-      <p>Hi ${firstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>Please verify your email address to continue using the CYF Mentorship platform.</p>
       <p>
         <a href="${verificationUrl.toString()}">
@@ -128,11 +154,11 @@ export class MailService {
 
     resetUrl.searchParams.set('token', token);
 
-    const firstName = fullName.trim().split(/\s+/)[0];
+    const recipientFullName = fullName.trim();
 
     const html = `
       <h1>Reset your password</h1>
-      <p>Hi ${firstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>Please click the link below to reset your password for the CYF Mentorship platform.</p>
       <p>
         <a href="${resetUrl.toString()}">
@@ -180,6 +206,159 @@ export class MailService {
     }
   }
 
+  async sendMentorProfileReceivedEmail({
+    email,
+    fullName,
+  }: SendMentorProfileReceivedParams): Promise<void> {
+    const dashboardUrl = new URL('/mentor/dashboard', this.frontendUrl);
+
+    const fullNameForEmail = fullName.trim();
+
+    const html = `
+      <h1>Your mentor profile has been received</h1>
+      <p>Hi ${fullNameForEmail}</p>
+      <p>
+        Thank you for completing your mentor profile.
+        We've received it and it is now waiting for CYF approval.
+      </p>
+      <p>
+        We'll let you know when your profile has been reviewed.
+      </p>
+      <p>
+        <a href="${dashboardUrl.toString()}">
+          View your mentor dashboard
+        </a>
+      </p>
+    `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Mentor profile submitted email for ${email}: ${dashboardUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: {
+          Data: 'Your CYF mentor profile has been received',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error(
+        'Failed to send mentor profile submitted email: ',
+        error,
+      );
+
+      throw new InternalServerErrorException(
+        'Unable to send mentor profile submitted email',
+      );
+    }
+  }
+
+  async sendMentorApprovalDecisionEmail({
+    email,
+    fullName,
+    approvalStatus,
+  }: SendMentorApprovalDecisionEmailParams) {
+    const dashboardUrl = new URL('/mentor/dashboard', this.frontendUrl);
+
+    const recipientFullName = fullName.trim();
+
+    const accepted = approvalStatus === ApprovalStatus.ACCEPTED;
+
+    const subject = accepted
+      ? 'Your CYF mentor profile has been approved'
+      : 'Update on your CYF mentor profile';
+
+    const html = accepted
+      ? `
+      <h1>Your mentor profile has been approved</h1>
+      <p>Hi ${recipientFullName},</p>
+      <p>
+        Your CYF mentor profile has been reviewed and approved.
+      </p>
+      <p>
+        You can now manage your mentoring availability from your dashboard.
+      </p>
+      <p>
+        <a href="${dashboardUrl.toString()}">
+          View your mentor dashboard
+        </a>
+      </p>
+    `
+      : `
+      <h1>Update on your mentor profile</h1>
+      <p>Hi ${recipientFullName},</p>
+      <p>
+        Your CYF mentor profile has been reviewed and has not been approved
+        at this time.
+      </p>
+      <p>
+        Please contact the CYF team if you need more information.
+      </p>
+      <p>
+        <a href="${dashboardUrl.toString()}">
+          View your mentor dashboard
+        </a>
+      </p>
+    `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Mentor approval decision email for ${email}: ${approvalStatus}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error(
+        'Failed to send mentor approval decision email: ',
+        error,
+      );
+
+      throw new InternalServerErrorException(
+        'Unable to send mentor approval decision email',
+      );
+    }
+  }
+
   async sendChemistryProposalEmail({
     email,
     mentorFullName,
@@ -187,11 +366,11 @@ export class MailService {
   }: SendChemistryProposalEmailParams): Promise<void> {
     const dashboardUrl = new URL('/mentor/dashboard', this.frontendUrl);
 
-    const mentorFirstName = mentorFullName.trim().split(/\s+/)[0];
+    const recipientFullName = mentorFullName.trim();
 
     const html = `
       <h1>New chemistry session proposal</h1>
-      <p>Hi ${mentorFirstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>${menteeFullName} would like to have a chemistry session with you.</p>
       <p>
         Please log in to your mentor dashboard to review the proposal and accept or decline it.
@@ -247,11 +426,11 @@ export class MailService {
   }: SendChemistryAcceptedEmailParams): Promise<void> {
     const dashboardUrl = new URL('/mentee/dashboard', this.frontendUrl);
 
-    const menteeFirstName = menteeFullName.trim().split(/\s+/)[0];
+    const recipientFullName = menteeFullName.trim();
 
     const html = `
       <h1>Your chemistry proposal was accepted</h1>
-      <p>Hi ${menteeFirstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>${mentorFullName} has accepted your chemistry session proposal.</p>
       <p>
         Please log in to your mentee dashboard to view their contact details
@@ -315,11 +494,11 @@ export class MailService {
 
     const dashboardUrl = new URL(dashboardPath, this.frontendUrl);
 
-    const firstName = fullName.trim().split(/\s+/)[0];
+    const recipientFullName = fullName.trim();
 
     const html = `
       <h1>Chemistry session check-in</h1>
-      <p>Hi ${firstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>
         It has been one week since you and ${counterpartFullName}
         agreed to have a chemistry session.
@@ -372,19 +551,137 @@ export class MailService {
     }
   }
 
+  async sendMatchExpiredEmail({
+    email,
+    fullName,
+    counterpartFullName,
+    recipientRole,
+  }: SendMatchExpiredEmailParams): Promise<void> {
+    const dashboardPath =
+      recipientRole === 'mentor' ? '/mentor/dashboard' : '/mentee/dashboard';
+    const dashboardUrl = new URL(dashboardPath, this.frontendUrl);
+    const recipientFullName = fullName.trim();
+
+    const html = `
+      <h1>Your mentorship match has ended</h1>
+      <p>Hi ${recipientFullName},</p>
+      <p>
+        The mentorship match with ${counterpartFullName} has been released
+        because the one-week check-in did not receive a response from both people.
+      </p>
+      <p>
+        ${recipientRole === 'mentee' ? 'You can request another mentor match from your dashboard.' : 'Your mentoring capacity is now available again.'}
+      </p>
+      <p>
+        <a href="${dashboardUrl.toString()}">Open your dashboard</a>
+      </p>
+    `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Match expired email for ${email}: ${dashboardUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: { ToAddresses: [email] },
+      Message: {
+        Subject: {
+          Data: 'Your CYF Mentorship match has ended',
+          Charset: 'UTF-8',
+        },
+        Body: { Html: { Data: html, Charset: 'UTF-8' } },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send match expired email: ', error);
+      throw new InternalServerErrorException(
+        'Unable to send match expired email',
+      );
+    }
+  }
+
+  async sendAdminMentorReadyForReviewEmail({
+    email,
+    adminFullName,
+    mentorFullName,
+    mentorEmail,
+  }: sendAdminMentorReadyForReviewEmailParams): Promise<void> {
+    const adminUrl = new URL('/admin', this.frontendUrl);
+
+    const adminName = adminFullName.trim();
+
+    const html = `
+      <h1>Mentor profile waiting for an approval</h1>
+      <p>Hi ${adminName},</p>
+      <p>
+        ${mentorFullName} (${mentorEmail}) has completed profile,
+        please login to review it.
+      </p>
+      <p>
+        The new mentor profile have been added to the mentor list.
+      </p>
+      <p>
+        <a href="${adminUrl.toString()}">
+          Review the mentor profile.
+        </a>
+      </p>
+    `;
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Mentor profile approval admin email for ${email}: ${adminUrl.toString()}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: {
+        ToAddresses: [email],
+      },
+      Message: {
+        Subject: {
+          Data: 'A mentor has completed profile, waiting for review',
+          Charset: 'UTF-8',
+        },
+        Body: {
+          Html: {
+            Data: html,
+            Charset: 'UTF-8',
+          },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error(`Failed to send mentor approval admin email: `, error);
+      throw new InternalServerErrorException(
+        'Unable to send mentor approval admin email',
+      );
+    }
+  }
+
   async sendMenteeWaitingListAdminEmail({
     email,
     adminFullName,
     menteeFullName,
     menteeEmail,
   }: SendMenteeWaitingListAdminEmailParams): Promise<void> {
-    const staffUrl = new URL('/staff', this.frontendUrl);
+    const adminUrl = new URL('/admin', this.frontendUrl);
 
-    const adminFirstName = adminFullName.trim().split(/\s+/)[0];
+    const recipientFullName = adminFullName.trim();
 
     const html = `
       <h1>Mentee waiting for a mentor</h1>
-      <p>Hi ${adminFirstName},</p>
+      <p>Hi ${recipientFullName},</p>
       <p>
         ${menteeFullName} (${menteeEmail}) has completed matching,
         but no suitable available mentor could currently be found.
@@ -393,7 +690,7 @@ export class MailService {
         They have been added to the mentorship waiting list.
       </p>
       <p>
-        <a href="${staffUrl.toString()}">
+        <a href="${adminUrl.toString()}">
           Review the waiting list
         </a>
       </p>
@@ -401,7 +698,7 @@ export class MailService {
 
     if (this.emailProvider === 'console') {
       this.logger.log(
-        `Waiting-list admin email for ${email}: ${staffUrl.toString()}`,
+        `Waiting-list admin email for ${email}: ${adminUrl.toString()}`,
       );
       return;
     }

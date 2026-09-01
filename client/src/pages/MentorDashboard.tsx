@@ -274,6 +274,16 @@ export function MentorDashboard() {
                 <MentorStatusBadge />
               </div>
 
+              {mentorProfile.approvalStatus === "PENDING" && (
+                <div className="mt-4 rounded-lg border border-line bg-surface px-4 py-3">
+                  <p className="font-semibold">Profile submitted</p>
+                  <p className="mt-1 text-sm text-muted">
+                    Your mentor profile has been received and is waiting for CYF
+                    approval. We'll let you know when it has been reviewed.
+                  </p>
+                </div>
+              )}
+
               <div className="mt-6">
                 <AcceptingMenteesToggle />
               </div>

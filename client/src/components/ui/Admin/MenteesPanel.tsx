@@ -1,8 +1,8 @@
-import { UserDetailsCard } from "@/components/ui/Staff/UserDetailsCard";
-import { ProposeMentorForm } from "@/components/ui/Staff/ProposeMentorForm";
-import { StaffPageMatches } from "@/components/ui/Staff/StaffPageMatches";
-import type { MenteeData, MentorData } from "@/lib/context/StaffContext";
-import { useStaff } from "@/lib/context/StaffContext";
+import { UserDetailsCard } from "@/components/ui/Admin/UserDetailsCard";
+import { ProposeMentorForm } from "@/components/ui/Admin/ProposeMentorForm";
+import { AdminPageMatches } from "@/components/ui/Admin/AdminPageMatches";
+import type { MenteeData, MentorData } from "@/lib/context/AdminContext";
+import { useAdmin } from "@/lib/context/AdminContext";
 import { useState } from "react";
 import { UsersList } from "./UsersList";
 
@@ -16,7 +16,7 @@ export function MenteesPanel() {
     menteeLimit,
     setMenteeSearch,
     setMenteePage,
-  } = useStaff();
+  } = useAdmin();
 
   const [selectedUser, setSelectedUser] = useState<
     MenteeData | MentorData | null
@@ -35,7 +35,7 @@ export function MenteesPanel() {
 
       <ProposeMentorForm />
 
-      <StaffPageMatches matches={selectedUser.matches} />
+      <AdminPageMatches matches={selectedUser.matches} />
     </div>
   ) : (
     <div>

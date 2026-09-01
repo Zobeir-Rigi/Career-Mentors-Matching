@@ -18,32 +18,32 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { AdminGuard } from '@/auth/guards/admin.guard';
 
-import { StaffMenteesResponseDto } from './dto/staff-mentees-response.dto';
-import { StaffMentorsResponseDto } from './dto/staff-mentors-response.dto';
-import { StaffService } from './staff.service';
-import { StaffOverviewResponseDto } from './dto/staff-overview-response.dto';
-import { StaffDirectoryQueryDto } from './dto/staff-directory-query.dto';
+import { AdminMenteesResponseDto } from './dto/admin-mentees-response.dto';
+import { AdminMentorsResponseDto } from './dto/admin-mentors-response.dto';
+import { AdminService } from './admin.service';
+import { AdminOverviewResponseDto } from './dto/admin-overview-response.dto';
+import { AdminDirectoryQueryDto } from './dto/admin-directory-query.dto';
 import { UpdateMentorApprovalDto } from './dto/update-mentor-approval.dto';
 
 @ApiTags('Admin')
 @ApiCookieAuth('accessToken')
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Controller('admin')
-export class StaffController {
-  constructor(private readonly staffService: StaffService) {}
+export class AdminController {
+  constructor(private readonly adminService: AdminService) {}
 
   @Get('mentees')
   @ApiOperation({ summary: 'Get mentees profiles.' })
   @ApiResponse({
     status: 200,
     description: 'Mentees retrieved successfully.',
-    type: StaffMenteesResponseDto,
+    type: AdminMenteesResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Admin access required' })
   @ApiResponse({ status: 404, description: 'Mentees not found.' })
-  async getMentees(@Query() query: StaffDirectoryQueryDto) {
-    return await this.staffService.getMentees(query);
+  async getMentees(@Query() query: AdminDirectoryQueryDto) {
+    return await this.adminService.getMentees(query);
   }
 
   @Get('mentors')
@@ -51,13 +51,13 @@ export class StaffController {
   @ApiResponse({
     status: 200,
     description: 'Mentors retrieved successfully.',
-    type: StaffMentorsResponseDto,
+    type: AdminMentorsResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Admin access required' })
   @ApiResponse({ status: 404, description: 'Mentors not found.' })
-  async getMentors(@Query() query: StaffDirectoryQueryDto) {
-    return await this.staffService.getMentors(query);
+  async getMentors(@Query() query: AdminDirectoryQueryDto) {
+    return await this.adminService.getMentors(query);
   }
 
   @Get('overview')
@@ -65,12 +65,12 @@ export class StaffController {
   @ApiResponse({
     status: 200,
     description: 'Programme overview retrieved successfully.',
-    type: StaffOverviewResponseDto,
+    type: AdminOverviewResponseDto,
   })
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   @ApiResponse({ status: 403, description: 'Admin access required' })
   async getOverview() {
-    return await this.staffService.getOverview();
+    return await this.adminService.getOverview();
   }
 
   @Patch('mentors/:mentorProfileId/approval')
@@ -85,7 +85,7 @@ export class StaffController {
     @Param('mentorProfileId') mentorProfileId: string,
     @Body() dto: UpdateMentorApprovalDto,
   ) {
-    return await this.staffService.updateMentorApproval(
+    return await this.adminService.updateMentorApproval(
       mentorProfileId,
       dto.approvalStatus,
     );

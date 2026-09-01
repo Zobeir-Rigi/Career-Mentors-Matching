@@ -19,26 +19,25 @@ jest.mock('@aws-sdk/client-ses', () => ({
 describe('MailService', () => {
   let service: MailService;
 
-  const configServiceMock = {
-    getOrThrow: jest.fn((key: string) => {
-      const values: Record<string, string> = {
-        EMAIL_FROM: 'CYF Mentorship <mentorship@cyf.academy>',
-        FRONTEND_URL: 'http://localhost:5173',
-      };
+  const createMailService = async (emailProvider = 'ses') => {
+    const configServiceMock = {
+      getOrThrow: jest.fn((key: string) => {
+        const values: Record<string, string> = {
+          EMAIL_FROM: 'CYF Mentorship <mentorship@cyf.academy>',
+          FRONTEND_URL: 'http://localhost:5173',
+          EMAIL_PROVIDER: emailProvider,
+        };
 
-      return values[key];
-    }),
+        const value = values[key];
 
-    get: jest.fn((key: string) => {
-      if (key === 'EMAIL_PROVIDER') {
-        return 'ses';
-      }
+        if (value === undefined) {
+          throw new Error(`Missing configuration value: ${key}`);
+        }
 
-      return undefined;
-    }),
-  };
+        return value;
+      }),
+    };
 
-  beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MailService,
@@ -49,9 +48,14 @@ describe('MailService', () => {
       ],
     }).compile();
 
-    service = module.get<MailService>(MailService);
+    return module.get<MailService>(MailService);
+  };
 
+  beforeEach(async () => {
     jest.clearAllMocks();
+    sesSendMock.mockReset();
+
+    service = await createMailService();
   });
 
   it('should be defined', () => {
@@ -89,7 +93,7 @@ describe('MailService', () => {
       'http://localhost:5173/verify-email?token=verification-token',
     );
 
-    expect(html).toContain('Hi Jane,');
+    expect(html).toContain('Hi Jane Doe,');
 
     expect(sesSendMock).toHaveBeenCalledTimes(1);
   });
@@ -106,6 +110,174 @@ describe('MailService', () => {
     await expect(action).rejects.toBeInstanceOf(InternalServerErrorException);
 
     await expect(action).rejects.toThrow('Unable to send verification email');
+  });
+
+  it('should send a password reset email with the correct details', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'password-reset-email-id',
+    });
+
+    await service.sendPasswordResetEmail({
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+      token: 'password-reset-token',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
+    expect(commandInput.Destination?.ToAddresses).toEqual(['jane@example.com']);
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Reset your CYF Mentorship password',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain(
+      'http://localhost:5173/reset-password?token=password-reset-token',
+    );
+    expect(html).toContain('Hi Jane Doe,');
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should send a profile received email to the mentor', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'profile-received-email-id',
+    });
+
+    await service.sendMentorProfileReceivedEmail({
+      email: 'amina@example.com',
+      fullName: 'Amina Patel',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
+
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'amina@example.com',
+    ]);
+
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Your CYF mentor profile has been received',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('<p>Hi Amina Patel</p>');
+    expect(html).toContain('http://localhost:5173/mentor/dashboard');
+
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should tell the mentor when their profile is accepted', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'profile-accepted-email-id',
+    });
+
+    await service.sendMentorApprovalDecisionEmail({
+      email: 'amina@example.com',
+      fullName: 'Amina Patel',
+      approvalStatus: 'ACCEPTED',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'amina@example.com',
+    ]);
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Your CYF mentor profile has been approved',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('Hi Amina Patel,');
+    expect(html).toContain('reviewed and approved');
+    expect(html).toContain('http://localhost:5173/mentor/dashboard');
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should tell the mentor when their profile is declined', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'profile-declined-email-id',
+    });
+
+    await service.sendMentorApprovalDecisionEmail({
+      email: 'amina@example.com',
+      fullName: 'Amina Patel',
+      approvalStatus: 'DECLINED',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'amina@example.com',
+    ]);
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'Update on your CYF mentor profile',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('Hi Amina Patel,');
+    expect(html).toContain('has not been approved');
+    expect(html).toContain('http://localhost:5173/mentor/dashboard');
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should send a mentor waiting for approval email to the admin', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'mentor-waiting-for-approval-email-id',
+    });
+
+    await service.sendAdminMentorReadyForReviewEmail({
+      email: 'admin@example.com',
+      adminFullName: 'Alex Admin',
+      mentorFullName: 'Amina Patel',
+      mentorEmail: 'amina@example.com',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
+
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'admin@example.com',
+    ]);
+
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'A mentor has completed profile, waiting for review',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('Hi Alex Admin,');
+    expect(html).toContain('Amina Patel');
+    expect(html).toContain('amina@example.com');
+    expect(html).toContain('http://localhost:5173/admin');
+
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
   });
 
   it('should send a chemistry proposal email to the mentor', async () => {
@@ -137,7 +309,7 @@ describe('MailService', () => {
 
     const html = commandInput.Message?.Body?.Html?.Data;
 
-    expect(html).toContain('Hi Amina,');
+    expect(html).toContain('Hi Amina Patel,');
     expect(html).toContain('Casey Morgan');
     expect(html).toContain('http://localhost:5173/mentor/dashboard');
 
@@ -173,7 +345,7 @@ describe('MailService', () => {
 
     const html = commandInput.Message?.Body?.Html?.Data;
 
-    expect(html).toContain('Hi Casey,');
+    expect(html).toContain('Hi Casey Morgan,');
     expect(html).toContain('Amina Patel');
     expect(html).toContain('http://localhost:5173/mentee/dashboard');
 
@@ -208,10 +380,58 @@ describe('MailService', () => {
 
     const html = commandInput.Message?.Body?.Html?.Data;
 
-    expect(html).toContain('Hi Casey,');
+    expect(html).toContain('Hi Casey Morgan,');
     expect(html).toContain('Amina Patel');
     expect(html).toContain('http://localhost:5173/mentee/dashboard');
 
     expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should send a waiting-list email to the admin', async () => {
+    sesSendMock.mockResolvedValue({
+      MessageId: 'waiting-list-email-id',
+    });
+
+    await service.sendMenteeWaitingListAdminEmail({
+      email: 'admin@example.com',
+      adminFullName: 'Alex Admin',
+      menteeFullName: 'Casey Morgan',
+      menteeEmail: 'casey@example.com',
+    });
+
+    expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+
+    const commandInput = (
+      SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+    ).mock.calls[0][0];
+
+    expect(commandInput.Source).toBe('CYF Mentorship <mentorship@cyf.academy>');
+    expect(commandInput.Destination?.ToAddresses).toEqual([
+      'admin@example.com',
+    ]);
+    expect(commandInput.Message?.Subject?.Data).toBe(
+      'A mentee has joined the mentorship waiting list',
+    );
+
+    const html = commandInput.Message?.Body?.Html?.Data;
+
+    expect(html).toContain('Hi Alex Admin,');
+    expect(html).toContain('Casey Morgan');
+    expect(html).toContain('casey@example.com');
+    expect(html).toContain('http://localhost:5173/admin');
+    expect(sesSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not call AWS SES when the email provider is console', async () => {
+    const consoleService = await createMailService('console');
+
+    await consoleService.sendVerificationEmail({
+      email: 'jane@example.com',
+      fullName: 'Jane Doe',
+      token: 'verification-token',
+    });
+
+    expect(SendEmailCommand).not.toHaveBeenCalled();
+    expect(sesSendMock).not.toHaveBeenCalled();
   });
 });

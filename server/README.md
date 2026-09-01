@@ -181,7 +181,7 @@ src/
 ├── mentee/
 ├── mentors/
 ├── prisma/
-├── staff/
+├── admin/
 ├── app.module.ts
 └── main.ts
 

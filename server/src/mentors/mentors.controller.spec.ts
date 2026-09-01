@@ -61,6 +61,8 @@ describe('MentorsController', () => {
     isAcceptingMentees: false,
     approvalStatus: ApprovalStatus.PENDING,
     notifiedAdminAt: null,
+    profileReceivedEmailSentAt: null,
+    approvalDecisionEmailSentAt: null,
     isProfileComplete: true,
     isMatchReady: false,
     user: {

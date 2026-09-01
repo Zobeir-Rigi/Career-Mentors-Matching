@@ -185,7 +185,6 @@ export function MentorProfile() {
   async function submitHandler(profileData: MentorProfilePayload) {
     if (missingFields.length > 0) {
       window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
     }
 
     setIsSubmitting(true);
@@ -204,7 +203,11 @@ export function MentorProfile() {
       await refreshProfile();
 
       // Next step: Notice CYF, waiting approval, Navigate to dashboard
-      navigate("/mentor/dashboard");
+      if (updatedProfile.isProfileComplete) {
+        navigate("/mentor/dashboard");
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     } catch (error) {
       setErrorMessage(
         getApiErrorMessage(error, "Failed to save profile. Please try again."),

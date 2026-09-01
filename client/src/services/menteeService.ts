@@ -38,6 +38,17 @@ export interface MenteeProfileResponse {
   matchReady: boolean;
 }
 
+export function isMenteeProfileResponse(
+  profile: unknown,
+): profile is MenteeProfileResponse {
+  return (
+    typeof profile === "object" &&
+    profile !== null &&
+    "matchReady" in profile &&
+    typeof profile.matchReady === "boolean"
+  );
+}
+
 export async function updateMenteeProfile(
   data: MenteeProfilePayload,
 ): Promise<MenteeProfileResponse> {

@@ -1,4 +1,4 @@
-import type { MenteeData, MentorData } from "@/lib/context/StaffContext";
+import type { MenteeData, MentorData } from "@/lib/context/AdminContext";
 import { Button } from "@components/ui/Button";
 
 interface UserDetailsCardProps {

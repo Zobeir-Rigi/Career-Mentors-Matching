@@ -93,7 +93,7 @@ export interface Match {
   score?: number | string | null;
 }
 
-export interface StaffContextType {
+export interface AdminContextType {
   globalMatchingData: GlobalMatchingData | null;
   menteesWaitingData: MenteesWaitingData;
   mentorData: MentorData | null;
@@ -124,14 +124,14 @@ export interface StaffContextType {
   refetch: () => Promise<void>;
 }
 
-export const StaffContext = createContext<StaffContextType | undefined>(
+export const AdminContext = createContext<AdminContextType | undefined>(
   undefined,
 );
 
-export const useStaff = () => {
-  const context = useContext(StaffContext);
+export const useAdmin = () => {
+  const context = useContext(AdminContext);
   if (!context) {
-    throw new Error("useStaff must be used within a StaffProvider");
+    throw new Error("useAdmin must be used within an AdminProvider");
   }
   return context;
 };

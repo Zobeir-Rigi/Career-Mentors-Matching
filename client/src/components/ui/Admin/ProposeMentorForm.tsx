@@ -9,7 +9,7 @@ export function ProposeMentorForm() {
       <p className="font-sans text-[16px] text-fg">Propose a specific mentor</p>
       <p className="font-sans text-[15px] text-muted">
         Your judgment outranks the algorithm — capacity and past rejections are
-        still enforced, and the pairing is recorded as a staff action.
+        still enforced, and the pairing is recorded as a admin action.
       </p>
       <div className="mt-4 flex flex-row">
         <input

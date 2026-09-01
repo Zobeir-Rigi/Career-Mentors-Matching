@@ -33,14 +33,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const refreshProfile = useCallback(
-    async (targetUser?: AuthUser) => {
+    async (targetUser?: AuthUser): Promise<UserProfile> => {
       const activeUser = targetUser || user;
       if (!activeUser) {
         setProfile(null);
-        return;
+        return null;
       }
       const profileData = await fetchProfileForUser(activeUser);
       setProfile(profileData);
+      return profileData;
     },
     [user],
   );

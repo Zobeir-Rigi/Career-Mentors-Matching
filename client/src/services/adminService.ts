@@ -4,11 +4,11 @@ import type {
   GlobalMatchingData,
   MenteeData,
   MentorData,
-} from "@/lib/context/StaffContext";
+} from "@/lib/context/AdminContext";
 
 type MentorApprovalStatus = "PENDING" | "ACCEPTED" | "DECLINED";
 
-export interface StaffDirectoryParams {
+export interface AdminDirectoryParams {
   search?: string;
   page?: number;
   limit?: number;
@@ -27,11 +27,11 @@ export interface MenteesResponse {
   limit: number;
 }
 
-export function getMentees(params: StaffDirectoryParams = {}) {
+export function getMentees(params: AdminDirectoryParams = {}) {
   return api.get<MenteesResponse>("/admin/mentees", { params });
 }
 
-export function getMentors(params: StaffDirectoryParams = {}) {
+export function getMentors(params: AdminDirectoryParams = {}) {
   return api.get<MentorsResponse>("/admin/mentors", { params });
 }
 

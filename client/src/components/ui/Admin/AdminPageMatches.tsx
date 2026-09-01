@@ -1,8 +1,8 @@
 import { Button } from "@components/ui/Button";
 
-import type { Match } from "@/lib/context/StaffContext";
+import type { Match } from "@/lib/context/AdminContext";
 
-interface StaffPageMatchesProps {
+interface AdminPageMatchesProps {
   matches?: Match[] | null;
 }
 
@@ -38,7 +38,7 @@ function getStatusStyles(status: string) {
   }
 }
 
-export function StaffPageMatches({ matches }: StaffPageMatchesProps) {
+export function AdminPageMatches({ matches }: AdminPageMatchesProps) {
   return (
     <section className="mt-12 w-full">
       <h2 className="overshoot font-display text-3xl font-black text-fg sm:text-4xl">

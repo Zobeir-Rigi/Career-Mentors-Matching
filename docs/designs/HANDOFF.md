@@ -10,7 +10,7 @@ screenshots in [`screens/`](screens/).
 ## 1. Reading the Penpot file
 
 - **Boards are screens.** Top row = reusable components; below that, one
-  row per role (public, mentee, mentor, staff, mobile). Desktop boards are
+  row per role (public, mentee, mentor, admin, mobile). Desktop boards are
   1280 wide, mobile 375. Everything in between the two widths is your
   responsibility with responsive utilities.
 - **Measure by selecting.** Click a shape, hold <kbd>Alt</kbd> and hover
@@ -173,7 +173,7 @@ export function StatusPill({ status }) {
   `prefers-reduced-motion` disables all of it — no exceptions.
 - Transient states (save toasts, "no compatible mentor") aren't captured;
   their copy lives in the source (`MenteeDashboard.tsx`, `Profile.tsx`,
-  `StaffDashboard.tsx`).
+  `AdminDashboard.tsx`).
 
 ## 7. Semantics the design implies
 

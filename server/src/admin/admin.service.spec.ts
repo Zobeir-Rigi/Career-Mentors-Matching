@@ -1,15 +1,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 
-import { StaffService } from './staff.service';
+import { AdminService } from './admin.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
+import { ApprovalStatus } from '../generated/prisma/enums';
 
-describe('StaffService', () => {
-  let service: StaffService;
+describe('AdminService', () => {
+  let service: AdminService;
 
   const prismaMock = {
     mentorProfile: {
       count: jest.fn(),
+      findUnique: jest.fn(),
       findMany: jest.fn(),
+      update: jest.fn(),
     },
     menteeProfile: {
       count: jest.fn(),
@@ -24,20 +28,35 @@ describe('StaffService', () => {
     },
   };
 
+  const mailServiceMock = {
+    sendMentorApprovalDecisionEmail: jest.fn(),
+  };
+
   beforeEach(async () => {
+    jest.clearAllMocks();
+    mailServiceMock.sendMentorApprovalDecisionEmail
+      .mockReset()
+      .mockResolvedValue(undefined);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        StaffService,
+        AdminService,
         {
           provide: PrismaService,
           useValue: prismaMock,
         },
+        {
+          provide: MailService,
+          useValue: mailServiceMock,
+        },
       ],
     }).compile();
 
-    service = module.get<StaffService>(StaffService);
+    service = module.get<AdminService>(AdminService);
+  });
 
-    jest.clearAllMocks();
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should be defined', () => {
@@ -509,6 +528,129 @@ describe('StaffService', () => {
         mentor: null,
         status: null,
       });
+    });
+  });
+
+  describe('updateMentorApproval', () => {
+    const mentor = {
+      id: 'mentor-profile-1',
+      approvalStatus: ApprovalStatus.ACCEPTED,
+      currentJobTitle: 'Senior Engineer',
+      user: {
+        fullName: 'Alex Mentor',
+        email: 'alex@example.com',
+      },
+    };
+
+    it('sends the decision email and stores its timestamp when the decision changes', async () => {
+      const decisionTime = new Date('2026-08-28T18:00:00.000Z');
+      jest.useFakeTimers();
+      jest.setSystemTime(decisionTime);
+
+      prismaMock.mentorProfile.findUnique.mockResolvedValue({
+        approvalStatus: ApprovalStatus.PENDING,
+      });
+      prismaMock.mentorProfile.update.mockResolvedValue(mentor);
+
+      const result = await service.updateMentorApproval(
+        mentor.id,
+        ApprovalStatus.ACCEPTED,
+      );
+
+      expect(prismaMock.mentorProfile.update).toHaveBeenNthCalledWith(1, {
+        where: {
+          id: mentor.id,
+        },
+        data: {
+          approvalStatus: ApprovalStatus.ACCEPTED,
+          approvalDecisionEmailSentAt: null,
+        },
+        select: {
+          id: true,
+          approvalStatus: true,
+          currentJobTitle: true,
+          user: {
+            select: {
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      });
+      expect(
+        mailServiceMock.sendMentorApprovalDecisionEmail,
+      ).toHaveBeenCalledWith({
+        email: 'alex@example.com',
+        fullName: 'Alex Mentor',
+        approvalStatus: ApprovalStatus.ACCEPTED,
+      });
+      expect(prismaMock.mentorProfile.update).toHaveBeenNthCalledWith(2, {
+        where: {
+          id: mentor.id,
+        },
+        data: {
+          approvalDecisionEmailSentAt: decisionTime,
+        },
+      });
+      expect(result).toEqual(mentor);
+    });
+
+    it('does not resend the email when the approval status is unchanged', async () => {
+      prismaMock.mentorProfile.findUnique.mockResolvedValue({
+        approvalStatus: ApprovalStatus.ACCEPTED,
+      });
+      prismaMock.mentorProfile.update.mockResolvedValue(mentor);
+
+      const result = await service.updateMentorApproval(
+        mentor.id,
+        ApprovalStatus.ACCEPTED,
+      );
+
+      expect(prismaMock.mentorProfile.update).toHaveBeenCalledTimes(1);
+      expect(prismaMock.mentorProfile.update).toHaveBeenCalledWith({
+        where: {
+          id: mentor.id,
+        },
+        data: {
+          approvalStatus: ApprovalStatus.ACCEPTED,
+        },
+        select: {
+          id: true,
+          approvalStatus: true,
+          currentJobTitle: true,
+          user: {
+            select: {
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+      });
+      expect(
+        mailServiceMock.sendMentorApprovalDecisionEmail,
+      ).not.toHaveBeenCalled();
+      expect(result).toEqual(mentor);
+    });
+
+    it('returns the updated mentor without a timestamp when email delivery fails', async () => {
+      prismaMock.mentorProfile.findUnique.mockResolvedValue({
+        approvalStatus: ApprovalStatus.PENDING,
+      });
+      prismaMock.mentorProfile.update.mockResolvedValue(mentor);
+      mailServiceMock.sendMentorApprovalDecisionEmail.mockRejectedValue(
+        new Error('SES unavailable'),
+      );
+
+      const result = await service.updateMentorApproval(
+        mentor.id,
+        ApprovalStatus.ACCEPTED,
+      );
+
+      expect(
+        mailServiceMock.sendMentorApprovalDecisionEmail,
+      ).toHaveBeenCalledTimes(1);
+      expect(prismaMock.mentorProfile.update).toHaveBeenCalledTimes(1);
+      expect(result).toEqual(mentor);
     });
   });
 });
