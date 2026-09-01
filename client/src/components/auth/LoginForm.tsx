@@ -7,6 +7,9 @@ import { login } from "@/services/authService";
 import { getApiErrorMessage } from "@/services/getApiErrorMessages";
 import { useAuth } from "@/lib/context/useAuth";
 
+import { isMentorProfileResponse } from "@/services/mentorService";
+import { isMenteeProfileResponse } from "@/services/menteeService";
+
 export function LoginForm() {
   const navigate = useNavigate();
   const { setUser, refreshProfile } = useAuth();
@@ -33,14 +36,22 @@ export function LoginForm() {
       });
 
       setUser(result.user);
-      await refreshProfile(result.user);
+      const profile = await refreshProfile(result.user);
 
       if (result.user.role === "ADMIN") {
         navigate("/admin");
       } else if (result.user.role === "MENTOR") {
-        navigate("/mentor/profile");
-      } else {
-        navigate("/mentee/profile");
+        if (isMentorProfileResponse(profile) && profile.isProfileComplete) {
+          navigate("/mentor/dashboard");
+        } else {
+          navigate("/mentor/profile");
+        }
+      } else if (result.user.role === "MENTEE") {
+        if (isMenteeProfileResponse(profile) && profile.matchReady) {
+          navigate("/mentee/dashboard");
+        } else {
+          navigate("/mentee/profile");
+        }
       }
     } catch (err) {
       setError(

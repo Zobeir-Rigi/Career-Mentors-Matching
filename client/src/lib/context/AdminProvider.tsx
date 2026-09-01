@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 import {
-  StaffContext,
+  AdminContext,
   type GlobalMatchingData,
   type MenteesWaitingData,
   type MentorData,
   type MenteeData,
   type Match,
-} from "@/lib/context/StaffContext";
+} from "@/lib/context/AdminContext";
 
-import { getMentees, getMentors, getOverview } from "@/services/staffService";
+import { getMentees, getMentors, getOverview } from "@/services/adminService";
 import { getApiErrorMessage } from "@/services/getApiErrorMessages";
 
-export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
+export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [globalMatchingData, setGlobalMatchingData] =
@@ -38,7 +38,7 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const fetchStaffData = useCallback(async () => {
+  const fetchAdminData = useCallback(async () => {
     const [overviewResponse, mentorsResponse, menteesResponse] =
       await Promise.all([
         getOverview(),
@@ -74,7 +74,7 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
 
     try {
-      const data = await fetchStaffData();
+      const data = await fetchAdminData();
 
       setGlobalMatchingData(data.overview);
       setMenteesWaitingData(data.overview.waitingMentees ?? []);
@@ -98,7 +98,7 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const loadInitialData = async () => {
       try {
-        const data = await fetchStaffData();
+        const data = await fetchAdminData();
 
         if (cancelled) {
           return;
@@ -133,7 +133,7 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       cancelled = true;
     };
-  }, [fetchStaffData]);
+  }, [fetchAdminData]);
 
   const mentorData: MentorData | null = null;
   const menteeData: MenteeData | null = null;
@@ -152,7 +152,7 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <StaffContext.Provider
+    <AdminContext.Provider
       value={{
         globalMatchingData,
         menteesWaitingData,
@@ -184,6 +184,6 @@ export const StaffProvider: React.FC<{ children: React.ReactNode }> = ({
       }}
     >
       {children}
-    </StaffContext.Provider>
+    </AdminContext.Provider>
   );
 };

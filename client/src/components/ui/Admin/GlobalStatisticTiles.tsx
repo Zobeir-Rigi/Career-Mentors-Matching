@@ -1,8 +1,8 @@
 import { Card } from "@components/ui/Card";
-import { useStaff } from "@/lib/context/StaffContext";
+import { useAdmin } from "@/lib/context/AdminContext";
 
 export function GlobalStatisticTiles() {
-  const { globalMatchingData, isLoading } = useStaff();
+  const { globalMatchingData, isLoading } = useAdmin();
 
   if (isLoading || !globalMatchingData) {
     return <div>Loading matching data...</div>;

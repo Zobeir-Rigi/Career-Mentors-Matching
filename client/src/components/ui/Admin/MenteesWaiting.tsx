@@ -1,9 +1,9 @@
-import { useStaff } from "@/lib/context/StaffContext";
+import { useAdmin } from "@/lib/context/AdminContext";
 import { Card } from "@components/ui/Card";
 import { Button } from "@components/ui/Button";
 
 export function MenteesWaiting() {
-  const { menteesWaitingData, isLoading } = useStaff();
+  const { menteesWaitingData, isLoading } = useAdmin();
 
   if (isLoading) {
     return <div>Loading mentees in waiting list...</div>;

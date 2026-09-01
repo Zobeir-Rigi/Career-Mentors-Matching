@@ -10,7 +10,7 @@ export interface AuthContextType {
   profile: UserProfile;
   isLoading: boolean;
   setUser: (user: AuthUser | null) => void;
-  refreshProfile: (targetUser?: AuthUser) => Promise<void>;
+  refreshProfile: (targetUser?: AuthUser) => Promise<UserProfile>;
   logout: () => Promise<void>;
 }
 

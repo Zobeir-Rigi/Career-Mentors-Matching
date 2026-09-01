@@ -140,9 +140,13 @@ export function MenteeProfile() {
   const missingFields = checkEmptyFields(role, profileData);
 
   async function submitHandler() {
+    if (missingFields.length > 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     setErrorMessage(null);
     try {
-      await updateMenteeProfile({
+      const updatedProfile = await updateMenteeProfile({
         currentJobTitle,
         reasonsNote: reasonNote,
         bio,
@@ -160,12 +164,11 @@ export function MenteeProfile() {
 
       await refreshProfile();
 
-      if (missingFields.length > 0) {
+      if (updatedProfile.matchReady) {
+        navigate("/mentee/dashboard");
+      } else {
         window.scrollTo({ top: 0, behavior: "smooth" });
-        return;
       }
-
-      navigate("/mentee/dashboard");
     } catch (error) {
       console.error("Failed to save profile", error);
 

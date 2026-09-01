@@ -3,10 +3,10 @@ import type {
   MenteesData,
   MentorData,
   MentorsData,
-} from "@lib/context/StaffContext";
+} from "@lib/context/AdminContext";
 
-import { useStaff } from "@/lib/context/StaffContext";
-import { updateMentorApproval } from "@/services/staffService";
+import { useAdmin } from "@/lib/context/AdminContext";
+import { updateMentorApproval } from "@/services/adminService";
 
 import { Input } from "../Input";
 import { Button } from "../Button";
@@ -45,7 +45,7 @@ export function UsersList({
   onSearchChange,
   setSelectedUser,
 }: UsersListProps) {
-  const { refetch } = useStaff();
+  const { refetch } = useAdmin();
 
   const isMentorList = userType === "Mentors";
 

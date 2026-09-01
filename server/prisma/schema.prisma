@@ -152,6 +152,8 @@ model MentorProfile {
   isAcceptingMentees Boolean              @default(false)
   approvalStatus     ApprovalStatus       @default(PENDING)
   notifiedAdminAt    DateTime?
+  profileReceivedEmailSentAt DateTime?
+  approvalDecisionEmailSentAt DateTime?
 
   user User @relation("UserMentorProfile", fields: [userId], references: [id], onDelete: Cascade)
 

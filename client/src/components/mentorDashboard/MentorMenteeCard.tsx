@@ -234,6 +234,11 @@ export function MentorMenteeCard({
 
         return (
           <>
+            <p className="mb-2 text-sm text-muted">
+              If the chemistry session did not happen within the last seven
+              days, please select “No, do not continue”.
+            </p>
+
             <Button
               disabled={isPending}
               onClick={() => onCheckIn(engagement.id, true)}
@@ -269,7 +274,7 @@ export function MentorMenteeCard({
   return (
     <article className="rounded-lg border border-line bg-surface p-5 sm:p-6">
       <div className="flex flex-col gap-6 sm:grid sm:grid-cols-[1fr_auto_1fr] sm:items-start sm:gap-5">
-        <div className="text-left sm:pt-2 sm:text-right">
+        <div className="text-left sm:text-right">
           <p className="font-display text-xl font-black text-fg">You</p>
 
           <p className="mt-1 text-xs text-muted">{mentorName}</p>

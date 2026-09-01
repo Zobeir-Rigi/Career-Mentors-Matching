@@ -17,6 +17,7 @@ describe('MatchingLifecycleService', () => {
 
   const mailServiceMock = {
     sendMentorshipCheckInEmail: jest.fn(),
+    sendMatchExpiredEmail: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -185,6 +186,12 @@ describe('MatchingLifecycleService', () => {
     prismaMock.matches.findMany.mockResolvedValue([
       {
         id: 'match-id',
+        menteeProfile: {
+          user: { email: 'casey@example.com', fullName: 'Casey Morgan' },
+        },
+        mentorProfile: {
+          user: { email: 'amina@example.com', fullName: 'Amina Patel' },
+        },
       },
     ]);
 
@@ -215,6 +222,19 @@ describe('MatchingLifecycleService', () => {
         declinedAt: now,
         checkInExpiresAt: null,
       },
+    });
+
+    expect(mailServiceMock.sendMatchExpiredEmail).toHaveBeenNthCalledWith(1, {
+      email: 'casey@example.com',
+      fullName: 'Casey Morgan',
+      counterpartFullName: 'Amina Patel',
+      recipientRole: 'mentee',
+    });
+    expect(mailServiceMock.sendMatchExpiredEmail).toHaveBeenNthCalledWith(2, {
+      email: 'amina@example.com',
+      fullName: 'Amina Patel',
+      counterpartFullName: 'Casey Morgan',
+      recipientRole: 'mentor',
     });
   });
 });

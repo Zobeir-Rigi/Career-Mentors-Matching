@@ -10,7 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
 import { MentorsModule } from './mentors/mentors.module';
 import { MatchingModule } from './matching/matching.module';
-import { StaffModule } from './staff/staff.module';
+import { AdminModule } from './admin/admin.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -34,7 +34,7 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
     ]),
     MatchingModule,
-    StaffModule,
+    AdminModule,
     ScheduleModule.forRoot(),
   ],
   providers: [

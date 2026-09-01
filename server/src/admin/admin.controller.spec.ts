@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StaffController } from './staff.controller';
-import { StaffService } from './staff.service';
+import { AdminController } from './admin.controller';
+import { AdminService } from './admin.service';
 import { JwtService } from '@nestjs/jwt';
 
-describe('StaffController', () => {
-  let controller: StaffController;
+describe('AdminController', () => {
+  let controller: AdminController;
 
   const jwtServiceMock = {
     verifyAsync: jest.fn(),
@@ -13,10 +13,10 @@ describe('StaffController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [StaffController],
+      controllers: [AdminController],
       providers: [
         {
-          provide: StaffService,
+          provide: AdminService,
           useValue: {
             getMentees: jest.fn(),
             getMentors: jest.fn(),
@@ -29,7 +29,7 @@ describe('StaffController', () => {
       ],
     }).compile();
 
-    controller = module.get<StaffController>(StaffController);
+    controller = module.get<AdminController>(AdminController);
   });
 
   it('should be defined', () => {

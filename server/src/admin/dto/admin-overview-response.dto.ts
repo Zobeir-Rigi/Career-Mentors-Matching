@@ -1,7 +1,7 @@
 import { MatchStatus } from '@/generated/prisma/enums';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class StaffWaitingMenteeDto {
+export class AdminWaitingMenteeDto {
   @ApiProperty()
   id!: string;
 
@@ -18,7 +18,7 @@ export class StaffWaitingMenteeDto {
   waitingSince!: Date;
 }
 
-export class StaffMatchedPersonDto {
+export class AdminMatchedPersonDto {
   @ApiProperty()
   id!: string;
 
@@ -29,21 +29,21 @@ export class StaffMatchedPersonDto {
   email!: string;
 }
 
-export class StaffMatchedPairDto {
+export class AdminMatchedPairDto {
   @ApiProperty()
   matchId!: string;
 
-  @ApiProperty({ type: StaffMatchedPersonDto })
-  mentee!: StaffMatchedPersonDto;
+  @ApiProperty({ type: AdminMatchedPersonDto })
+  mentee!: AdminMatchedPersonDto;
 
   @ApiProperty()
-  mentor!: StaffMatchedPersonDto;
+  mentor!: AdminMatchedPersonDto;
 
   @ApiProperty({ enum: MatchStatus })
   status!: MatchStatus;
 }
 
-export class StaffOverviewResponseDto {
+export class AdminOverviewResponseDto {
   @ApiProperty()
   volunteerMentors!: number;
 
@@ -56,11 +56,11 @@ export class StaffOverviewResponseDto {
   @ApiProperty()
   menteesWaiting!: number;
 
-  @ApiProperty({ type: [StaffWaitingMenteeDto] })
-  waitingMentees!: StaffWaitingMenteeDto[];
+  @ApiProperty({ type: [AdminWaitingMenteeDto] })
+  waitingMentees!: AdminWaitingMenteeDto[];
 
-  @ApiProperty({ type: [StaffMatchedPairDto] })
-  matchedPairs!: StaffMatchedPairDto[];
+  @ApiProperty({ type: [AdminMatchedPairDto] })
+  matchedPairs!: AdminMatchedPairDto[];
 
   @ApiProperty()
   pendingMentors!: number;

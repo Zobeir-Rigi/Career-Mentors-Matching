@@ -128,13 +128,13 @@ white, 2px inset, translates 20px. `role="switch"` + `aria-checked`.
 **Inputs** — `surface` fill, 1.5px `line` border, radius 6, padding 10×14,
 15px text; focus: border `accent` + outline. Labels above, SB 14.
 
-**Stat tile (staff)** — card + Fraunces SB 40 numeral (`fg`, or `ok`/`warn`
+**Stat tile (admin)** — card + Fraunces SB 40 numeral (`fg`, or `ok`/`warn`
 when the number is itself a status), 14px `muted` label under.
 
 **Capacity ring (mentor)** — 72px SVG ring, 7px stroke: `ok` under capacity,
 `accent-soft` at capacity, `line` track. Fraunces "live/capacity" centered.
 
-**Tabs (staff)** — text SB 14 on a `line` bottom border; active: `accent`
+**Tabs (admin)** — text SB 14 on a `line` bottom border; active: `accent`
 text + 2px `accent-soft` underline sitting on the border.
 
 **Notices** — 4px left border, radius 6, padding 12×16, `surface` fill.
@@ -158,7 +158,7 @@ info and logout pinned at the bottom; Escape and backdrop close it.
 - Motion: ONE orchestrated moment — landing hero lines rise staggered
   (0.55s, 50–400ms delays) and the thread draws itself. Everything else is
   color transitions. `prefers-reduced-motion` disables all of it.
-- Wide content (staff tables) scrolls inside its own container, never the page.
+- Wide content (admin tables) scrolls inside its own container, never the page.
 
 ---
 
@@ -192,14 +192,14 @@ Files follow `{screen}--{state}--{variant}.png`; variants are
 | `mentor-dashboard--confirm` | booked mentee, Confirm button | staged-accounts.json |
 | `mentor-dashboard--confirmed-waiting` | mentor confirmed, mentee hasn't | staged-accounts.json |
 | `mentor-dashboard--active` | active mentee, End mentorship | ruta.radiya@ |
-| `staff-overview` | stat tiles + waiting queue | staff@ |
-| `staff-mentors` | search + mentors table | staff@ |
-| `staff-mentors--search-empty` | empty-search table row | staff@ |
-| `staff-mentees` | search + mentees table | staff@ |
-| `staff-settings` | disciplines + questions management | staff@ |
-| `staff-settings--add-question` | new-question form open | staff@ |
-| `staff-user-detail` | mentor detail: facts + audit trail | staff@ |
-| `staff-user-detail--mentee` | mentee detail: propose-pair card | staff@ |
+| `admin-overview` | stat tiles + waiting queue | admin@ |
+| `admin-mentors` | search + mentors table | admin@ |
+| `admin-mentors--search-empty` | empty-search table row | admin@ |
+| `admin-mentees` | search + mentees table | admin@ |
+| `admin-settings` | disciplines + questions management | admin@ |
+| `admin-settings--add-question` | new-question form open | admin@ |
+| `admin-user-detail` | mentor detail: facts + audit trail | admin@ |
+| `admin-user-detail--mentee` | mentee detail: propose-pair card | admin@ |
 | `mobile-drawer--open` | mobile nav drawer | stage.booked@ |
 
 Mentor-side logins for match states depend on who the matcher picked — they
@@ -208,10 +208,10 @@ are resolved and claimed at staging time and recorded in
 README.
 
 **States deliberately not captured** (transient or destructive to stage):
-save-confirmation toasts ("Profile saved", "Goals saved"), the staff
+save-confirmation toasts ("Profile saved", "Goals saved"), the admin
 propose-match result notices, and the mentee "no compatible mentor" notice —
 the last would require draining all 60+ mentors' capacity to trigger. Their
-copy lives in the source (`MenteeDashboard.tsx`, `StaffDashboard.tsx`,
+copy lives in the source (`MenteeDashboard.tsx`, `AdminDashboard.tsx`,
 `Profile.tsx`). Note also that `stage.history` re-enters the matching queue,
 so the hourly sweep may re-match them — re-run `design:stage` before
 `design:capture` for pristine states.

@@ -21,7 +21,10 @@
     "test:e2e": "NODE_OPTIONS=--experimental-vm-modules jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
     "postinstall": "prisma generate",
-    "seed:demo-manual": "tsx prisma/seed-demo-manual.ts"
+    "seed:demo-manual": "tsx prisma/seed-demo-manual.ts",
+    "demo:reset": "tsx prisma/demo-reset.ts",
+    "demo:set-emails": "tsx prisma/demo-set-emails.ts",
+    "demo:fast-forward": "tsx prisma/demo-fast-forward.ts"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1110.0",
@@ -89,6 +92,9 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/setup-env.ts"
+    ],
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1",
       "^(\\.{1,2}/.*)\\.js$": "$1"

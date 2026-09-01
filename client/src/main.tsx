@@ -18,7 +18,7 @@ import { AuthProvider } from "./lib/context/AuthProvider";
 import { VerifyEmail } from "./pages/VerifyEmail";
 import { MentorDashboard } from "./pages/MentorDashboard";
 import { ProtectedRoute } from "./lib/context/ProtectedRoute";
-import { Staff } from "./pages/Staff";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { ThemeProvider } from "./lib/context/ThemeProvider";
 import { ForgotPassword } from "./pages/ForgotPassword";
 import { ResetPassword } from "./pages/ResetPassword";
@@ -74,7 +74,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               />
             </Route>
             <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
-              <Route path="/admin" element={<Staff />} />
+              <Route path="/admin" element={<AdminDashboard />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

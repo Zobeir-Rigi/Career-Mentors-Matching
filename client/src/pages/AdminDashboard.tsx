@@ -1,9 +1,9 @@
 import { Header } from "@/components/Header";
-import { ProgrammeTabs } from "@/components/ui/Staff/ProgrammeTabs";
+import { ProgrammeTabs } from "@/components/ui/Admin/ProgrammeTabs";
 import { Footer } from "@/components/Footer";
 import { useAuth } from "@/lib/context/useAuth";
 
-export function Staff() {
+export function AdminDashboard() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {

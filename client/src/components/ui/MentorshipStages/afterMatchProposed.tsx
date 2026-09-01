@@ -132,6 +132,11 @@ export function AfterMatchProposed({
               chemistry session using the contact details above.
             </p>
 
+            <p className="mt-2 font-sans text-sm font-normal text-muted">
+              Marking the session as booked is optional. Your scheduled
+              check-in will still happen if you do not.
+            </p>
+
             {scheduledCheckIn && (
               <p className="mt-1 font-sans text-sm font-normal text-muted">
                 We will check in with both of you on{" "}
@@ -183,6 +188,11 @@ export function AfterMatchProposed({
               Would you like to continue with {mentor.fullName} as your mentor?
             </p>
 
+            <p className="mt-2 font-sans text-sm font-normal text-muted">
+              If the chemistry session did not happen within the last seven
+              days, please select “No, rematch me”.
+            </p>
+
             {countdown.daysLeft !== null && (
               <p className="mt-1 font-sans text-sm font-normal text-muted">
                 Please respond within {countdown.daysLeft}{" "}
@@ -213,7 +223,7 @@ export function AfterMatchProposed({
             onClick={() => void onBook(currentMatch.id)}
             disabled={isActionPending}
           >
-            {pendingAction === "book" ? "Saving..." : "I've booked our session"}
+            {pendingAction === "book" ? "Saving..." : "Mark as booked"}
           </Button>
         );
 
@@ -262,7 +272,7 @@ export function AfterMatchProposed({
 
   return (
     <div>
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
         <div className="text-left sm:w-[40%] sm:text-right">
           <p className="font-display text-[20px] font-black text-fg">You</p>
 

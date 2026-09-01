@@ -148,11 +148,17 @@ export class MatchingLifecycleService {
       },
       select: {
         id: true,
+        menteeProfile: {
+          include: { user: { select: { email: true, fullName: true } } },
+        },
+        mentorProfile: {
+          include: { user: { select: { email: true, fullName: true } } },
+        },
       },
     });
 
     for (const match of expiredMatches) {
-      await this.prisma.matches.updateMany({
+      const transition = await this.prisma.matches.updateMany({
         where: {
           id: match.id,
           status: MatchStatus.MATCH_PENDING,
@@ -174,6 +180,10 @@ export class MatchingLifecycleService {
           checkInExpiresAt: null,
         },
       });
+
+      if (transition.count === 0) continue;
+
+      await this.sendMatchExpiredEmail(match);
     }
   }
 
@@ -202,6 +212,31 @@ export class MatchingLifecycleService {
         `Check-in email could not be sent for match ${matchId} to ${recipientRole}`,
         error instanceof Error ? error.stack : undefined,
       );
+    }
+  }
+
+  private async sendMatchExpiredEmail(match: {
+    id: string;
+    menteeProfile: { user: { email: string; fullName: string } };
+    mentorProfile: { user: { email: string; fullName: string } };
+  }): Promise<void> {
+    for (const [recipient, counterpart, role] of [
+      [match.menteeProfile.user, match.mentorProfile.user, 'mentee'] as const,
+      [match.mentorProfile.user, match.menteeProfile.user, 'mentor'] as const,
+    ]) {
+      try {
+        await this.mailService.sendMatchExpiredEmail({
+          email: recipient.email,
+          fullName: recipient.fullName,
+          counterpartFullName: counterpart.fullName,
+          recipientRole: role,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Match expiry email could not be sent for match ${match.id} to ${role}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
     }
   }
 }

@@ -13,6 +13,7 @@ import {
   Role,
 } from '../generated/prisma/enums';
 import { User } from '../generated/prisma/client';
+import { MailService } from '../mail/mail.service';
 
 describe('MentorsService', () => {
   let service: MentorsService;
@@ -53,6 +54,8 @@ describe('MentorsService', () => {
     isAcceptingMentees: false,
     approvalStatus: ApprovalStatus.PENDING,
     notifiedAdminAt: null,
+    profileReceivedEmailSentAt: new Date('2026-08-20T12:00:00.000Z'),
+    approvalDecisionEmailSentAt: null,
     user: {
       id: MOCK_USER_ID,
       fullName: 'Test User',
@@ -79,9 +82,11 @@ describe('MentorsService', () => {
       ),
     user: {
       update: jest.fn(),
+      findMany: jest.fn(),
     },
     mentorProfile: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
       upsert: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
@@ -109,6 +114,11 @@ describe('MentorsService', () => {
     },
   };
 
+  const mockMailService = {
+    sendAdminMentorReadyForReviewEmail: jest.fn(),
+    sendMentorProfileReceivedEmail: jest.fn(),
+  };
+
   const mockUser: User = {
     id: MOCK_USER_ID,
     email: 'test@example.com',
@@ -129,6 +139,15 @@ describe('MentorsService', () => {
   };
 
   beforeEach(async () => {
+    jest.clearAllMocks();
+    mockPrismaService.user.findMany.mockReset().mockResolvedValue([]);
+    mockMailService.sendAdminMentorReadyForReviewEmail
+      .mockReset()
+      .mockResolvedValue(undefined);
+    mockMailService.sendMentorProfileReceivedEmail
+      .mockReset()
+      .mockResolvedValue(undefined);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MentorsService,
@@ -136,15 +155,15 @@ describe('MentorsService', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: MailService,
+          useValue: mockMailService,
+        },
       ],
     }).compile();
 
     service = module.get<MentorsService>(MentorsService);
     prisma = module.get<PrismaService>(PrismaService);
-  });
-
-  afterEach(() => {
-    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
@@ -418,6 +437,307 @@ describe('MentorsService', () => {
       await expect(
         service.updateProfile(MOCK_USER_ID, { capacity: 5 }),
       ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('admin notification when a profile first becomes complete', () => {
+    it('should notify every active admin and save the notification time', async () => {
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: null,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+
+      mockPrismaService.user.findMany.mockResolvedValue([
+        {
+          email: 'alex.admin@example.com',
+          fullName: 'Alex Admin',
+        },
+        {
+          email: 'sam.admin@example.com',
+          fullName: 'Sam Admin',
+        },
+      ]);
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+        where: {
+          role: Role.ADMIN,
+          isActive: true,
+        },
+        select: {
+          email: true,
+          fullName: true,
+        },
+      });
+
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).toHaveBeenCalledTimes(2);
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).toHaveBeenCalledWith({
+        email: 'alex.admin@example.com',
+        adminFullName: 'Alex Admin',
+        mentorFullName: 'Test User',
+        mentorEmail: 'test@example.com',
+      });
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).toHaveBeenCalledWith({
+        email: 'sam.admin@example.com',
+        adminFullName: 'Sam Admin',
+        mentorFullName: 'Test User',
+        mentorEmail: 'test@example.com',
+      });
+
+      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(result.notifiedAdminAt).toBeInstanceOf(Date);
+      expect(updateSpy).toHaveBeenNthCalledWith(2, {
+        where: {
+          id: mockFullMentorProfile.id,
+        },
+        data: {
+          notifiedAdminAt: result.notifiedAdminAt,
+        },
+      });
+    });
+
+    it('should not notify admins again when a notification time already exists', async () => {
+      const existingNotificationTime = new Date('2026-08-20T12:00:00.000Z');
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: existingNotificationTime,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(mockPrismaService.user.findMany).not.toHaveBeenCalled();
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(result.notifiedAdminAt).toBe(existingNotificationTime);
+    });
+
+    it('should not notify admins when the profile is incomplete', async () => {
+      const incompleteProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        bio: '',
+        notifiedAdminAt: null,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(incompleteProfile);
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        bio: '',
+      });
+
+      expect(mockPrismaService.user.findMany).not.toHaveBeenCalled();
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(result.notifiedAdminAt).toBeNull();
+    });
+
+    it('should leave the notification time empty when an admin email fails', async () => {
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: null,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+
+      mockPrismaService.user.findMany.mockResolvedValue([
+        {
+          email: 'alex.admin@example.com',
+          fullName: 'Alex Admin',
+        },
+      ]);
+      mockMailService.sendAdminMentorReadyForReviewEmail.mockRejectedValue(
+        new Error('SES unavailable'),
+      );
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(result.notifiedAdminAt).toBeNull();
+    });
+  });
+
+  describe('mentor profile received notification', () => {
+    it('should email the mentor once and save the sent time', async () => {
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: new Date('2026-08-20T12:00:00.000Z'),
+        profileReceivedEmailSentAt: null,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(
+        mockMailService.sendMentorProfileReceivedEmail,
+      ).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        fullName: 'Test User',
+      });
+      expect(updateSpy).toHaveBeenCalledTimes(2);
+      expect(result.profileReceivedEmailSentAt).toBeInstanceOf(Date);
+      expect(updateSpy).toHaveBeenNthCalledWith(2, {
+        where: {
+          id: mockFullMentorProfile.id,
+        },
+        data: {
+          profileReceivedEmailSentAt: result.profileReceivedEmailSentAt,
+        },
+      });
+    });
+
+    it('should not send the profile received email again', async () => {
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: new Date('2026-08-20T12:00:00.000Z'),
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(
+        mockMailService.sendMentorProfileReceivedEmail,
+      ).not.toHaveBeenCalled();
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(result.profileReceivedEmailSentAt).toBe(
+        updatedProfile.profileReceivedEmailSentAt,
+      );
+    });
+
+    it('should retry a failed mentor email when the mentor saves again', async () => {
+      const updatedProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: new Date('2026-08-20T12:00:00.000Z'),
+        profileReceivedEmailSentAt: null,
+      };
+
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(updatedProfile);
+      mockMailService.sendMentorProfileReceivedEmail
+        .mockRejectedValueOnce(new Error('SES unavailable'))
+        .mockResolvedValueOnce(undefined);
+
+      const firstResult = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 4,
+      });
+
+      expect(firstResult.profileReceivedEmailSentAt).toBeNull();
+
+      const secondResult = await service.updateProfile(MOCK_USER_ID, {
+        capacity: 5,
+      });
+
+      expect(
+        mockMailService.sendMentorProfileReceivedEmail,
+      ).toHaveBeenCalledTimes(2);
+      expect(updateSpy).toHaveBeenCalledTimes(3);
+      expect(secondResult.profileReceivedEmailSentAt).toBeInstanceOf(Date);
+    });
+
+    it('should automatically retry only missing admin notifications', async () => {
+      const pendingProfile: MentorProfileWithRelations = {
+        ...mockFullMentorProfile,
+        notifiedAdminAt: null,
+        profileReceivedEmailSentAt: null,
+      };
+
+      mockPrismaService.mentorProfile.findMany.mockResolvedValue([
+        pendingProfile,
+      ]);
+      mockPrismaService.user.findMany.mockResolvedValue([
+        {
+          email: 'alex.admin@example.com',
+          fullName: 'Alex Admin',
+        },
+      ]);
+      const updateSpy = jest
+        .spyOn(prisma.mentorProfile, 'update')
+        .mockResolvedValue(pendingProfile);
+
+      await service.retryPendingAdminNotifications();
+
+      expect(mockPrismaService.mentorProfile.findMany).toHaveBeenCalledWith({
+        where: {
+          approvalStatus: ApprovalStatus.PENDING,
+          notifiedAdminAt: null,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              linkedinURL: true,
+              scheduleURL: true,
+            },
+          },
+          mentorDisciplines: {
+            include: {
+              discipline: true,
+            },
+          },
+          mentorSkills: {
+            include: {
+              skill: true,
+            },
+          },
+          mentorDomainIndustries: {
+            include: {
+              industry: true,
+            },
+          },
+        },
+      });
+      expect(
+        mockMailService.sendMentorProfileReceivedEmail,
+      ).not.toHaveBeenCalled();
+      expect(
+        mockMailService.sendAdminMentorReadyForReviewEmail,
+      ).toHaveBeenCalledTimes(1);
+      expect(updateSpy).toHaveBeenCalledTimes(1);
+      expect(pendingProfile.profileReceivedEmailSentAt).toBeNull();
+      expect(pendingProfile.notifiedAdminAt).toBeInstanceOf(Date);
     });
   });
 

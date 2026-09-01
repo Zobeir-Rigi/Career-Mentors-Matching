@@ -14,7 +14,7 @@ This project aims to provide a platform where mentors and mentees can create pro
 - Mentee profile management
 - Matching based on selected criteria
 - Match acceptance and rejection workflow
-- Staff visibility of mentor-mentee matches and relationship status
+- Admin visibility of mentor-mentee matches and relationship status
 
 ## Live Application
 

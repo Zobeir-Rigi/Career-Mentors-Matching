@@ -21,7 +21,7 @@ export class MenteeMatchDto {
   declinedAt!: string;
 }
 
-export class StaffMenteeMentorDto {
+export class AdminMenteeMentorDto {
   @ApiProperty()
   mentorProfileId!: string;
 
@@ -32,7 +32,7 @@ export class StaffMenteeMentorDto {
   email!: string;
 }
 
-export class StaffMenteeDto {
+export class AdminMenteeDto {
   @ApiProperty()
   menteeProfileId!: string;
 
@@ -78,10 +78,10 @@ export class StaffMenteeDto {
   matches!: MenteeMatchDto[];
 
   @ApiProperty({
-    type: StaffMenteeMentorDto,
+    type: AdminMenteeMentorDto,
     nullable: true,
   })
-  mentor!: StaffMenteeMentorDto | null;
+  mentor!: AdminMenteeMentorDto | null;
 
   @ApiProperty({
     nullable: true,
@@ -90,12 +90,12 @@ export class StaffMenteeDto {
   status!: string | null;
 }
 
-export class StaffMenteesResponseDto {
+export class AdminMenteesResponseDto {
   @ApiProperty({
-    type: [StaffMenteeDto],
+    type: [AdminMenteeDto],
     description: 'List of mentee profiles',
   })
-  mentees!: StaffMenteeDto[];
+  mentees!: AdminMenteeDto[];
 
   @ApiProperty()
   total!: number;

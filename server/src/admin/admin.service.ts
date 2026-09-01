@@ -8,22 +8,26 @@ import { plainToInstance } from 'class-transformer';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ApprovalStatus, WaitingStatus } from '@/generated/prisma/enums';
 
-import { StaffMenteesResponseDto } from './dto/staff-mentees-response.dto';
-import { StaffMentorsResponseDto } from './dto/staff-mentors-response.dto';
-import { StaffOverviewResponseDto } from './dto/staff-overview-response.dto';
+import { AdminMenteesResponseDto } from './dto/admin-mentees-response.dto';
+import { AdminMentorsResponseDto } from './dto/admin-mentors-response.dto';
+import { AdminOverviewResponseDto } from './dto/admin-overview-response.dto';
 import { CAPACITY_RELEVANT_STATUSES } from '@/common/constants/capacity-relevant-statuses';
-import { StaffDirectoryQueryDto } from './dto/staff-directory-query.dto';
+import { AdminDirectoryQueryDto } from './dto/admin-directory-query.dto';
 import { buildDirectorySearch } from './helpers/build-directory-search';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
-export class StaffService {
-  private readonly logger = new Logger(StaffService.name);
+export class AdminService {
+  private readonly logger = new Logger(AdminService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   async getMentees(
-    query: StaffDirectoryQueryDto,
-  ): Promise<StaffMenteesResponseDto> {
+    query: AdminDirectoryQueryDto,
+  ): Promise<AdminMenteesResponseDto> {
     try {
       const { search, page, limit } = query;
       const skip = (page - 1) * limit;
@@ -135,7 +139,7 @@ export class StaffService {
           })),
         };
       });
-      return plainToInstance(StaffMenteesResponseDto, {
+      return plainToInstance(AdminMenteesResponseDto, {
         mentees: menteesData,
         total,
         page,
@@ -147,8 +151,8 @@ export class StaffService {
   }
 
   async getMentors(
-    query: StaffDirectoryQueryDto,
-  ): Promise<StaffMentorsResponseDto> {
+    query: AdminDirectoryQueryDto,
+  ): Promise<AdminMentorsResponseDto> {
     try {
       const { search, page, limit } = query;
       const skip = (page - 1) * limit;
@@ -269,7 +273,7 @@ export class StaffService {
         };
       });
 
-      return plainToInstance(StaffMentorsResponseDto, {
+      return plainToInstance(AdminMentorsResponseDto, {
         mentors: mentorsData,
         total,
         page,
@@ -280,7 +284,7 @@ export class StaffService {
     }
   }
 
-  async getOverview(): Promise<StaffOverviewResponseDto> {
+  async getOverview(): Promise<AdminOverviewResponseDto> {
     const [
       volunteerMentors,
       liveMatches,
@@ -449,12 +453,33 @@ export class StaffService {
     approvalStatus: ApprovalStatus,
   ) {
     try {
-      return await this.prisma.mentorProfile.update({
+      const existingMentor = await this.prisma.mentorProfile.findUnique({
+        where: {
+          id: mentorProfileId,
+        },
+        select: {
+          approvalStatus: true,
+        },
+      });
+
+      if (!existingMentor) {
+        throw new Error('Mentor profile not found');
+      }
+
+      const isDecisionChange =
+        existingMentor.approvalStatus !== approvalStatus &&
+        (approvalStatus === ApprovalStatus.ACCEPTED ||
+          approvalStatus === ApprovalStatus.DECLINED);
+
+      const mentor = await this.prisma.mentorProfile.update({
         where: {
           id: mentorProfileId,
         },
         data: {
           approvalStatus,
+          ...(isDecisionChange && {
+            approvalDecisionEmailSentAt: null,
+          }),
         },
         select: {
           id: true,
@@ -468,6 +493,32 @@ export class StaffService {
           },
         },
       });
+
+      if (isDecisionChange) {
+        try {
+          await this.mailService.sendMentorApprovalDecisionEmail({
+            email: mentor.user.email,
+            fullName: mentor.user.fullName,
+            approvalStatus,
+          });
+
+          await this.prisma.mentorProfile.update({
+            where: {
+              id: mentor.id,
+            },
+            data: {
+              approvalDecisionEmailSentAt: new Date(),
+            },
+          });
+        } catch (error) {
+          this.logger.error(
+            `Mentor approval decision email could not be sent for mentor ${mentor.id}`,
+            error instanceof Error ? error.stack : undefined,
+          );
+        }
+      }
+
+      return mentor;
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

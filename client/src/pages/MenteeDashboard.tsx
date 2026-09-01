@@ -209,14 +209,6 @@ export function MenteeDashboard() {
 
       await refreshDashboard();
 
-      /*
-       * The recommendation card can be much taller than the
-       * post-proposal state, especially on mobile. When it disappears,
-       * browser scroll anchoring can leave the viewport near the bottom.
-       *
-       * Return the user to the mentorship section after the new state
-       * has rendered.
-       */
       scrollToMentorship();
     } catch (error) {
       setRecommendationCandidates((currentCandidates) =>
@@ -415,6 +407,41 @@ export function MenteeDashboard() {
       cancelled = true;
     };
   }, []);
+
+  const currentMatchStatus = dashboard?.currentMatch?.status;
+
+  useEffect(() => {
+    if (currentMatchStatus !== "CHEMISTRY_CONFIRMED") {
+      return;
+    }
+
+    let cancelled = false;
+
+    const refreshIntervalId = window.setInterval(async () => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      try {
+        const data = await getMenteeDashboard();
+
+        if (!cancelled) {
+          setDashboard(data);
+        }
+      } catch (error) {
+        console.warn(
+          "Failed to refresh the mentee dashboard; retrying in one minute.",
+          error,
+        );
+      }
+    }, 60_000);
+
+    return () => {
+      cancelled = true;
+
+      window.clearInterval(refreshIntervalId);
+    };
+  }, [currentMatchStatus]);
 
   const displayedGoals = selectedGoals ?? dashboard?.goals ?? [];
 
