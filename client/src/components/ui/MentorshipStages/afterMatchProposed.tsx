@@ -133,8 +133,8 @@ export function AfterMatchProposed({
             </p>
 
             <p className="mt-2 font-sans text-sm font-normal text-muted">
-              Marking the session as booked is optional. Your scheduled
-              check-in will still happen if you do not.
+              Marking the session as booked is optional. Your scheduled check-in
+              will still happen if you do not.
             </p>
 
             {scheduledCheckIn && (
@@ -335,7 +335,7 @@ export function AfterMatchProposed({
                 rel="noreferrer"
                 className="font-sans text-sm font-bold text-accent underline decoration-accent-soft underline-offset-4 hover:text-accent-hover"
               >
-                Book chemistry session
+                Schedule meeting
               </a>
             )}
 
