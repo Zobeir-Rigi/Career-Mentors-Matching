@@ -133,8 +133,8 @@ export function AfterMatchProposed({
             </p>
 
             <p className="mt-2 font-sans text-sm font-normal text-muted">
-              Marking the session as booked is optional. Your scheduled
-              check-in will still happen if you do not.
+              Marking the session as booked is optional. Your scheduled check-in
+              will still happen if you do not.
             </p>
 
             {scheduledCheckIn && (

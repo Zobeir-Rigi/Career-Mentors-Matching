@@ -130,9 +130,7 @@ export function Header() {
             className="fixed right-0 top-0 z-50 flex h-dvh w-72 flex-col border-l border-line bg-bg p-5"
             aria-label="Mobile navigation"
           >
-            <div className="flex items-center justify-between">
-              <Logo />
-
+            <div className="text-right">
               <Button
                 variant="quiet"
                 className="shrink-0 px-3"
