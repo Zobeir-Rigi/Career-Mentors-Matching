@@ -4,8 +4,12 @@ import { useAdmin } from "@/lib/context/AdminContext";
 export function GlobalStatisticTiles() {
   const { globalMatchingData, isLoading } = useAdmin();
 
-  if (isLoading || !globalMatchingData) {
+  if (isLoading) {
     return <div>Loading matching data...</div>;
+  }
+
+  if (!globalMatchingData) {
+    return <div>No matching data yet.</div>;
   }
   const statistics = [
     {

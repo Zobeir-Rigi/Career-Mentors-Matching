@@ -1,5 +1,5 @@
 import { useState, type SyntheticEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 import { signup, type SignupRole } from "../../services/authService";
 import { Input } from "../ui/Input";
@@ -23,8 +23,11 @@ const DEFAULT_ERROR_MESSAGE =
 
 export function SignupForm() {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const [role, setRole] = useState<SignupRole | "">("");
+  const roleFromNavigation = location.state?.role as SignupRole | undefined;
+
+  const [role, setRole] = useState<SignupRole | "">(roleFromNavigation ?? "");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
