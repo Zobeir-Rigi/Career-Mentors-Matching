@@ -19,7 +19,7 @@ export function VolunteerAnHour() {
           </p>
           <Button
             className="w-full bg-accent text-on-accent sm:w-auto"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/signup", { state: { role: "MENTOR" } })}
           >
             Become a mentor
           </Button>

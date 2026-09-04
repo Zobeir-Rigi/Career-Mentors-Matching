@@ -25,7 +25,7 @@ export function HeroBand({ disciplines }: HeroBandProps) {
         <div className="mt-8 flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
           <Button
             className="w-full bg-accent text-on-accent sm:w-auto"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/signup", { state: { role: "MENTEE" } })}
           >
             Find your mentor
           </Button>
@@ -33,7 +33,7 @@ export function HeroBand({ disciplines }: HeroBandProps) {
           <Button
             variant="outline"
             className="w-full sm:w-auto"
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/signup", { state: { role: "MENTOR" } })}
           >
             Volunteer as a mentor
           </Button>
