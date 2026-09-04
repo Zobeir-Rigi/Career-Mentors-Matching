@@ -36,7 +36,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   const mentorLimit = 10;
   const menteeLimit = 10;
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const fetchAdminData = useCallback(async () => {
     const [overviewResponse, mentorsResponse, menteesResponse] =
