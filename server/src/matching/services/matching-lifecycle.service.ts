@@ -17,7 +17,7 @@ export class MatchingLifecycleService {
     private readonly mailService: MailService,
   ) {}
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron('*/5 * * * * *')
   async processDueCheckIns(): Promise<void> {
     const now = new Date();
 
@@ -127,7 +127,7 @@ export class MatchingLifecycleService {
     }
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron('*/5 * * * * *')
   async processExpiredCheckIns(): Promise<void> {
     const now = new Date();
 

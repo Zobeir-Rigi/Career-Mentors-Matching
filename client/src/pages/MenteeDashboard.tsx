@@ -411,7 +411,10 @@ export function MenteeDashboard() {
   const currentMatchStatus = dashboard?.currentMatch?.status;
 
   useEffect(() => {
-    if (currentMatchStatus !== "CHEMISTRY_CONFIRMED") {
+    if (
+      currentMatchStatus !== "CHEMISTRY_CONFIRMED" &&
+      currentMatchStatus !== "MATCH_PENDING"
+    ) {
       return;
     }
 
@@ -430,11 +433,11 @@ export function MenteeDashboard() {
         }
       } catch (error) {
         console.warn(
-          "Failed to refresh the mentee dashboard; retrying in one minute.",
+          "Failed to refresh the mentee dashboard; retrying in five seconds.",
           error,
         );
       }
-    }, 60_000);
+    }, 5_000);
 
     return () => {
       cancelled = true;
