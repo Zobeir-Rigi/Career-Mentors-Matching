@@ -1,5 +1,19 @@
 type UserRole = "mentor" | "mentee";
 
+export const MIN_BIO_WORDS = 50;
+
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  return trimmed === "" ? 0 : trimmed.split(/\s+/).length;
+}
+
+export function validatedBio(bio: string): string | null {
+  if (countWords(bio) < MIN_BIO_WORDS) {
+    return `Bio must contain at least ${MIN_BIO_WORDS} words.`;
+  }
+  return null;
+}
+
 export function getFieldLabels(role: UserRole): Record<string, string> {
   return {
     currentJobTitle: "Job title",
