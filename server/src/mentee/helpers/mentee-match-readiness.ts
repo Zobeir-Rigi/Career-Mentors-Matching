@@ -1,3 +1,5 @@
+import { hasCompleteBio } from '@/common/utils/bio-validation';
+
 interface MenteeProfileWithRelations {
   reasonsNote: string | null;
   bio: string | null;
@@ -19,7 +21,7 @@ export function isMenteeMatchReady(
 ): boolean {
   return Boolean(
     profile.reasonsNote?.trim() &&
-    profile.bio?.trim() &&
+    hasCompleteBio(profile.bio) &&
     profile.user.linkedinURL?.trim() &&
     profile.region &&
     profile.availability.length > 0 &&

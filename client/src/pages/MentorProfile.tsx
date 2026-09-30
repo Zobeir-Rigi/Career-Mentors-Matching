@@ -27,7 +27,12 @@ import {
   useProfile,
   type MentorProfileContextType,
 } from "../lib/context/ProfileContext";
-import { checkEmptyFields } from "@/lib/profileValidation";
+import {
+  checkEmptyFields,
+  countWords,
+  MIN_BIO_WORDS,
+  validatedBio,
+} from "@/lib/profileValidation";
 import { useAuth } from "@/lib/context/useAuth";
 import {
   upsertMentorProfile,
@@ -181,6 +186,8 @@ export function MentorProfile() {
   };
 
   const missingFields = checkEmptyFields(role, profileData);
+  const bioWordCount = countWords(bio);
+  const bioError = validatedBio(bio);
 
   async function submitHandler(profileData: MentorProfilePayload) {
     if (missingFields.length > 0) {
@@ -256,9 +263,19 @@ export function MentorProfile() {
             >
               <Textarea
                 id="bio-shown-to-matches"
+                aria-describedby="bio-word-count"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
               />
+
+              <p
+                id="bio-word-count"
+                className={`text-sm ${bioError ? "text-red-600" : "text-muted"}`}
+              >
+                {bioWordCount} words / minimum {MIN_BIO_WORDS} to complete your
+                profile.
+                {bioError && " You can save now and finish later."}
+              </p>
             </FormField>
 
             <div className="grid md:grid-cols-2 gap-4">

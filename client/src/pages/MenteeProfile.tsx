@@ -19,7 +19,12 @@ import { Textarea } from "../components/ui/Textarea";
 import { QuestionLabel } from "../components/ui/QuestionLabel";
 import { OptionsDisplay } from "../components/ui/OptionsDisplay";
 
-import { checkEmptyFields } from "@/lib/profileValidation";
+import {
+  checkEmptyFields,
+  countWords,
+  MIN_BIO_WORDS,
+  validatedBio,
+} from "@/lib/profileValidation";
 import {
   availabilityOptions,
   industryOptions,
@@ -138,6 +143,8 @@ export function MenteeProfile() {
   };
 
   const missingFields = checkEmptyFields(role, profileData);
+  const bioWordCount = countWords(bio);
+  const bioError = validatedBio(bio);
 
   async function submitHandler() {
     if (missingFields.length > 0) {
@@ -354,10 +361,19 @@ export function MenteeProfile() {
             >
               <Textarea
                 id="mentee-bio"
+                aria-describedby="bio-word-count"
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
               />
+              <p
+                id="bio-word-count"
+                className={`text-sm ${bioError ? "text-red-600" : " text-muted"}`}
+              >
+                {bioWordCount} words / minimum {MIN_BIO_WORDS} to complete your
+                profile.
+                {bioError && " You can save now and finish later."}
+              </p>
             </FormField>
             <div className="space-y-2">
               <QuestionLabel question="Preferred meeting style" />

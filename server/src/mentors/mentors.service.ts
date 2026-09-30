@@ -12,6 +12,7 @@ import {
 } from '../generated/prisma/enums';
 import { MailService } from '@/mail/mail.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { hasCompleteBio } from '@/common/utils/bio-validation';
 
 export interface MentorProfileWithRelations {
   id: string;
@@ -177,7 +178,7 @@ export class MentorsService {
     return Boolean(
       profile.currentJobTitle?.trim() &&
       profile.region &&
-      profile.bio?.trim() &&
+      hasCompleteBio(profile.bio) &&
       Array.isArray(profile.availability) &&
       profile.availability.length > 0 &&
       profile.capacity >= 1 &&
