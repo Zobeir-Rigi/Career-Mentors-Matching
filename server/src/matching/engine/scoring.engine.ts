@@ -1,25 +1,30 @@
-import {
+import type {
+  AvailabilityOption,
   MeetingCadence,
   MeetingStructure,
   Region,
-} from '../../generated/prisma/enums';
-import { Prisma } from '../../generated/prisma/client';
+} from './scoring.types';
+export interface MenteeScoringInput {
+  goalDisciplineIds: string[];
+  wantedSkillIds: string[];
+  targetedIndustryIds: string[];
+  availability: AvailabilityOption[];
+  region: Region | null;
+  openToRemote: boolean;
+  meetingStructure: MeetingStructure | null;
+  meetingCadence: MeetingCadence | null;
+}
 
-export type MenteeWithRelations = Prisma.MenteeProfileGetPayload<{
-  include: {
-    goalDisciplines: { include: { discipline: true } };
-    wantedSkills: { include: { skill: true } };
-    targetedIndustries: { include: { industry: true } };
-  };
-}>;
-
-export type MentorWithRelations = Prisma.MentorProfileGetPayload<{
-  include: {
-    mentorDisciplines: { include: { discipline: true } };
-    mentorSkills: { include: { skill: true } };
-    mentorDomainIndustries: { include: { industry: true } };
-  };
-}>;
+export interface MentorScoringInput {
+  mentorDisciplineIds: string[];
+  mentorSkillIds: string[];
+  mentorDomainIndustryIds: string[];
+  availability: AvailabilityOption[];
+  region: Region | null;
+  openToRemote: boolean;
+  meetingStructure: MeetingStructure | null;
+  meetingCadence: MeetingCadence | null;
+}
 
 export const SCORING_CATEGORY_KEYS = [
   'disciplines',
@@ -121,21 +126,21 @@ export function calculateMeetingCadenceScore(
  * alter matching behaviour.
  */
 export function computeAllCategoryScores(
-  menteeProfile: MenteeWithRelations,
-  mentorProfile: MentorWithRelations,
+  menteeProfile: MenteeScoringInput,
+  mentorProfile: MentorScoringInput,
 ): CategoryScores {
   return {
     disciplines: calculateArrayOverlapScore(
-      menteeProfile.goalDisciplines?.map(({ disciplineId }) => disciplineId),
-      mentorProfile.mentorDisciplines?.map(({ disciplineId }) => disciplineId),
+      menteeProfile.goalDisciplineIds,
+      mentorProfile.mentorDisciplineIds,
     ),
     skills: calculateArrayOverlapScore(
-      menteeProfile.wantedSkills?.map(({ skillId }) => skillId),
-      mentorProfile.mentorSkills?.map(({ skillId }) => skillId),
+      menteeProfile.wantedSkillIds,
+      mentorProfile.mentorSkillIds,
     ),
     industries: calculateArrayOverlapScore(
-      menteeProfile.targetedIndustries?.map(({ industryId }) => industryId),
-      mentorProfile.mentorDomainIndustries?.map(({ industryId }) => industryId),
+      menteeProfile.targetedIndustryIds,
+      mentorProfile.mentorDomainIndustryIds,
     ),
     availability: calculateArrayOverlapScore(
       menteeProfile.availability,

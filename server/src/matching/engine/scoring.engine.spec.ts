@@ -7,15 +7,13 @@ import {
   computeAllCategoryScores,
   type ActiveRule,
   type CategoryScores,
-  type MenteeWithRelations,
-  type MentorWithRelations,
 } from './scoring.engine';
 import {
   AvailabilityOption,
   MeetingCadence,
   MeetingStructure,
   Region,
-} from '../../generated/prisma/enums';
+} from './scoring.types';
 
 describe('Scoring Engine', () => {
   describe('calculateArrayOverlapScore', () => {
@@ -220,20 +218,9 @@ describe('Scoring Engine', () => {
 
   describe('computeAllCategoryScores', () => {
     const mentee = {
-      goalDisciplines: [
-        {
-          disciplineId: 'disc-1',
-          discipline: { id: 'disc-1', name: 'Old name' },
-        },
-        { disciplineId: 'disc-2', discipline: { id: 'disc-2', name: 'Data' } },
-      ],
-      wantedSkills: [
-        { skillId: 'skill-1', skill: { id: 'skill-1', name: 'TypeScript' } },
-        { skillId: 'skill-2', skill: { id: 'skill-2', name: 'Python' } },
-      ],
-      targetedIndustries: [
-        { industryId: 'ind-1', industry: { id: 'ind-1', name: 'Technology' } },
-      ],
+      goalDisciplineIds: ['disc-1', 'disc-2'],
+      wantedSkillIds: ['skill-1', 'skill-2'],
+      targetedIndustryIds: ['ind-1'],
       availability: [
         AvailabilityOption.WEEKDAY_EVENING,
         AvailabilityOption.WEEKEND_MORNING,
@@ -242,33 +229,18 @@ describe('Scoring Engine', () => {
       openToRemote: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
-    } as unknown as MenteeWithRelations;
+    };
 
     const mentor = {
-      mentorDisciplines: [
-        {
-          disciplineId: 'disc-1',
-          discipline: {
-            id: 'disc-1',
-            name: 'Completely renamed display label',
-          },
-        },
-      ],
-      mentorSkills: [
-        { skillId: 'skill-1', skill: { id: 'skill-1', name: 'TS' } },
-      ],
-      mentorDomainIndustries: [
-        {
-          industryId: 'ind-99',
-          industry: { id: 'ind-99', name: 'Healthcare' },
-        },
-      ],
+      mentorDisciplineIds: ['disc-1'],
+      mentorSkillIds: ['skill-1'],
+      mentorDomainIndustryIds: ['ind-99'],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.CAPE_TOWN,
       openToRemote: true,
       meetingStructure: MeetingStructure.STRUCTURED,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
-    } as unknown as MentorWithRelations;
+    };
 
     it('computes every category from canonical IDs and preferences', () => {
       expect(computeAllCategoryScores(mentee, mentor)).toEqual({
@@ -285,10 +257,10 @@ describe('Scoring Engine', () => {
     it('treats empty mentee discipline/skill/industry preferences as unrestricted', () => {
       const unrestricted = {
         ...mentee,
-        goalDisciplines: [],
-        wantedSkills: [],
-        targetedIndustries: [],
-      } as unknown as MenteeWithRelations;
+        goalDisciplineIds: [],
+        wantedSkillIds: [],
+        targetedIndustryIds: [],
+      };
 
       const result = computeAllCategoryScores(unrestricted, mentor);
       expect(result.disciplines).toBe(1);

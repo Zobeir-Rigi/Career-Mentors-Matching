@@ -13,6 +13,10 @@ import {
   type CategoryScores,
 } from '../engine/scoring.engine';
 import { MatchingDataService } from './matching-data.service';
+import {
+  toMenteeScoringInput,
+  toMentorScoringInput,
+} from '../engine/scoring.adapter';
 
 export interface ScoredMatch {
   mentorId: string;
@@ -146,7 +150,10 @@ export class MatchingAlgoService {
           continue;
         }
 
-        const categoryScores = computeAllCategoryScores(mentee, mentor);
+        const categoryScores = computeAllCategoryScores(
+          toMenteeScoringInput(mentee),
+          toMentorScoringInput(mentor),
+        );
         const finalScore = calculateDynamicScore(categoryScores, activeRules);
 
         if (finalScore < threshold) continue;

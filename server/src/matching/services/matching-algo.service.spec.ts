@@ -12,10 +12,7 @@ import {
   MeetingStructure,
   Region,
 } from '../../generated/prisma/enums';
-import type {
-  MenteeWithRelations,
-  MentorWithRelations,
-} from '../engine/scoring.engine';
+import type { MentorAdapterInput } from '../engine/scoring.adapter';
 import {
   DEFAULT_WEIGHTS,
   MatchingAlgoService,
@@ -23,7 +20,7 @@ import {
 } from './matching-algo.service';
 import { MatchingDataService } from './matching-data.service';
 
-type TestMentor = MentorWithRelations & {
+type TestMentor = MentorAdapterInput & {
   id: string;
   userId: string;
   currentJobTitle: string | null;
@@ -76,8 +73,6 @@ const richMentee = {
     },
   ],
   matches: [] as { mentorId: string; status: MatchStatus }[],
-} as unknown as MenteeWithRelations & {
-  matches: { mentorId: string; status: MatchStatus }[];
 };
 
 function makeMentor(
@@ -214,9 +209,7 @@ describe('MatchingAlgoService', () => {
         // remote still matches = 10
         mentorSkills: [
           {
-            mentorId: 'mentor-second',
             skillId: 'skill-x',
-            skill: { id: 'skill-x', name: 'JavaScript' },
           },
         ], // skills = 0; everything else contributes => 61
       });
@@ -247,16 +240,12 @@ describe('MatchingAlgoService', () => {
         id: 'mentor-threshold',
         mentorSkills: [
           {
-            mentorId: 'mentor-threshold',
             skillId: 'skill-x',
-            skill: { id: 'skill-x', name: 'Other' },
           },
         ],
         mentorDomainIndustries: [
           {
-            mentorId: 'mentor-threshold',
             industryId: 'ind-x',
-            industry: { id: 'ind-x', name: 'Other' },
           },
         ],
         meetingCadence: MeetingCadence.MONTHLY,
@@ -281,16 +270,12 @@ describe('MatchingAlgoService', () => {
         meetingStructure: MeetingStructure.STRUCTURED,
         mentorSkills: [
           {
-            mentorId: 'mentor-low',
             skillId: 'skill-x',
-            skill: { id: 'skill-x', name: 'Other' },
           },
         ],
         mentorDomainIndustries: [
           {
-            mentorId: 'mentor-low',
             industryId: 'ind-x',
-            industry: { id: 'ind-x', name: 'Other' },
           },
         ],
       });
