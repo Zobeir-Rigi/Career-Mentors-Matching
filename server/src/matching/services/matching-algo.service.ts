@@ -4,10 +4,12 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { MatchStatus, Region } from '../../generated/prisma/enums';
 import {
-  calculateDynamicScore,
-  computeAllCategoryScores,
+  ApprovalStatus,
+  MatchStatus,
+  Region,
+} from '../../generated/prisma/enums';
+import {
   isScoringCategoryKey,
   type ActiveRule,
   type CategoryScores,
@@ -17,6 +19,10 @@ import {
   toMenteeScoringInput,
   toMentorScoringInput,
 } from '../engine/scoring.adapter';
+import {
+  selectMentorMatches,
+  type MentorCandidate,
+} from '../engine/candidate-selection';
 
 export interface ScoredMatch {
   mentorId: string;
@@ -110,17 +116,18 @@ export class MatchingAlgoService {
 
   async findBestMatches(userId: string): Promise<ScoredMatch[]> {
     try {
+      // 1. Load the mentee and their match history.
       const mentee = await this.dataService.fetchMenteeContextByUserId(userId);
       if (!mentee) {
         throw new NotFoundException(`Mentee with user ID ${userId} not found`);
       }
 
+      // 2. Prepare the score threshold and weights.
       const config = await this.dataService.fetchActiveConfig();
       const threshold = normalizeThreshold(config?.minScoreThreshold);
       const activeRules = normalizeActiveRules(config?.weights);
 
-      // Once a mentor has already appeared in this mentee's match history, do
-      // not surface that mentor again. This avoids duplicate/repeated matches.
+      // 3. List previous mentors so they won't be suggested again.
       const menteeMatches = (mentee as { matches?: MenteeMatchRecord[] })
         .matches;
       const excludedMentorIds = [
@@ -134,35 +141,55 @@ export class MatchingAlgoService {
         ),
       ];
 
+      // 4. Load approved, accepting mentors who aren't on that list.
+      // Only matches that occupy a place are included in their match counts.
       const candidateMentors =
         await this.dataService.fetchEligibleCandidates(excludedMentorIds);
 
       if (!candidateMentors?.length) return [];
 
-      const scoredMatches: ScoredMatch[] = [];
+      // 5. Convert mentor records into matching inputs.
+      const mentorMatchingInputs: MentorCandidate[] = candidateMentors.map(
+        (mentor) => ({
+          mentorId: mentor.id,
+          isApproved: mentor.approvalStatus === ApprovalStatus.ACCEPTED,
+          isAcceptingMentees: mentor.isAcceptingMentees,
+          scoringInput: toMentorScoringInput(mentor),
+          capacity: mentor.capacity,
+          occupiedCapacity: mentor.matches?.length ?? 0,
+        }),
+      );
 
-      for (const mentor of candidateMentors) {
-        const capacityRelevantMatchCount = mentor.matches?.length ?? 0;
-        if (
-          mentor.capacity <= 0 ||
-          capacityRelevantMatchCount >= mentor.capacity
-        ) {
-          continue;
+      // 6. Filter mentors, calculate scores and rank the results.
+      const rankedMentorMatches = selectMentorMatches(
+        toMenteeScoringInput(mentee),
+        mentorMatchingInputs,
+        excludedMentorIds,
+        threshold,
+        activeRules,
+      );
+
+      // 7. Store each loaded mentor under their ID for easy lookup.
+      const mentorsById = new Map(
+        candidateMentors.map((mentor) => [mentor.id, mentor]),
+      );
+
+      // 8. Add profile details without changing the ranked order.
+      return rankedMentorMatches.map((match) => {
+        const mentor = mentorsById.get(match.mentorId);
+
+        // A selected mentor must exist in the records we loaded.
+        if (!mentor) {
+          throw new Error(
+            `Selected mentor ${match.mentorId} was not in the candidate list`,
+          );
         }
 
-        const categoryScores = computeAllCategoryScores(
-          toMenteeScoringInput(mentee),
-          toMentorScoringInput(mentor),
-        );
-        const finalScore = calculateDynamicScore(categoryScores, activeRules);
-
-        if (finalScore < threshold) continue;
-
-        scoredMatches.push({
-          mentorId: mentor.id,
+        return {
+          mentorId: match.mentorId,
           userId: mentor.userId,
-          score: finalScore,
-          categoryScores,
+          score: match.score,
+          categoryScores: match.categoryScores,
           profile: {
             fullName: mentor.user.fullName,
             currentJobTitle: mentor.currentJobTitle,
@@ -171,15 +198,10 @@ export class MatchingAlgoService {
             bio: mentor.bio,
             linkedinURL: mentor.user.linkedinURL,
           },
-        });
-      }
-
-      // Stable deterministic ranking for equal scores makes API responses and
-      // tests reproducible.
-      return scoredMatches.sort(
-        (a, b) => b.score - a.score || a.mentorId.localeCompare(b.mentorId),
-      );
+        };
+      });
     } catch (error) {
+      // Keep "mentee not found" errors; log other failures below.
       if (error instanceof NotFoundException) throw error;
 
       this.logger.error(
