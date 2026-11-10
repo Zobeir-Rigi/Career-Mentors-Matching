@@ -349,6 +349,29 @@ describe('MatchingAlgoService', () => {
       expect(results[0].score).toBe(80);
     });
 
+    it('excludes a score of 61 using the default threshold of 70 when no config exists', async () => {
+      const mentor = makeMentor({
+        id: 'mentor-below-default-threshold',
+        mentorSkills: [{ skillId: 'skill-x' }],
+      });
+      mockMatchingDataService.fetchEligibleCandidates.mockResolvedValue([
+        mentor,
+      ]);
+
+      // Verify this candidate scores 61 and qualifies under the old threshold.
+      mockMatchingDataService.fetchActiveConfig.mockResolvedValue({
+        ...standardConfig,
+        minScoreThreshold: 60,
+      });
+      const results = await service.findBestMatches('mentee-1');
+      expect(results).toHaveLength(1);
+      expect(results[0].score).toBe(61);
+
+      // Without stored configuration, the new default must exclude it.
+      mockMatchingDataService.fetchActiveConfig.mockResolvedValue(null);
+      await expect(service.findBestMatches('mentee-1')).resolves.toEqual([]);
+    });
+
     it('falls back safely when config weights are malformed', async () => {
       mockMatchingDataService.fetchActiveConfig.mockResolvedValue({
         ...standardConfig,
