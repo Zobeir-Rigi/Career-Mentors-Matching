@@ -26,7 +26,7 @@ type TestMentor = MentorAdapterInput & {
   currentJobTitle: string | null;
   capacity: number;
   region: Region | null;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   bio: string | null;
   isAcceptingMentees: boolean;
   approvalStatus: ApprovalStatus;
@@ -47,7 +47,7 @@ const richMentee = {
   bio: 'Looking for guidance',
   reasonsNote: null,
   region: Region.LONDON,
-  openToRemote: true,
+  openToInPerson: true,
   availability: [AvailabilityOption.WEEKDAY_EVENING],
   meetingCadence: MeetingCadence.FORTNIGHTLY,
   meetingStructure: MeetingStructure.OPEN,
@@ -85,7 +85,7 @@ function makeMentor(
     currentJobTitle: 'Senior Engineer',
     capacity: 3,
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKDAY_EVENING],
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.OPEN,
@@ -206,12 +206,12 @@ describe('MatchingAlgoService', () => {
       const secondMentor = makeMentor({
         id: 'mentor-second',
         region: Region.OTHER,
-        // remote still matches = 10
+        // Different regions receive no in-person points.
         mentorSkills: [
           {
             skillId: 'skill-x',
           },
-        ], // skills = 0; everything else contributes => 61
+        ], // No skill or location points; final score is 51.
       });
 
       mockMatchingDataService.fetchEligibleCandidates.mockResolvedValue([
@@ -225,7 +225,23 @@ describe('MatchingAlgoService', () => {
       expect(results[0].mentorId).toBe('mentor-top');
       expect(results[0].score).toBe(80);
       expect(results[1].mentorId).toBe('mentor-second');
-      expect(results[1].score).toBe(61);
+      expect(results[1].score).toBe(51);
+    });
+
+    it('keeps remote-only mentors eligible without in-person points', async () => {
+      mockMatchingDataService.fetchMenteeContextByUserId.mockResolvedValue({
+        ...richMentee,
+        openToInPerson: false,
+      });
+      mockMatchingDataService.fetchEligibleCandidates.mockResolvedValue([
+        makeMentor({ id: 'mentor-remote-only', openToInPerson: false }),
+      ]);
+
+      const results = await service.findBestMatches('mentee-1');
+      expect(results).toHaveLength(1);
+      expect(results[0].score).toBe(70);
+      expect(results[0].categoryScores.location).toBe(0);
+      expect(results[0].profile.openToInPerson).toBe(false);
     });
 
     it('includes a mentor whose score is exactly the threshold', async () => {
@@ -264,7 +280,7 @@ describe('MatchingAlgoService', () => {
       const lowMentor = makeMentor({
         id: 'mentor-low',
         region: Region.OTHER,
-        openToRemote: false,
+        openToInPerson: false,
         availability: [AvailabilityOption.WEEKEND_MORNING],
         meetingCadence: MeetingCadence.MONTHLY,
         meetingStructure: MeetingStructure.STRUCTURED,

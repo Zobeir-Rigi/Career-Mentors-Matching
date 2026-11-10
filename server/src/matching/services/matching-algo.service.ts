@@ -33,7 +33,7 @@ export interface ScoredMatch {
     fullName: string;
     currentJobTitle: string | null;
     region: Region | null;
-    openToRemote: boolean;
+    openToInPerson: boolean;
     bio: string | null;
     linkedinURL: string | null;
   };
@@ -116,18 +116,19 @@ export class MatchingAlgoService {
 
   async findBestMatches(userId: string): Promise<ScoredMatch[]> {
     try {
-      // 1. Load the mentee and their match history.
+      // 1. Load the mentee's preferences and match history from the database.
       const mentee = await this.dataService.fetchMenteeContextByUserId(userId);
       if (!mentee) {
         throw new NotFoundException(`Mentee with user ID ${userId} not found`);
       }
 
-      // 2. Prepare the score threshold and weights.
+      // 2. Load configuration and convert it into usable threshold and weight inputs.
       const config = await this.dataService.fetchActiveConfig();
       const threshold = normalizeThreshold(config?.minScoreThreshold);
       const activeRules = normalizeActiveRules(config?.weights);
 
-      // 3. List previous mentors so they won't be suggested again.
+      // 3. Collect unique previous mentor IDs, regardless of match status.
+      // Both the database query and the pure selection function exclude these IDs.
       const menteeMatches = (mentee as { matches?: MenteeMatchRecord[] })
         .matches;
       const excludedMentorIds = [
@@ -141,14 +142,15 @@ export class MatchingAlgoService {
         ),
       ];
 
-      // 4. Load approved, accepting mentors who aren't on that list.
-      // Only matches that occupy a place are included in their match counts.
+      // 4. Fetch approved mentors accepting mentees, excluding previous mentors.
+      // Their loaded matches include only statuses that occupy capacity.
       const candidateMentors =
         await this.dataService.fetchEligibleCandidates(excludedMentorIds);
 
       if (!candidateMentors?.length) return [];
 
-      // 5. Convert mentor records into matching inputs.
+      // 5. Convert database records into the plain inputs selection needs.
+      // The scoring adapter extracts preference IDs; the match count supplies occupied capacity.
       const mentorMatchingInputs: MentorCandidate[] = candidateMentors.map(
         (mentor) => ({
           mentorId: mentor.id,
@@ -160,7 +162,8 @@ export class MatchingAlgoService {
         }),
       );
 
-      // 6. Filter mentors, calculate scores and rank the results.
+      // 6. Convert the mentee's preferences, then filter, score and rank mentors.
+      // This pure function receives all its data and makes no database requests.
       const rankedMentorMatches = selectMentorMatches(
         toMenteeScoringInput(mentee),
         mentorMatchingInputs,
@@ -169,16 +172,17 @@ export class MatchingAlgoService {
         activeRules,
       );
 
-      // 7. Store each loaded mentor under their ID for easy lookup.
+      // 7. Build an in-memory lookup: each pair is [mentor ID, full mentor record].
+      // This lets us attach profile details without fetching the mentors again.
       const mentorsById = new Map(
         candidateMentors.map((mentor) => [mentor.id, mentor]),
       );
 
-      // 8. Add profile details without changing the ranked order.
+      // 8. Attach display details to each selected result, preserving its ranked order.
       return rankedMentorMatches.map((match) => {
         const mentor = mentorsById.get(match.mentorId);
 
-        // A selected mentor must exist in the records we loaded.
+        // Every selected ID must come from the supplied candidate records.
         if (!mentor) {
           throw new Error(
             `Selected mentor ${match.mentorId} was not in the candidate list`,
@@ -194,14 +198,13 @@ export class MatchingAlgoService {
             fullName: mentor.user.fullName,
             currentJobTitle: mentor.currentJobTitle,
             region: mentor.region,
-            openToRemote: mentor.openToRemote,
+            openToInPerson: mentor.openToInPerson,
             bio: mentor.bio,
             linkedinURL: mentor.user.linkedinURL,
           },
         };
       });
     } catch (error) {
-      // Keep "mentee not found" errors; log other failures below.
       if (error instanceof NotFoundException) throw error;
 
       this.logger.error(

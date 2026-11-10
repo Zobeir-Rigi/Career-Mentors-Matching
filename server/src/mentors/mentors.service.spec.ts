@@ -25,7 +25,7 @@ describe('MentorsService', () => {
     currentJobTitle: 'Senior Backend Engineer',
     capacity: 3,
     region: Region.CAPE_TOWN,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKEND_EVENING,
@@ -46,7 +46,7 @@ describe('MentorsService', () => {
     currentJobTitle: mockMentorDto.currentJobTitle,
     capacity: mockMentorDto.capacity,
     region: Region.CAPE_TOWN,
-    openToRemote: mockMentorDto.openToRemote,
+    openToInPerson: mockMentorDto.openToInPerson,
     availability: mockMentorDto.availability,
     meetingCadence: mockMentorDto.meetingCadence,
     meetingStructure: mockMentorDto.meetingStructure,
@@ -212,6 +212,53 @@ describe('MentorsService', () => {
   });
 
   describe('upsertProfile (CREATE / REPLACE)', () => {
+    it.each([true, false])(
+      'persists in-person preference %p on create and replace',
+      async (openToInPerson) => {
+        const profile = { ...mockFullMentorProfile, openToInPerson };
+        mockPrismaService.mentorProfile.upsert.mockResolvedValue(profile);
+        mockPrismaService.mentorProfile.findUnique.mockResolvedValue(profile);
+
+        const result = await service.upsertProfile(MOCK_USER_ID, {
+          ...mockMentorDto,
+          disciplines: [],
+          skills: [],
+          industries: [],
+          openToInPerson,
+        });
+
+        const preferenceMatcher: unknown = expect.objectContaining({
+          openToInPerson,
+        });
+        expect(mockPrismaService.mentorProfile.upsert).toHaveBeenCalledWith(
+          expect.objectContaining({
+            create: preferenceMatcher,
+            update: preferenceMatcher,
+          }),
+        );
+        expect(result.openToInPerson).toBe(openToInPerson);
+      },
+    );
+
+    it('allows an opted-in mentor to opt out through a partial update', async () => {
+      mockPrismaService.mentorProfile.update.mockResolvedValue({
+        ...mockFullMentorProfile,
+        openToInPerson: false,
+      });
+
+      const result = await service.updateProfile(MOCK_USER_ID, {
+        openToInPerson: false,
+      });
+
+      expect(mockPrismaService.mentorProfile.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId: MOCK_USER_ID },
+          data: { openToInPerson: false },
+        }),
+      );
+      expect(result.openToInPerson).toBe(false);
+    });
+
     it('should upsert a mentor profile and sync relations inside a transaction', async () => {
       const { linkedinURL, scheduleURL } = mockMentorDto;
 
@@ -219,7 +266,7 @@ describe('MentorsService', () => {
         currentJobTitle: mockMentorDto.currentJobTitle,
         capacity: mockMentorDto.capacity,
         region: mockMentorDto.region,
-        openToRemote: mockMentorDto.openToRemote,
+        openToInPerson: mockMentorDto.openToInPerson,
         availability: mockMentorDto.availability,
         meetingCadence: mockMentorDto.meetingCadence,
         meetingStructure: mockMentorDto.meetingStructure,

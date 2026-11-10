@@ -57,6 +57,8 @@ const prisma = new PrismaClient({
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? 'Demo123!';
 const DEMO_MATCHING_CONFIG_ID = '00000000-0000-4000-8000-000000000101';
 const DEMO_THRESHOLD = 70;
+// Demo profiles below explicitly opt in/out of optional in-person meetings.
+// Existing real profiles are reset to false by the migration; users must opt in.
 
 type ScoringCategoryKey =
   | 'disciplines'
@@ -138,7 +140,7 @@ type MentorSeed = UserSeed & {
   currentJobTitle: string;
   capacity: number;
   region: Region;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   availability: AvailabilityOption[];
   meetingCadence: MeetingCadence;
   meetingStructure: MeetingStructure;
@@ -156,7 +158,7 @@ type MenteeSeed = UserSeed & {
   currentJobTitle?: string;
   reasonsNote?: string;
   region?: Region;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   availability: AvailabilityOption[];
   meetingCadence?: MeetingCadence;
   meetingStructure?: MeetingStructure;
@@ -187,7 +189,7 @@ const MENTORS = [
     currentJobTitle: 'Principal Software Engineer',
     capacity: 3,
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -211,7 +213,7 @@ const MENTORS = [
     currentJobTitle: 'Staff Backend Engineer',
     capacity: 2,
     region: Region.NORTH_WEST,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -235,7 +237,7 @@ const MENTORS = [
     currentJobTitle: 'Senior Data Platform Engineer',
     capacity: 2,
     region: Region.CAPE_TOWN,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKDAY_EVENING],
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
@@ -256,7 +258,7 @@ const MENTORS = [
     currentJobTitle: 'Engineering Manager',
     capacity: 4,
     region: Region.LONDON,
-    openToRemote: false,
+    openToInPerson: false,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -280,7 +282,7 @@ const MENTORS = [
     currentJobTitle: 'Senior Software Engineer',
     capacity: 2,
     region: Region.SCOTLAND,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKEND_MORNING],
     meetingCadence: MeetingCadence.FORTNIGHTLY,
     meetingStructure: MeetingStructure.STRUCTURED,
@@ -301,7 +303,7 @@ const MENTORS = [
     currentJobTitle: 'Lead Data & AI Engineer',
     capacity: 3,
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKDAY_EVENING,
@@ -325,7 +327,7 @@ const MENTORS = [
     currentJobTitle: 'Senior Platform Engineer',
     capacity: 3,
     region: Region.NORTH_WEST,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -349,7 +351,7 @@ const MENTORS = [
     currentJobTitle: 'Engineering Career Coach',
     capacity: 2,
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKEND_EVENING,
@@ -376,7 +378,7 @@ const MENTORS = [
     currentJobTitle: 'Senior Security Engineer',
     capacity: 2,
     region: Region.SHEFFIELD,
-    openToRemote: false,
+    openToInPerson: false,
     availability: [AvailabilityOption.WEEKEND_EVENING],
     meetingCadence: MeetingCadence.WEEKLY,
     meetingStructure: MeetingStructure.OPEN,
@@ -397,7 +399,7 @@ const MENTORS = [
     currentJobTitle: 'Lead Product Designer',
     capacity: 1,
     region: Region.WEST_MIDLANDS,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKDAY_AFTERNOON],
     meetingCadence: MeetingCadence.MONTHLY,
     meetingStructure: MeetingStructure.MIX,
@@ -422,7 +424,7 @@ const MENTEES = [
     reasonsNote:
       'I want practical support growing my technical skills and making good career decisions.',
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -444,7 +446,7 @@ const MENTEES = [
     reasonsNote:
       'I want to grow from analytics into stronger data engineering and AI skills.',
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKDAY_EVENING,
@@ -466,7 +468,7 @@ const MENTEES = [
     reasonsNote:
       'I want to deepen my DevOps skills and become more confident working with production systems.',
     region: Region.NORTH_WEST,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_EVENING,
       AvailabilityOption.WEEKEND_MORNING,
@@ -488,7 +490,7 @@ const MENTEES = [
     reasonsNote:
       'I want help preparing for interviews and presenting my experience confidently.',
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKEND_EVENING,
@@ -514,7 +516,7 @@ const MENTEES = [
     reasonsNote:
       'I want to move into cybersecurity in healthcare and need help with my job search.',
     region: Region.SHEFFIELD,
-    openToRemote: false,
+    openToInPerson: false,
     availability: [AvailabilityOption.WEEKEND_EVENING],
     meetingCadence: MeetingCadence.WEEKLY,
     meetingStructure: MeetingStructure.OPEN,
@@ -533,7 +535,7 @@ const MENTEES = [
     currentJobTitle: 'Business Analyst',
     reasonsNote: 'I want support moving into product and project management.',
     region: Region.WEST_MIDLANDS,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKDAY_AFTERNOON],
     meetingCadence: MeetingCadence.MONTHLY,
     meetingStructure: MeetingStructure.MIX,
@@ -553,7 +555,7 @@ const MENTEES = [
     reasonsNote:
       'I want guidance developing a long-term career in software quality and testing.',
     region: Region.SHEFFIELD,
-    openToRemote: false,
+    openToInPerson: false,
     availability: [AvailabilityOption.WEEKEND_EVENING],
     meetingCadence: MeetingCadence.WEEKLY,
     meetingStructure: MeetingStructure.STRUCTURED,
@@ -573,7 +575,7 @@ const MENTEES = [
     reasonsNote:
       'I want mentorship focused on business analysis in public-sector organisations.',
     region: Region.SHEFFIELD,
-    openToRemote: false,
+    openToInPerson: false,
     availability: [AvailabilityOption.WEEKEND_EVENING],
     meetingCadence: MeetingCadence.WEEKLY,
     meetingStructure: MeetingStructure.STRUCTURED,
@@ -593,7 +595,7 @@ const MENTEES = [
     reasonsNote:
       'I want support developing my UX career and moving into professional product design work.',
     region: Region.WEST_MIDLANDS,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [AvailabilityOption.WEEKDAY_AFTERNOON],
     meetingCadence: MeetingCadence.MONTHLY,
     meetingStructure: MeetingStructure.MIX,
@@ -612,7 +614,7 @@ const MENTEES = [
     currentJobTitle: 'Support Worker',
     reasonsNote: 'I want to explore a move into tech.',
     region: Region.LONDON,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [],
     disciplines: [],
     skills: [],
@@ -810,7 +812,7 @@ async function seedMentor(
     currentJobTitle: seed.currentJobTitle,
     capacity: seed.capacity,
     region: seed.region,
-    openToRemote: seed.openToRemote,
+    openToInPerson: seed.openToInPerson,
     availability: seed.availability,
     meetingCadence: seed.meetingCadence,
     meetingStructure: seed.meetingStructure,
@@ -826,7 +828,7 @@ async function seedMentor(
     currentJobTitle: seed.currentJobTitle,
     capacity: seed.capacity,
     region: seed.region,
-    openToRemote: seed.openToRemote,
+    openToInPerson: seed.openToInPerson,
     availability: seed.availability,
     meetingCadence: seed.meetingCadence,
     meetingStructure: seed.meetingStructure,
@@ -860,7 +862,7 @@ async function seedMentee(
     currentJobTitle: seed.currentJobTitle ?? null,
     reasonsNote: seed.reasonsNote ?? null,
     region: seed.region ?? null,
-    openToRemote: seed.openToRemote,
+    openToInPerson: seed.openToInPerson,
     availability: seed.availability,
     meetingCadence: seed.meetingCadence ?? null,
     meetingStructure: seed.meetingStructure ?? null,
@@ -871,7 +873,7 @@ async function seedMentee(
     currentJobTitle: seed.currentJobTitle ?? null,
     reasonsNote: seed.reasonsNote ?? null,
     region: seed.region ?? null,
-    openToRemote: seed.openToRemote,
+    openToInPerson: seed.openToInPerson,
     availability: seed.availability,
     meetingCadence: seed.meetingCadence ?? null,
     meetingStructure: seed.meetingStructure ?? null,

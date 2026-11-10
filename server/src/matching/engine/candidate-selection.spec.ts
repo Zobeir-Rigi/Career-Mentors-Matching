@@ -10,7 +10,7 @@ const mentee: MenteeScoringInput = {
   targetedIndustryIds: [],
   availability: [],
   region: null,
-  openToRemote: false,
+  openToInPerson: false,
   meetingStructure: null,
   meetingCadence: null,
 };
@@ -27,7 +27,7 @@ const mentor: MentorCandidate = {
     mentorDomainIndustryIds: [],
     availability: [],
     region: null,
-    openToRemote: false,
+    openToInPerson: false,
     meetingStructure: null,
     meetingCadence: null,
   },

@@ -10,7 +10,7 @@ export interface MenteeScoringInput {
   targetedIndustryIds: string[];
   availability: AvailabilityOption[];
   region: Region | null;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   meetingStructure: MeetingStructure | null;
   meetingCadence: MeetingCadence | null;
 }
@@ -21,7 +21,7 @@ export interface MentorScoringInput {
   mentorDomainIndustryIds: string[];
   availability: AvailabilityOption[];
   region: Region | null;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   meetingStructure: MeetingStructure | null;
   meetingCadence: MeetingCadence | null;
 }
@@ -90,18 +90,22 @@ export function calculateArrayOverlapScore(
 }
 
 /**
- * A location is compatible when the regions match, or when both people are
- * open to a remote mentoring relationship.
+ * Awards location points only when both people opt in to in-person meetings
+ * and share a known region. Remote mentoring remains available to everyone.
  */
 export function calculateLocationScore(
   menteeRegion: Region | null | undefined,
   mentorRegion: Region | null | undefined,
-  menteeOpenToRemote: boolean,
-  mentorOpenToRemote: boolean,
+  menteeOpenToInPerson: boolean,
+  mentorOpenToInPerson: boolean,
 ): number {
-  if (menteeRegion && mentorRegion && menteeRegion === mentorRegion) return 1;
-  if (menteeOpenToRemote && mentorOpenToRemote) return 1;
-  return 0;
+  return menteeOpenToInPerson &&
+    mentorOpenToInPerson &&
+    menteeRegion &&
+    mentorRegion &&
+    menteeRegion === mentorRegion
+    ? 1
+    : 0;
 }
 
 export function calculateMeetingStructureScore(
@@ -149,8 +153,8 @@ export function computeAllCategoryScores(
     location: calculateLocationScore(
       menteeProfile.region,
       mentorProfile.region,
-      menteeProfile.openToRemote,
-      mentorProfile.openToRemote,
+      menteeProfile.openToInPerson,
+      mentorProfile.openToInPerson,
     ),
     meetingStructure: calculateMeetingStructureScore(
       menteeProfile.meetingStructure,

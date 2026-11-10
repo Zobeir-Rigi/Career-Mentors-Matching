@@ -24,7 +24,7 @@ export class MentorProfileResponseDto {
   region!: Region | null;
 
   @ApiProperty({ example: true })
-  openToRemote!: boolean;
+  openToInPerson!: boolean;
 
   @ApiProperty({ enum: AvailabilityOption, isArray: true })
   availability!: AvailabilityOption[];

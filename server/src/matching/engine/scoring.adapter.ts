@@ -6,7 +6,7 @@ export interface MenteeAdapterInput {
   targetedIndustries: { industryId: string }[];
   availability: MenteeScoringInput['availability'];
   region: MenteeScoringInput['region'];
-  openToRemote: boolean;
+  openToInPerson: boolean;
   meetingStructure: MenteeScoringInput['meetingStructure'];
   meetingCadence: MenteeScoringInput['meetingCadence'];
 }
@@ -17,7 +17,7 @@ export interface MentorAdapterInput {
   mentorDomainIndustries: { industryId: string }[];
   availability: MentorScoringInput['availability'];
   region: MentorScoringInput['region'];
-  openToRemote: boolean;
+  openToInPerson: boolean;
   meetingStructure: MentorScoringInput['meetingStructure'];
   meetingCadence: MentorScoringInput['meetingCadence'];
 }
@@ -35,7 +35,7 @@ export function toMenteeScoringInput(
     ),
     availability: profile.availability,
     region: profile.region,
-    openToRemote: profile.openToRemote,
+    openToInPerson: profile.openToInPerson,
     meetingStructure: profile.meetingStructure,
     meetingCadence: profile.meetingCadence,
   };
@@ -54,7 +54,7 @@ export function toMentorScoringInput(
     ),
     availability: profile.availability,
     region: profile.region,
-    openToRemote: profile.openToRemote,
+    openToInPerson: profile.openToInPerson,
     meetingStructure: profile.meetingStructure,
     meetingCadence: profile.meetingCadence,
   };

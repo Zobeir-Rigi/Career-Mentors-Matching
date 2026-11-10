@@ -19,7 +19,7 @@ export interface MentorProfileWithRelations {
   currentJobTitle: string | null;
   capacity: number;
   region: Region | null;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   availability: AvailabilityOption[];
   meetingCadence: MeetingCadence | null;
   meetingStructure: MeetingStructure | null;

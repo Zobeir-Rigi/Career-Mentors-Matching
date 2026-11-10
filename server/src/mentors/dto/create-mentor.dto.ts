@@ -37,7 +37,7 @@ export class CreateMentorDto {
 
   @ApiProperty({ example: true })
   @IsBoolean()
-  openToRemote!: boolean;
+  openToInPerson!: boolean;
 
   @ApiProperty({
     enum: AvailabilityOption,

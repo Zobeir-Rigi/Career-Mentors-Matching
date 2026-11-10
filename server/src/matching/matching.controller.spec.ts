@@ -43,7 +43,7 @@ describe('MatchingController', () => {
         fullName: 'Jane Smith',
         currentJobTitle: 'Senior Software Engineer',
         region: Region.LONDON,
-        openToRemote: true,
+        openToInPerson: true,
         bio: 'Experienced software engineer',
         linkedinURL: 'https://linkedin.com/in/janesmith',
       },

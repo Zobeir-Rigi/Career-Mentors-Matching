@@ -92,15 +92,9 @@ describe('Scoring Engine', () => {
   });
 
   describe('calculateLocationScore', () => {
-    it('matches the same region regardless of remote settings', () => {
+    it('awards location points when both opt in and share a region', () => {
       expect(
-        calculateLocationScore(Region.LONDON, Region.LONDON, false, false),
-      ).toBe(1);
-    });
-
-    it('matches different regions when both are open to remote', () => {
-      expect(
-        calculateLocationScore(Region.LONDON, Region.CAPE_TOWN, true, true),
+        calculateLocationScore(Region.LONDON, Region.LONDON, true, true),
       ).toBe(1);
     });
 
@@ -109,22 +103,37 @@ describe('Scoring Engine', () => {
       [false, true],
       [false, false],
     ])(
-      'rejects different regions when remote compatibility is %p/%p',
-      (menteeRemote, mentorRemote) => {
+      'requires both people to opt in (%p/%p)',
+      (menteeInPerson, mentorInPerson) => {
         expect(
           calculateLocationScore(
             Region.LONDON,
-            Region.CAPE_TOWN,
-            menteeRemote,
-            mentorRemote,
+            Region.LONDON,
+            menteeInPerson,
+            mentorInPerson,
           ),
         ).toBe(0);
       },
     );
 
-    it('allows remote compatibility even if region data is absent', () => {
-      expect(calculateLocationScore(null, undefined, true, true)).toBe(1);
+    it('awards no location points across different regions even when both opt in', () => {
+      expect(
+        calculateLocationScore(Region.LONDON, Region.CAPE_TOWN, true, true),
+      ).toBe(0);
     });
+
+    it.each([
+      [null, Region.LONDON],
+      [Region.LONDON, undefined],
+      [null, undefined],
+    ])(
+      'requires both regions to be known (%p/%p)',
+      (menteeRegion, mentorRegion) => {
+        expect(
+          calculateLocationScore(menteeRegion, mentorRegion, true, true),
+        ).toBe(0);
+      },
+    );
   });
 
   describe('meeting preference scores', () => {
@@ -226,7 +235,7 @@ describe('Scoring Engine', () => {
         AvailabilityOption.WEEKEND_MORNING,
       ],
       region: Region.LONDON,
-      openToRemote: false,
+      openToInPerson: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     };
@@ -237,7 +246,7 @@ describe('Scoring Engine', () => {
       mentorDomainIndustryIds: ['ind-99'],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.CAPE_TOWN,
-      openToRemote: true,
+      openToInPerson: true,
       meetingStructure: MeetingStructure.STRUCTURED,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     };

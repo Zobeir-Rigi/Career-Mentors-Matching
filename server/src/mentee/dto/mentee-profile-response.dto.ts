@@ -19,7 +19,7 @@ export class MenteeProfileResponseDto {
   scheduleURL?: string;
 
   @ApiPropertyOptional()
-  openToRemote?: boolean;
+  openToInPerson?: boolean;
 
   @ApiPropertyOptional({
     example: 'MONTHLY',

@@ -74,7 +74,7 @@ export class MatchingRequestService {
   private buildMenteeSnapshot(mentee: MenteeWithRelations) {
     return {
       region: mentee.region,
-      openToRemote: mentee.openToRemote,
+      openToInPerson: mentee.openToInPerson,
       availability: mentee.availability,
       meetingCadence: mentee.meetingCadence,
       meetingStructure: mentee.meetingStructure,
@@ -92,7 +92,7 @@ export class MatchingRequestService {
       fullName: mentor.user.fullName,
       currentJobTitle: mentor.currentJobTitle,
       region: mentor.region,
-      openToRemote: mentor.openToRemote,
+      openToInPerson: mentor.openToInPerson,
       availability: mentor.availability,
       meetingCadence: mentor.meetingCadence,
       meetingStructure: mentor.meetingStructure,

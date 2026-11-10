@@ -121,7 +121,7 @@ model MenteeProfile {
   currentJobTitle  String?
   reasonsNote      String?
   region           Region?
-  openToRemote     Boolean              @default(false)
+  openToInPerson     Boolean              @default(false)
   availability     AvailabilityOption[] @map("Availability")
   meetingCadence   MeetingCadence?
   meetingStructure MeetingStructure?
@@ -144,7 +144,7 @@ model MentorProfile {
   currentJobTitle    String?
   capacity           Int                  @default(1)
   region             Region?
-  openToRemote       Boolean              @default(false)
+  openToInPerson       Boolean              @default(false)
   availability       AvailabilityOption[] @map("Availability")
   meetingCadence     MeetingCadence?
   meetingStructure   MeetingStructure?

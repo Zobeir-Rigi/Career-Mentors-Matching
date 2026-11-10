@@ -44,7 +44,7 @@ export class UpdateMenteeProfileDto {
   })
   @IsOptional()
   @IsBoolean()
-  openToRemote?: boolean;
+  openToInPerson?: boolean;
 
   @ApiPropertyOptional({
     example: 'https://linkedin.com/in/johndoe',

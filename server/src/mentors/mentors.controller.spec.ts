@@ -39,7 +39,7 @@ describe('MentorsController', () => {
     currentJobTitle: 'Senior Backend Engineer',
     capacity: 3,
     region: Region.CAPE_TOWN,
-    openToRemote: true,
+    openToInPerson: true,
     availability: [
       AvailabilityOption.WEEKDAY_AFTERNOON,
       AvailabilityOption.WEEKEND_EVENING,

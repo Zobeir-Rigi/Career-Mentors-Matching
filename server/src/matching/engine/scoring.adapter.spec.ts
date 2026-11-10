@@ -14,7 +14,7 @@ describe('toMenteeScoringInput', () => {
       targetedIndustries: [{ industryId: 'industry-1' }],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.LONDON,
-      openToRemote: false,
+      openToInPerson: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     });
@@ -25,7 +25,7 @@ describe('toMenteeScoringInput', () => {
       targetedIndustryIds: ['industry-1'],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.LONDON,
-      openToRemote: false,
+      openToInPerson: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     });
@@ -43,7 +43,7 @@ describe('toMentorScoringInput', () => {
       mentorDomainIndustries: [{ industryId: 'industry-1' }],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.LONDON,
-      openToRemote: false,
+      openToInPerson: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     });
@@ -54,7 +54,7 @@ describe('toMentorScoringInput', () => {
       mentorDomainIndustryIds: ['industry-1'],
       availability: [AvailabilityOption.WEEKDAY_EVENING],
       region: Region.LONDON,
-      openToRemote: false,
+      openToInPerson: false,
       meetingStructure: MeetingStructure.OPEN,
       meetingCadence: MeetingCadence.FORTNIGHTLY,
     });
