@@ -49,7 +49,7 @@ export const DEFAULT_WEIGHTS: readonly ActiveRule[] = [
   { categoryKey: 'meetingCadence', weight: 5 },
 ];
 
-export const DEFAULT_THRESHOLD = 60;
+export const DEFAULT_THRESHOLD = 70;
 
 type MenteeMatchRecord = { mentorId: string; status: MatchStatus };
 

@@ -56,7 +56,7 @@ const prisma = new PrismaClient({
 
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD ?? 'Demo123!';
 const DEMO_MATCHING_CONFIG_ID = '00000000-0000-4000-8000-000000000101';
-const DEMO_THRESHOLD = 60;
+const DEMO_THRESHOLD = 70;
 
 type ScoringCategoryKey =
   | 'disciplines'

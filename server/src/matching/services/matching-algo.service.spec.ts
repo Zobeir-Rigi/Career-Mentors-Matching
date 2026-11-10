@@ -129,7 +129,7 @@ function makeMentor(
 const standardConfig = {
   id: 'config-1',
   isActive: true,
-  minScoreThreshold: 60,
+  minScoreThreshold: 70,
   weights: DEFAULT_WEIGHTS.map((rule) => ({ ...rule })),
   createdAt: new Date(),
   updatedBy: 'admin-1',
