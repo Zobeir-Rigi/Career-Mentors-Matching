@@ -53,8 +53,8 @@ export function MenteeProfile() {
     setScheduleURL,
     region,
     setRegion,
-    openToRemote,
-    setOpenToRemote,
+    openToInPerson,
+    setOpenToInPerson,
     selectedAvailability,
     setAvailability,
     toggleAvailability,
@@ -82,7 +82,7 @@ export function MenteeProfile() {
         setLinkedinURL(data.linkedinURL ?? "");
         setScheduleURL(data.scheduleURL ?? "");
         setRegion(data.region ?? "");
-        setOpenToRemote(data.openToRemote ?? false);
+        setOpenToInPerson(data.openToInPerson ?? false);
         setMeetingCadence(data.meetingCadence ?? "");
         setMeetingStructure(data.meetingStructure ?? "");
 
@@ -112,7 +112,7 @@ export function MenteeProfile() {
     setLinkedinURL,
     setScheduleURL,
     setRegion,
-    setOpenToRemote,
+    setOpenToInPerson,
     setMeetingCadence,
     setMeetingStructure,
     setAvailability,
@@ -128,7 +128,7 @@ export function MenteeProfile() {
     linkedinURL,
     scheduleURL,
     region,
-    openToRemote,
+    openToInPerson,
     meetingCadence,
     meetingStructure,
     availability: [...selectedAvailability],
@@ -153,7 +153,7 @@ export function MenteeProfile() {
         linkedinURL,
         scheduleURL,
         region,
-        openToRemote,
+        openToInPerson,
         availability: Array.from(selectedAvailability),
         disciplineGoals: Array.from(selectedDisciplines),
         wantedSkills: Array.from(selectedSkills),
@@ -270,16 +270,22 @@ export function MenteeProfile() {
 
               <div className="flex items-center gap-2 md:pt-6">
                 <Switch
-                  id="open-to-remote"
-                  checked={openToRemote}
-                  onCheckedChange={setOpenToRemote}
+                  id="open-to-in-person"
+                  aria-describedby="in-person-help"
+                  checked={openToInPerson}
+                  onCheckedChange={setOpenToInPerson}
                 />
-                <label
-                  htmlFor="open-to-remote"
-                  className="text-sm font-semibold"
-                >
-                  Open to remote mentoring
-                </label>
+                <div>
+                  <label
+                    htmlFor="open-to-in-person"
+                    className="text-sm font-semibold"
+                  >
+                    Open to optional in-person meetings
+                  </label>
+                  <p id="in-person-help" className="text-sm text-muted">
+                    Mentorship is remote by default.
+                  </p>
+                </div>
               </div>
             </div>
           </Card>

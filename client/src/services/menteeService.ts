@@ -4,7 +4,7 @@ export interface MenteeProfilePayload {
   currentJobTitle?: string;
   reasonsNote?: string;
   bio?: string;
-  openToRemote?: boolean;
+  openToInPerson?: boolean;
   region?: string;
   meetingCadence?: string;
   meetingStructure?: string;
@@ -21,7 +21,7 @@ export interface MenteeProfileResponse {
   reasonsNote?: string;
   bio?: string;
 
-  openToRemote: boolean;
+  openToInPerson: boolean;
   region?: string;
 
   meetingCadence?: string;

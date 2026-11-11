@@ -18,8 +18,8 @@ interface BaseProfileContext {
   region: string;
   setRegion: (val: string) => void;
 
-  openToRemote: boolean;
-  setOpenToRemote: (val: boolean) => void;
+  openToInPerson: boolean;
+  setOpenToInPerson: (val: boolean) => void;
 
   // Multi-select collections
   selectedAvailability: Set<string>;

@@ -4,7 +4,7 @@ export interface MentorProfilePayload {
   currentJobTitle: string;
   bio: string;
   capacity: number;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   region: string;
   meetingCadence: string;
   meetingStructure: string;
@@ -22,7 +22,7 @@ export interface MentorProfileResponse {
   currentJobTitle: string;
   bio: string;
   capacity: number;
-  openToRemote: boolean;
+  openToInPerson: boolean;
   region: string;
   meetingCadence: string;
   meetingStructure: string;

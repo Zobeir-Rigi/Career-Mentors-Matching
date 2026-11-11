@@ -17,7 +17,7 @@ export interface MentorRecommendation {
     fullName: string;
     currentJobTitle: string | null;
     region: string | null;
-    openToRemote: boolean;
+    openToInPerson: boolean;
     bio: string | null;
     linkedinURL: string | null;
   };

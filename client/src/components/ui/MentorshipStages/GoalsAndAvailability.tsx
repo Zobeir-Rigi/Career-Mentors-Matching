@@ -138,8 +138,8 @@ export function GoalsAndAvailability({
               <span>{recommendation.profile.region.replaceAll("_", " ")}</span>
             )}
 
-            {recommendation.profile.openToRemote && (
-              <span>Open to remote mentoring</span>
+            {recommendation.profile.openToInPerson && (
+              <span>Open to optional in-person meetings</span>
             )}
           </div>
 

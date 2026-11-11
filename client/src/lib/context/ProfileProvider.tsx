@@ -20,7 +20,7 @@ export function ProfileProvider({ role, children }: ProfileProviderProps) {
   const [linkedinURL, setLinkedinURL] = useState("");
   const [scheduleURL, setScheduleURL] = useState("");
   const [region, setRegion] = useState("");
-  const [openToRemote, setOpenToRemote] = useState(false);
+  const [openToInPerson, setOpenToInPerson] = useState(false);
 
   // Multi-select sets
   const [selectedAvailability, toggleAvailability, setAvailability] =
@@ -56,8 +56,8 @@ export function ProfileProvider({ role, children }: ProfileProviderProps) {
     setScheduleURL,
     region,
     setRegion,
-    openToRemote,
-    setOpenToRemote,
+    openToInPerson,
+    setOpenToInPerson,
     selectedAvailability,
     toggleAvailability,
     setAvailability,
