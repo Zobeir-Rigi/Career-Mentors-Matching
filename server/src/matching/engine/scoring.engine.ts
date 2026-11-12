@@ -59,10 +59,10 @@ export function isScoringCategoryKey(
  * Each additional actual overlap improves the score with diminishing returns:
  *
  * 0 overlaps = 0
- * 1 overlap  = 0.5
- * 2 overlaps = 0.75
- * 3 overlaps = 0.875
- * 4 overlaps = 0.9375
+ * 1 overlap  = 0.75
+ * 2 overlaps = 0.9375
+ * 3 overlaps = 0.984375
+ * 4 overlaps = 0.99609375
  */
 export function calculateArrayOverlapScore(
   menteeItems: readonly string[] | undefined | null,
