@@ -23,6 +23,19 @@ describe('MentorEngagementService', () => {
     sendChemistryAcceptedEmail: jest.fn(),
   };
 
+  const pendingProposal = {
+    id: 'engagement-id',
+    status: MatchStatus.CHEMISTRY_PENDING,
+    menteeAcceptedAt: new Date('2026-08-19T12:00:00.000Z'),
+    chemistryMentorConfirmedAt: null,
+    menteeProfile: {
+      user: { email: 'casey@example.com', fullName: 'Casey Morgan' },
+    },
+    mentorProfile: {
+      user: { fullName: 'Amina Patel' },
+    },
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -40,7 +53,8 @@ describe('MentorEngagementService', () => {
 
     service = module.get<MentorEngagementService>(MentorEngagementService);
 
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+    mailServiceMock.sendChemistryAcceptedEmail.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -218,13 +232,15 @@ describe('MentorEngagementService', () => {
     };
 
     prismaMock.matches.findFirst.mockResolvedValue(engagement);
-    prismaMock.matches.update.mockResolvedValue(confirmedEngagement);
+    prismaMock.matches.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.matches.findUniqueOrThrow.mockResolvedValue(confirmedEngagement);
 
     const result = await service.confirm('mentor-user-id', 'engagement-id');
 
-    expect(prismaMock.matches.update).toHaveBeenCalledWith({
+    expect(prismaMock.matches.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'engagement-id',
+        status: MatchStatus.CHEMISTRY_PENDING,
       },
       data: {
         status: MatchStatus.CHEMISTRY_CONFIRMED,
@@ -236,6 +252,8 @@ describe('MentorEngagementService', () => {
 
     expect(result).toEqual(confirmedEngagement);
 
+    expect(prismaMock.matches.update).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendChemistryAcceptedEmail).toHaveBeenCalledTimes(1);
     expect(mailServiceMock.sendChemistryAcceptedEmail).toHaveBeenCalledWith({
       email: 'casey@example.com',
       menteeFullName: 'Casey Morgan',
@@ -278,7 +296,8 @@ describe('MentorEngagementService', () => {
     };
 
     prismaMock.matches.findFirst.mockResolvedValue(engagement);
-    prismaMock.matches.update.mockResolvedValue(confirmedEngagement);
+    prismaMock.matches.updateMany.mockResolvedValue({ count: 1 });
+    prismaMock.matches.findUniqueOrThrow.mockResolvedValue(confirmedEngagement);
 
     mailServiceMock.sendChemistryAcceptedEmail.mockRejectedValue(
       new Error('SES unavailable'),
@@ -288,9 +307,10 @@ describe('MentorEngagementService', () => {
 
     expect(result).toEqual(confirmedEngagement);
 
-    expect(prismaMock.matches.update).toHaveBeenCalledWith({
+    expect(prismaMock.matches.updateMany).toHaveBeenCalledWith({
       where: {
         id: 'engagement-id',
+        status: MatchStatus.CHEMISTRY_PENDING,
       },
       data: {
         status: MatchStatus.CHEMISTRY_CONFIRMED,
@@ -299,6 +319,70 @@ describe('MentorEngagementService', () => {
         proposalExpiresAt: null,
       },
     });
+  });
+
+  it('does not accept or email when expiry changed the proposal after it was read', async () => {
+    prismaMock.matches.findFirst.mockResolvedValue(pendingProposal);
+    prismaMock.matches.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      service.confirm('mentor-user-id', 'engagement-id'),
+    ).rejects.toThrow('This chemistry proposal is no longer pending.');
+
+    expect(prismaMock.matches.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 'engagement-id',
+          status: MatchStatus.CHEMISTRY_PENDING,
+        },
+      }),
+    );
+    expect(prismaMock.matches.update).not.toHaveBeenCalled();
+    expect(prismaMock.matches.findUniqueOrThrow).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendChemistryAcceptedEmail).not.toHaveBeenCalled();
+  });
+
+  it('sends only one acceptance email when two requests read the same pending proposal', async () => {
+    const confirmedProposal = {
+      ...pendingProposal,
+      status: MatchStatus.CHEMISTRY_CONFIRMED,
+      chemistryMentorConfirmedAt: new Date(),
+    };
+
+    prismaMock.matches.findFirst.mockResolvedValue(pendingProposal);
+    prismaMock.matches.updateMany
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
+    prismaMock.matches.findUniqueOrThrow.mockResolvedValue(confirmedProposal);
+
+    const results = await Promise.allSettled([
+      service.confirm('mentor-user-id', 'engagement-id'),
+      service.confirm('mentor-user-id', 'engagement-id'),
+    ]);
+
+    expect(results[0]).toEqual({
+      status: 'fulfilled',
+      value: confirmedProposal,
+    });
+    expect(results[1].status).toBe('rejected');
+    expect(results[1]).toHaveProperty('reason', expect.any(ConflictException));
+    expect(prismaMock.matches.updateMany).toHaveBeenCalledTimes(2);
+    expect(prismaMock.matches.update).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendChemistryAcceptedEmail).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects an already expired proposal without attempting acceptance', async () => {
+    prismaMock.matches.findFirst.mockResolvedValue({
+      ...pendingProposal,
+      status: MatchStatus.DECLINED,
+    });
+
+    await expect(
+      service.confirm('mentor-user-id', 'engagement-id'),
+    ).rejects.toThrow('A declined engagement cannot be confirmed');
+
+    expect(prismaMock.matches.updateMany).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendChemistryAcceptedEmail).not.toHaveBeenCalled();
   });
 
   it('is idempotent when mentor has already confirmed', async () => {
@@ -317,6 +401,8 @@ describe('MentorEngagementService', () => {
 
     expect(result).toEqual(engagement);
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
+    expect(prismaMock.matches.updateMany).not.toHaveBeenCalled();
+    expect(mailServiceMock.sendChemistryAcceptedEmail).not.toHaveBeenCalled();
   });
 
   it('rejects confirmation before mentee acceptance', async () => {

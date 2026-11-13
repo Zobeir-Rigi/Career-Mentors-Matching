@@ -106,11 +106,25 @@ export class MatchingLifecycleService {
       },
       select: {
         id: true,
+        menteeProfile: {
+          select: {
+            user: {
+              select: { email: true, fullName: true },
+            },
+          },
+        },
+        mentorProfile: {
+          select: {
+            user: {
+              select: { email: true, fullName: true },
+            },
+          },
+        },
       },
     });
 
     for (const match of expiredMatches) {
-      await this.prisma.matches.updateMany({
+      const transition = await this.prisma.matches.updateMany({
         where: {
           id: match.id,
           status: MatchStatus.CHEMISTRY_PENDING,
@@ -124,6 +138,9 @@ export class MatchingLifecycleService {
           proposalExpiresAt: null,
         },
       });
+      if (transition.count === 0) continue;
+
+      await this.sendChemistryProposalExpiredEmail(match);
     }
   }
 
@@ -184,6 +201,33 @@ export class MatchingLifecycleService {
       if (transition.count === 0) continue;
 
       await this.sendMatchExpiredEmail(match);
+    }
+  }
+
+  private async sendChemistryProposalExpiredEmail(match: {
+    id: string;
+    menteeProfile: { user: { email: string; fullName: string } };
+    mentorProfile: { user: { email: string; fullName: string } };
+  }): Promise<void> {
+    const recipients = [
+      [match.menteeProfile.user, match.mentorProfile.user, 'mentee'],
+      [match.mentorProfile.user, match.menteeProfile.user, 'mentor'],
+    ] as const;
+
+    for (const [recipient, counterpart, recipientRole] of recipients) {
+      try {
+        await this.mailService.sendChemistryProposalExpiredEmail({
+          email: recipient.email,
+          recipientFullName: recipient.fullName,
+          counterpartFullName: counterpart.fullName,
+          recipientRole,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Chemistry proposal expiry email could not be sent for match ${match.id} to ${recipientRole}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
     }
   }
 

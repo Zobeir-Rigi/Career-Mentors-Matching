@@ -352,6 +352,79 @@ describe('MailService', () => {
     expect(sesSendMock).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['mentor', 'mentee'] as const)(
+    'sends a proposal expiry email with the correct %s dashboard',
+    async (recipientRole) => {
+      sesSendMock.mockResolvedValue({ MessageId: 'expiry-email-id' });
+
+      await service.sendChemistryProposalExpiredEmail({
+        email: 'casey@example.com',
+        recipientFullName: 'Casey Morgan',
+        counterpartFullName: 'Amina Patel',
+        recipientRole,
+      });
+
+      expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+      expect(sesSendMock).toHaveBeenCalledTimes(1);
+
+      const commandInput = (
+        SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+      ).mock.calls[0][0];
+
+      expect(commandInput.Source).toBe(
+        'CYF Mentorship <mentorship@cyf.academy>',
+      );
+      expect(commandInput.Destination?.ToAddresses).toEqual([
+        'casey@example.com',
+      ]);
+      expect(commandInput.Message?.Subject?.Data).toBe(
+        'Your CYF chemistry proposal has expired',
+      );
+
+      const html = commandInput.Message?.Body?.Html?.Data;
+
+      expect(html).toContain('Hi Casey Morgan,');
+      expect(html).toContain('proposal with Amina Patel');
+      expect(html).toContain(
+        `http://localhost:5173/${recipientRole}/dashboard`,
+      );
+
+      const expectedNextStep =
+        recipientRole === 'mentee'
+          ? 'You can request another mentor match'
+          : 'The mentoring place reserved for this proposal';
+
+      expect(html).toContain(expectedNextStep);
+    },
+  );
+
+  it('does not send a proposal expiry email through SES in console mode', async () => {
+    const consoleService = await createMailService('console');
+
+    await consoleService.sendChemistryProposalExpiredEmail({
+      email: 'casey@example.com',
+      recipientFullName: 'Casey Morgan',
+      counterpartFullName: 'Amina Patel',
+      recipientRole: 'mentee',
+    });
+
+    expect(SendEmailCommand).not.toHaveBeenCalled();
+    expect(sesSendMock).not.toHaveBeenCalled();
+  });
+
+  it('reports a proposal expiry email delivery failure', async () => {
+    sesSendMock.mockRejectedValue(new Error('SES unavailable'));
+
+    await expect(
+      service.sendChemistryProposalExpiredEmail({
+        email: 'casey@example.com',
+        recipientFullName: 'Casey Morgan',
+        counterpartFullName: 'Amina Patel',
+        recipientRole: 'mentee',
+      }),
+    ).rejects.toThrow('Unable to send chemistry proposal expiry email');
+  });
+
   it('should send a mentorship check-in email', async () => {
     sesSendMock.mockResolvedValue({
       MessageId: 'check-in-email-id',

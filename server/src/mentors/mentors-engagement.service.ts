@@ -177,15 +177,28 @@ export class MentorEngagementService {
 
     const scheduledCheckIn = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const confirmedEngagement = await this.prisma.matches.update({
+    const transition = await this.prisma.matches.updateMany({
       where: {
         id: engagement.id,
+        status: MatchStatus.CHEMISTRY_PENDING,
       },
       data: {
         status: MatchStatus.CHEMISTRY_CONFIRMED,
         chemistryMentorConfirmedAt: now,
         scheduledCheckIn,
         proposalExpiresAt: null,
+      },
+    });
+
+    if (transition.count === 0) {
+      throw new ConflictException(
+        'This chemistry proposal is no longer pending.',
+      );
+    }
+
+    const confirmedEngagement = await this.prisma.matches.findUniqueOrThrow({
+      where: {
+        id: engagement.id,
       },
     });
 

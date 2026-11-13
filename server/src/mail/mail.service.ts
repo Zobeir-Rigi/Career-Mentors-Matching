@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { ApprovalStatus } from '@/generated/prisma/enums';
+import { buildChemistryProposalExpiredEmail } from './templates/chemistry-proposal-expired-email';
 
 interface SendAuthEmailParams {
   email: string;
@@ -35,6 +36,13 @@ interface SendChemistryAcceptedEmailParams {
   email: string;
   menteeFullName: string;
   mentorFullName: string;
+}
+
+interface SendChemistryProposalExpiredEmailParams {
+  email: string;
+  recipientFullName: string;
+  counterpartFullName: string;
+  recipientRole: 'mentor' | 'mentee';
 }
 
 interface SendMentorshipCheckInEmailParams {
@@ -479,6 +487,56 @@ export class MailService {
 
       throw new InternalServerErrorException(
         'Unable to send chemistry accepted email',
+      );
+    }
+  }
+
+  async sendChemistryProposalExpiredEmail({
+    email,
+    recipientFullName,
+    counterpartFullName,
+    recipientRole,
+  }: SendChemistryProposalExpiredEmailParams): Promise<void> {
+    const dashboardPath =
+      recipientRole === 'mentor' ? '/mentor/dashboard' : '/mentee/dashboard';
+
+    const dashboardUrl = new URL(dashboardPath, this.frontendUrl).toString();
+
+    const { subject, html } = buildChemistryProposalExpiredEmail({
+      recipientFullName,
+      counterpartFullName,
+      recipientRole,
+      dashboardUrl,
+    });
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(
+        `Chemistry proposal expiry email for ${email}: ${dashboardUrl}`,
+      );
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: { ToAddresses: [email] },
+      Message: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: {
+          Html: { Data: html, Charset: 'UTF-8' },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error(
+        'Failed to send chemistry proposal expiry email: ',
+        error,
+      );
+
+      throw new InternalServerErrorException(
+        'Unable to send chemistry proposal expiry email',
       );
     }
   }
