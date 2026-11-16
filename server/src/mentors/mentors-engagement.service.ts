@@ -41,6 +41,7 @@ export class MentorEngagementService {
           include: {
             user: {
               select: {
+                email: true,
                 fullName: true,
               },
             },
@@ -103,9 +104,9 @@ export class MentorEngagementService {
 
     const now = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       if (!agreed) {
-        return tx.matches.update({
+        const updatedEngagement = await tx.matches.update({
           where: {
             id: engagement.id,
           },
@@ -116,6 +117,11 @@ export class MentorEngagementService {
             checkInExpiresAt: null,
           },
         });
+
+        return {
+          updatedEngagement,
+          becameActive: false,
+        };
       }
 
       await tx.matches.update({
@@ -127,7 +133,7 @@ export class MentorEngagementService {
         },
       });
 
-      await tx.matches.updateMany({
+      const activation = await tx.matches.updateMany({
         where: {
           id: engagement.id,
           status: MatchStatus.MATCH_PENDING,
@@ -140,12 +146,33 @@ export class MentorEngagementService {
         },
       });
 
-      return tx.matches.findUniqueOrThrow({
+      const updatedEngagement = await tx.matches.findUniqueOrThrow({
         where: {
           id: engagement.id,
         },
       });
+
+      return {
+        updatedEngagement,
+        becameActive: activation.count === 1,
+      };
     });
+
+    // Notify both participants after this request commits the activation.
+    if (result.becameActive) {
+      await this.mailService.notifyMentorshipStarted({
+        mentor: {
+          email: engagement.mentorProfile.user.email,
+          fullName: engagement.mentorProfile.user.fullName,
+        },
+        mentee: {
+          email: engagement.menteeProfile.user.email,
+          fullName: engagement.menteeProfile.user.fullName,
+        },
+      });
+    }
+
+    return result.updatedEngagement;
   }
 
   async confirm(userId: string, engagementId: string) {

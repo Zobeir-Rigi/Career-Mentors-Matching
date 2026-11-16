@@ -1,17 +1,9 @@
+import { escapeHtml } from './escape-html';
 export interface ChemistryProposalExpiredEmailInput {
   recipientFullName: string;
   counterpartFullName: string;
   recipientRole: 'mentor' | 'mentee';
   dashboardUrl: string;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
 
 export function buildChemistryProposalExpiredEmail({

@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { ApprovalStatus } from '@/generated/prisma/enums';
 import { buildChemistryProposalExpiredEmail } from './templates/chemistry-proposal-expired-email';
+import { buildMentorshipStartedEmail } from './templates/mentorship-started-email';
 
 interface SendAuthEmailParams {
   email: string;
@@ -57,6 +58,23 @@ interface SendMatchExpiredEmailParams {
   fullName: string;
   counterpartFullName: string;
   recipientRole: 'mentor' | 'mentee';
+}
+
+interface SendMentorshipStartedEmailParams {
+  email: string;
+  recipientFullName: string;
+  counterpartFullName: string;
+  recipientRole: 'mentor' | 'mentee';
+}
+
+interface MentorshipEmailParticipant {
+  email: string;
+  fullName: string;
+}
+
+interface NotifyMentorshipStartedParams {
+  mentor: MentorshipEmailParticipant;
+  mentee: MentorshipEmailParticipant;
 }
 
 interface sendAdminMentorReadyForReviewEmailParams {
@@ -661,6 +679,85 @@ export class MailService {
       throw new InternalServerErrorException(
         'Unable to send match expired email',
       );
+    }
+  }
+
+  async sendMentorshipStartedEmail({
+    email,
+    recipientFullName,
+    counterpartFullName,
+    recipientRole,
+  }: SendMentorshipStartedEmailParams): Promise<void> {
+    const dashboardPath =
+      recipientRole === 'mentor' ? '/mentor/dashboard' : '/mentee/dashboard';
+
+    const dashboardUrl = new URL(dashboardPath, this.frontendUrl).toString();
+
+    const { subject, html } = buildMentorshipStartedEmail({
+      recipientFullName,
+      counterpartFullName,
+      dashboardUrl,
+    });
+
+    if (this.emailProvider === 'console') {
+      this.logger.log(`Mentorship started email for ${email}: ${dashboardUrl}`);
+      return;
+    }
+
+    const command = new SendEmailCommand({
+      Source: this.emailFrom,
+      Destination: { ToAddresses: [email] },
+      Message: {
+        Subject: { Data: subject, Charset: 'UTF-8' },
+        Body: {
+          Html: { Data: html, Charset: 'UTF-8' },
+        },
+      },
+    });
+
+    try {
+      await this.ses.send(command);
+    } catch (error) {
+      this.logger.error('Failed to send mentorship started email: ', error);
+
+      throw new InternalServerErrorException(
+        'Unable to send mentorship started email',
+      );
+    }
+  }
+
+  // Attempt both deliveries even if one participant's email fails.
+  async notifyMentorshipStarted({
+    mentor,
+    mentee,
+  }: NotifyMentorshipStartedParams): Promise<void> {
+    const recipients = [
+      {
+        recipient: mentor,
+        counterpart: mentee,
+        recipientRole: 'mentor',
+      },
+      {
+        recipient: mentee,
+        counterpart: mentor,
+        recipientRole: 'mentee',
+      },
+    ] as const;
+
+    for (const { recipient, counterpart, recipientRole } of recipients) {
+      try {
+        await this.sendMentorshipStartedEmail({
+          email: recipient.email,
+          recipientFullName: recipient.fullName,
+          counterpartFullName: counterpart.fullName,
+          recipientRole,
+        });
+      } catch (error) {
+        this.logger.error(
+          `Mentorship started email could not be sent to ${recipientRole}`,
+          error instanceof Error ? error.stack : undefined,
+        );
+      }
     }
   }
 

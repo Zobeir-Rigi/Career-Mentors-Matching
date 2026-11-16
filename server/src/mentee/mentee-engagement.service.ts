@@ -6,10 +6,15 @@ import {
 
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchStatus } from '../generated/prisma/enums';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class MenteeEngagementService {
-  constructor(private readonly prisma: PrismaService) {}
+  // Nest supplies MailService for mentorship notifications.
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly mailService: MailService,
+  ) {}
 
   private async findOwnedEngagement(userId: string, engagementId: string) {
     const engagement = await this.prisma.matches.findFirst({
@@ -17,6 +22,29 @@ export class MenteeEngagementService {
         id: engagementId,
         menteeProfile: {
           userId,
+        },
+      },
+      // Load both participants' contact details for mentorship notifications.
+      include: {
+        menteeProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
+        },
+        mentorProfile: {
+          include: {
+            user: {
+              select: {
+                email: true,
+                fullName: true,
+              },
+            },
+          },
         },
       },
     });
@@ -92,9 +120,9 @@ export class MenteeEngagementService {
 
     const now = new Date();
 
-    return this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx) => {
       if (!agreed) {
-        return tx.matches.update({
+        const updatedEngagement = await tx.matches.update({
           where: {
             id: engagement.id,
           },
@@ -105,6 +133,11 @@ export class MenteeEngagementService {
             checkInExpiresAt: null,
           },
         });
+
+        return {
+          updatedEngagement,
+          becameActive: false,
+        };
       }
 
       await tx.matches.update({
@@ -116,7 +149,7 @@ export class MenteeEngagementService {
         },
       });
 
-      await tx.matches.updateMany({
+      const activation = await tx.matches.updateMany({
         where: {
           id: engagement.id,
           status: MatchStatus.MATCH_PENDING,
@@ -129,12 +162,33 @@ export class MenteeEngagementService {
         },
       });
 
-      return tx.matches.findUniqueOrThrow({
+      const updatedEngagement = await tx.matches.findUniqueOrThrow({
         where: {
           id: engagement.id,
         },
       });
+
+      return {
+        updatedEngagement,
+        becameActive: activation.count === 1,
+      };
     });
+
+    // Notify both participants after this request commits the activation.
+    if (result.becameActive) {
+      await this.mailService.notifyMentorshipStarted({
+        mentor: {
+          email: engagement.mentorProfile.user.email,
+          fullName: engagement.mentorProfile.user.fullName,
+        },
+        mentee: {
+          email: engagement.menteeProfile.user.email,
+          fullName: engagement.menteeProfile.user.fullName,
+        },
+      });
+    }
+
+    return result.updatedEngagement;
   }
 
   async decline(userId: string, engagementId: string) {
