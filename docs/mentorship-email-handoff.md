@@ -1,6 +1,6 @@
 # Mentorship email work: handoff to the Mac
 
-Updated: 13 November 2026.
+Updated: 18 November 2026.
 
 ## Start here in a new conversation
 
@@ -8,8 +8,8 @@ Open this repository on `feat/mentorship-email-updates` and ask:
 
 > Read `docs/mentorship-email-handoff.md`, check the current branch and files,
 > and help me continue Task 3. Explain each small step so I can learn. First
-> review the next email template with me; do not implement the remaining work
-> automatically.
+> review the email inventory and Monoco's template conventions with me; do not
+> implement the remaining work automatically.
 
 This note supplies the project context to a new conversation. Do not rely on
 the assistant remembering the previous conversation across computers.
@@ -23,8 +23,10 @@ There are two separate repositories:
 | `Zobeir-Rigi/Career-Mentors-Matching` | Original application; implement and test the requested email additions here first | `feat/mentorship-email-updates`                      |
 | `CodeYourFuture/monoco`               | Production destination in the CYF Portal                                          | `feat/mentor-matching-emails` was created for Task 3 |
 
-This email branch starts from `develop` at `8840752`. The code checkpoint is
-`ec91530` — **Add proposal expiry emails and guard mentor acceptance**.
+This email branch starts from `develop` at `8840752`. Completed checkpoints
+include `ec91530` (proposal expiry emails and guarded mentor acceptance) and
+`7bc236a` (mentorship-started notifications). This checkpoint adds
+**Notify both participants when mentorship ends**; use `git log` for its hash.
 
 The earlier scoring decoupling, threshold 70 and `openToInPerson` changes are
 on a separate original-repository branch, ending at `9fe8261`:
@@ -153,6 +155,28 @@ terminal. Avoid running Monoco and this frontend on port 5173 simultaneously.
    the affected-row count. If expiry has already changed the status, acceptance
    cannot overwrite it or send an acceptance email. Tests also cover overlapping
    acceptance attempts and already expired/confirmed proposals.
+5. Added `mentorship-started-email.ts`, its template tests, and MailService's
+   `sendMentorshipStartedEmail` and `notifyMentorshipStarted` methods. Both
+   engagement services notify both participants only after the activation
+   transaction commits and its guarded update reports `count: 1`.
+6. Added `mentorship-ended-email.ts`, its template tests, and MailService's
+   `sendMentorshipEndedEmail` and `notifyMentorshipEnded` methods. Both `end`
+   methods conditionally update only an `ACTIVE` match to `COMPLETED`, then
+   notify both participants only when that request reports `count: 1`.
+   Tests cover both delivery roles, console mode, failed deliveries, repeated
+   and overlapping requests, invalid statuses, ownership and database errors.
+
+The started and ended templates take `recipientFullName`,
+`counterpartFullName` and `dashboardUrl`, and return `{ subject, html }`.
+They share `escape-html.ts` with the proposal-expiry template. Notification
+helpers catch each recipient's delivery failure separately, so both deliveries
+are attempted. The existing MailModule wiring supports both engagement services.
+
+Latest assistant-run checks: six mail/template/engagement suites passed
+**93 tests**; backend typecheck, scoped ESLint and formatting checks passed.
+Before requesting this checkpoint, the user reported that the tests passed
+after being given the full backend verification commands. No new full-suite
+test count was supplied.
 
 The conditional database update is the key protection: checking the status in
 an earlier read alone leaves time for another request to change it before the
@@ -161,7 +185,7 @@ they are not live concurrent-database tests.
 
 Email failures are logged. This work does not add a durable retry queue: a
 failed delivery after the status changes is not automatically retried by the
-expiry job.
+expiry job or by repeated start/end requests.
 
 ## Agreed lifecycle and email behaviour
 
@@ -177,8 +201,8 @@ as a past match.
 | Mentor has not responded within seven days                | New expiry emails to both participants; completed                   |
 | Scheduled check-in becomes due (`MATCH_PENDING`)          | Existing check-in emails to both                                    |
 | Check-in response window expires                          | Existing match-expiry emails to both; separate from proposal expiry |
-| Both agree to continue (`ACTIVE`)                         | New mentorship-started emails to both still needed                  |
-| Either person ends an active mentorship (`COMPLETED`)     | New mentorship-ended emails to both still needed                    |
+| Both agree to continue (`ACTIVE`)                         | New mentorship-started emails to both; completed                    |
+| Either person ends an active mentorship (`COMPLETED`)     | New mentorship-ended emails to both; completed                      |
 
 The application also has existing verification, password-reset, mentor-profile
 receipt, mentor approval-decision, admin mentor-review and admin waiting-list
@@ -187,20 +211,17 @@ already owns; confirm which templates belong in the migration.
 
 ## Next small steps
 
-1. Agree the wording and inputs for `mentorship-started-email.ts`, following the
-   expiry template pattern. Start with its pure builder and tests.
-2. Add its MailService delivery method and tests.
-3. Inspect `respondToCheckIn` in **both**
-   `server/src/mentee/mentee-engagement.service.ts` and
-   `server/src/mentors/mentors-engagement.service.ts`. Notify both people only
-   after a successful transition to `ACTIVE` has committed. Handle either person
-   being the second to agree, repeated requests and overlapping requests; do not
-   send from inside a transaction that might roll back.
-4. Repeat the template/delivery steps for `mentorship-ended-email.ts`. Inspect
-   `end` in both engagement services. Send only for the successful transition
-   from `ACTIVE` to `COMPLETED`, with repeat/concurrency coverage.
-5. Run focused tests, typecheck, lint and the full backend suite. Make another
-   small checkpoint before moving the templates to Monoco.
+1. Inventory the existing mentoring emails in MailService alongside the three
+   extracted templates. Agree which profile/admin notifications also belong in
+   Task 3, avoiding duplicates of authentication emails Monoco already owns.
+2. Inspect Monoco's current instructions and its volunteer-confirmation email
+   builder, content-block types and tests before choosing a template location.
+3. Adapt the agreed templates to pure functions returning a subject and content
+   blocks, with Deno tests. Keep database access and delivery outside them.
+4. Document which lifecycle event invokes each template and what inputs it
+   needs, including the new started/ended and seven-day proposal-expiry emails.
+5. Run Monoco's required checks and prepare a Task 3-only PR. No Task 3
+   templates have been ported into Monoco yet.
 
 Use `recipientFullName` consistently. Supply `dashboardUrl` to pure templates
 instead of hardcoding a deployment URL. No additional manual-decline emails,
@@ -214,8 +235,15 @@ before choosing a new base; do not assume they have merged.
 
 | Task                                       | Branch                            | Known checkpoint            |
 | ------------------------------------------ | --------------------------------- | --------------------------- |
-| 1: scoring engine and Deno tests           | `feat/mentor-matching-scoring`    | `896ac41a`                  |
-| 2: pure candidate selection and Deno tests | `feat/mentor-matching-candidates` | `96a0977a`, based on Task 1 |
+| 1: scoring engine and Deno tests           | `feat/mentor-matching-scoring`    | `bd2aa396`, PR #1045         |
+| 2: pure candidate selection and Deno tests | `feat/mentor-matching-candidates` | `6ec608fe`, PR #1046, based on Task 1 |
+
+Both review updates were pushed. Task 1 now uses Portal `locationId` inputs,
+scores empty availability as zero, documents MIX as matching only MIX, and
+returns unrounded final scores. Task 2 carries those changes and tests raw-score
+ranking and thresholds; its capacity check and threshold documentation were
+updated. Duncan also requested GitHub's explicit PR stack grouping; verify
+whether it has been created. Do not assume either PR has merged.
 
 Task 2 originally included Task 1 files when compared with `main`. Keep dependent
 PRs based on the appropriate branch, or rebase after the dependency merges, so
@@ -234,7 +262,7 @@ and `monoco test`. Task 1 also explicitly requires `monoco test:edge`. Do not ed
 `supabase/migrations/` or `supabase/tests/`.
 
 Last reported Monoco Task 2 checks: `monoco test:edge` passed 908 tests with
-244 steps; `monoco lint` passed. A previous full test run had WebKit launch
+272 steps; `monoco lint` passed. A previous full test run had WebKit launch
 failures caused by missing Linux dependencies. That was not a passing full
 suite; report the actual new Mac results rather than carrying over a green claim.
 

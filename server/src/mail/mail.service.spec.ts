@@ -493,6 +493,95 @@ describe('MailService', () => {
     ).rejects.toThrow('Unable to send mentorship started email');
   });
 
+  describe('sendMentorshipEndedEmail', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it.each(['mentor', 'mentee'] as const)(
+      'sends the ended email through SES with the correct %s dashboard',
+      async (recipientRole) => {
+        sesSendMock.mockResolvedValue({ MessageId: 'ended-email-id' });
+
+        await service.sendMentorshipEndedEmail({
+          email: 'casey@example.com',
+          recipientFullName: 'Casey Morgan',
+          counterpartFullName: 'Amina Patel',
+          recipientRole,
+        });
+
+        expect(SendEmailCommand).toHaveBeenCalledTimes(1);
+        expect(sesSendMock).toHaveBeenCalledTimes(1);
+
+        const commandInput = (
+          SendEmailCommand as jest.MockedClass<typeof SendEmailCommand>
+        ).mock.calls[0][0];
+
+        expect(commandInput.Source).toBe(
+          'CYF Mentorship <mentorship@cyf.academy>',
+        );
+        expect(commandInput.Destination?.ToAddresses).toEqual([
+          'casey@example.com',
+        ]);
+        expect(commandInput.Message?.Subject?.Data).toBe(
+          'Your CYF mentorship has ended',
+        );
+
+        const html = commandInput.Message?.Body?.Html?.Data;
+
+        expect(html).toContain('Hi Casey Morgan,');
+        expect(html).toContain('Your mentorship with Amina Patel has ended.');
+        expect(html).toContain(
+          `href="http://localhost:5173/${recipientRole}/dashboard"`,
+        );
+      },
+    );
+
+    it('logs the ended email without sending through SES in console mode', async () => {
+      const consoleService = await createMailService('console');
+      const log = jest
+        .spyOn(Logger.prototype, 'log')
+        .mockImplementation(() => undefined);
+
+      await consoleService.sendMentorshipEndedEmail({
+        email: 'casey@example.com',
+        recipientFullName: 'Casey Morgan',
+        counterpartFullName: 'Amina Patel',
+        recipientRole: 'mentee',
+      });
+
+      expect(log).toHaveBeenCalledWith(
+        'Mentorship ended email for casey@example.com: http://localhost:5173/mentee/dashboard',
+      );
+      expect(SendEmailCommand).not.toHaveBeenCalled();
+      expect(sesSendMock).not.toHaveBeenCalled();
+    });
+
+    it('reports an ended email delivery failure', async () => {
+      const failure = new Error('SES unavailable');
+      sesSendMock.mockRejectedValue(failure);
+      const logError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation(() => undefined);
+
+      const action = service.sendMentorshipEndedEmail({
+        email: 'casey@example.com',
+        recipientFullName: 'Casey Morgan',
+        counterpartFullName: 'Amina Patel',
+        recipientRole: 'mentee',
+      });
+
+      await expect(action).rejects.toBeInstanceOf(InternalServerErrorException);
+      await expect(action).rejects.toThrow(
+        'Unable to send mentorship ended email',
+      );
+      expect(logError).toHaveBeenCalledWith(
+        'Failed to send mentorship ended email: ',
+        failure,
+      );
+    });
+  });
+
   describe('notifyMentorshipStarted', () => {
     const participants = {
       mentor: { email: 'amina@example.com', fullName: 'Amina Patel' },
@@ -557,6 +646,76 @@ describe('MailService', () => {
         );
         expect(logError).toHaveBeenCalledWith(
           `Mentorship started email could not be sent to ${failedRole}`,
+          failure.stack,
+        );
+      },
+    );
+  });
+
+  describe('notifyMentorshipEnded', () => {
+    const participants = {
+      mentor: { email: 'amina@example.com', fullName: 'Amina Patel' },
+      mentee: { email: 'casey@example.com', fullName: 'Casey Morgan' },
+    };
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it("sends one ended email to each participant with the other person's name", async () => {
+      const sendEmail = jest
+        .spyOn(service, 'sendMentorshipEndedEmail')
+        .mockResolvedValue(undefined);
+
+      await service.notifyMentorshipEnded(participants);
+
+      expect(sendEmail).toHaveBeenCalledTimes(2);
+      expect(sendEmail).toHaveBeenNthCalledWith(1, {
+        email: 'amina@example.com',
+        recipientFullName: 'Amina Patel',
+        counterpartFullName: 'Casey Morgan',
+        recipientRole: 'mentor',
+      });
+      expect(sendEmail).toHaveBeenNthCalledWith(2, {
+        email: 'casey@example.com',
+        recipientFullName: 'Casey Morgan',
+        counterpartFullName: 'Amina Patel',
+        recipientRole: 'mentee',
+      });
+    });
+
+    it.each(['mentor', 'mentee'] as const)(
+      'attempts both ended emails and logs a %s delivery failure without rejecting',
+      async (failedRole) => {
+        const sendEmail = jest
+          .spyOn(service, 'sendMentorshipEndedEmail')
+          .mockResolvedValue(undefined);
+        const logError = jest
+          .spyOn(Logger.prototype, 'error')
+          .mockImplementation(() => undefined);
+        const failure = new Error('SES unavailable');
+
+        if (failedRole === 'mentor') {
+          sendEmail.mockRejectedValueOnce(failure);
+        } else {
+          sendEmail
+            .mockResolvedValueOnce(undefined)
+            .mockRejectedValueOnce(failure);
+        }
+
+        await expect(
+          service.notifyMentorshipEnded(participants),
+        ).resolves.toBeUndefined();
+
+        expect(sendEmail).toHaveBeenCalledTimes(2);
+        expect(sendEmail).toHaveBeenCalledWith(
+          expect.objectContaining({ recipientRole: 'mentor' }),
+        );
+        expect(sendEmail).toHaveBeenCalledWith(
+          expect.objectContaining({ recipientRole: 'mentee' }),
+        );
+        expect(logError).toHaveBeenCalledWith(
+          `Mentorship ended email could not be sent to ${failedRole}`,
           failure.stack,
         );
       },

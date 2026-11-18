@@ -234,14 +234,36 @@ export class MenteeEngagementService {
       throw new ConflictException('Only an active mentorship can be ended.');
     }
 
-    return this.prisma.matches.update({
+    // Only one request can change this active mentorship to completed.
+    const completion = await this.prisma.matches.updateMany({
       where: {
         id: engagement.id,
+        status: MatchStatus.ACTIVE,
       },
       data: {
         status: MatchStatus.COMPLETED,
         completedAt: new Date(),
       },
     });
+
+    const updatedEngagement = await this.prisma.matches.findUniqueOrThrow({
+      where: { id: engagement.id },
+    });
+
+    // Notify both people only when this request successfully ended the mentorship.
+    if (completion.count === 1) {
+      await this.mailService.notifyMentorshipEnded({
+        mentor: {
+          email: engagement.mentorProfile.user.email,
+          fullName: engagement.mentorProfile.user.fullName,
+        },
+        mentee: {
+          email: engagement.menteeProfile.user.email,
+          fullName: engagement.menteeProfile.user.fullName,
+        },
+      });
+    }
+
+    return updatedEngagement;
   }
 }

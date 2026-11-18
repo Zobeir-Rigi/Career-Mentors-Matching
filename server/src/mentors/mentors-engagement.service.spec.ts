@@ -22,6 +22,7 @@ describe('MentorEngagementService', () => {
   const mailServiceMock = {
     sendChemistryAcceptedEmail: jest.fn(),
     notifyMentorshipStarted: jest.fn(),
+    notifyMentorshipEnded: jest.fn(),
   };
 
   const pendingProposal = {
@@ -57,6 +58,7 @@ describe('MentorEngagementService', () => {
     jest.resetAllMocks();
     mailServiceMock.sendChemistryAcceptedEmail.mockResolvedValue(undefined);
     mailServiceMock.notifyMentorshipStarted.mockResolvedValue(undefined);
+    mailServiceMock.notifyMentorshipEnded.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -429,89 +431,147 @@ describe('MentorEngagementService', () => {
     expect(prismaMock.matches.update).not.toHaveBeenCalled();
   });
 
-  it('ends an active mentorship', async () => {
-    const now = new Date('2026-08-13T12:00:00.000Z');
-
-    jest.useFakeTimers();
-    jest.setSystemTime(now);
-
-    const engagement = {
+  describe('ending a mentorship', () => {
+    const now = new Date('2026-11-18T12:00:00.000Z');
+    const activeEngagement = {
       id: 'engagement-id',
       status: MatchStatus.ACTIVE,
       completedAt: null,
+      mentorProfile: {
+        user: { email: 'amina@example.com', fullName: 'Amina Patel' },
+      },
+      menteeProfile: {
+        user: { email: 'casey@example.com', fullName: 'Casey Morgan' },
+      },
     };
-
     const completedEngagement = {
-      ...engagement,
+      ...activeEngagement,
       status: MatchStatus.COMPLETED,
       completedAt: now,
     };
 
-    prismaMock.matches.findFirst.mockResolvedValue(engagement);
-    prismaMock.matches.update.mockResolvedValue(completedEngagement);
-
-    const result = await service.end('mentor-user-id', 'engagement-id');
-
-    expect(prismaMock.matches.update).toHaveBeenCalledWith({
-      where: {
-        id: 'engagement-id',
-      },
-      data: {
-        status: MatchStatus.COMPLETED,
-        completedAt: now,
-      },
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(now);
+      prismaMock.matches.findFirst.mockResolvedValue(activeEngagement);
+      prismaMock.matches.updateMany.mockResolvedValue({ count: 1 });
+      prismaMock.matches.findUniqueOrThrow.mockResolvedValue(
+        completedEngagement,
+      );
     });
 
-    expect(result).toEqual(completedEngagement);
-  });
+    it('completes an active mentorship before notifying both participants', async () => {
+      prismaMock.matches.updateMany.mockImplementation(() => {
+        expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
+        return Promise.resolve({ count: 1 });
+      });
 
-  it('is idempotent when mentorship is already completed', async () => {
-    const engagement = {
-      id: 'engagement-id',
-      status: MatchStatus.COMPLETED,
-      completedAt: new Date(),
-    };
+      const result = await service.end('mentor-user-id', 'engagement-id');
 
-    prismaMock.matches.findFirst.mockResolvedValue(engagement);
-
-    const result = await service.end('mentor-user-id', 'engagement-id');
-
-    expect(result).toEqual(engagement);
-    expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects ending a declined engagement', async () => {
-    prismaMock.matches.findFirst.mockResolvedValue({
-      id: 'engagement-id',
-      status: MatchStatus.DECLINED,
+      expect(prismaMock.matches.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: 'engagement-id',
+            mentorProfile: { userId: 'mentor-user-id' },
+          },
+        }),
+      );
+      expect(prismaMock.matches.updateMany).toHaveBeenCalledWith({
+        where: { id: 'engagement-id', status: MatchStatus.ACTIVE },
+        data: { status: MatchStatus.COMPLETED, completedAt: now },
+      });
+      expect(prismaMock.matches.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { id: 'engagement-id' },
+      });
+      expect(mailServiceMock.notifyMentorshipEnded).toHaveBeenCalledTimes(1);
+      expect(mailServiceMock.notifyMentorshipEnded).toHaveBeenCalledWith({
+        mentor: { email: 'amina@example.com', fullName: 'Amina Patel' },
+        mentee: { email: 'casey@example.com', fullName: 'Casey Morgan' },
+      });
+      expect(result).toEqual(completedEngagement);
     });
 
-    const action = service.end('mentor-user-id', 'engagement-id');
+    it('returns the current match without notifying when no row was changed', async () => {
+      prismaMock.matches.updateMany.mockResolvedValue({ count: 0 });
 
-    await expect(action).rejects.toThrow(ConflictException);
+      const result = await service.end('mentor-user-id', 'engagement-id');
 
-    await expect(action).rejects.toThrow(
-      'A declined engagement cannot be ended.',
-    );
-
-    expect(prismaMock.matches.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects ending a pre-active engagement', async () => {
-    prismaMock.matches.findFirst.mockResolvedValue({
-      id: 'engagement-id',
-      status: MatchStatus.CHEMISTRY_PENDING,
+      expect(result).toEqual(completedEngagement);
+      expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
     });
 
-    const action = service.end('mentor-user-id', 'engagement-id');
+    it('notifies only once when overlapping requests read the same active match', async () => {
+      prismaMock.matches.updateMany
+        .mockResolvedValueOnce({ count: 1 })
+        .mockResolvedValueOnce({ count: 0 });
 
-    await expect(action).rejects.toThrow(ConflictException);
+      const results = await Promise.all([
+        service.end('mentor-user-id', 'engagement-id'),
+        service.end('mentor-user-id', 'engagement-id'),
+      ]);
 
-    await expect(action).rejects.toThrow(
-      'Only an active mentorship can be ended.',
-    );
+      expect(results).toEqual([completedEngagement, completedEngagement]);
+      expect(prismaMock.matches.updateMany).toHaveBeenCalledTimes(2);
+      expect(mailServiceMock.notifyMentorshipEnded).toHaveBeenCalledTimes(1);
+    });
 
-    expect(prismaMock.matches.update).not.toHaveBeenCalled();
+    it('does not update or notify when the mentorship is already completed', async () => {
+      prismaMock.matches.findFirst.mockResolvedValue(completedEngagement);
+
+      const result = await service.end('mentor-user-id', 'engagement-id');
+
+      expect(result).toEqual(completedEngagement);
+      expect(prismaMock.matches.updateMany).not.toHaveBeenCalled();
+      expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      MatchStatus.CHEMISTRY_PENDING,
+      MatchStatus.CHEMISTRY_CONFIRMED,
+      MatchStatus.MATCH_PENDING,
+      MatchStatus.DECLINED,
+    ])('rejects ending a mentorship with status %s', async (status) => {
+      prismaMock.matches.findFirst.mockResolvedValue({
+        ...activeEngagement,
+        status,
+      });
+
+      const action = service.end('mentor-user-id', 'engagement-id');
+
+      await expect(action).rejects.toThrow(ConflictException);
+      await expect(action).rejects.toThrow(
+        status === MatchStatus.DECLINED
+          ? 'A declined engagement cannot be ended.'
+          : 'Only an active mentorship can be ended.',
+      );
+
+      expect(prismaMock.matches.updateMany).not.toHaveBeenCalled();
+      expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
+    });
+
+    it('does not update or notify when the mentor does not own the match', async () => {
+      prismaMock.matches.findFirst.mockResolvedValue(null);
+
+      await expect(
+        service.end('mentor-user-id', 'engagement-id'),
+      ).rejects.toThrow(NotFoundException);
+
+      expect(prismaMock.matches.updateMany).not.toHaveBeenCalled();
+      expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
+    });
+
+    it('does not notify when the completion update fails', async () => {
+      prismaMock.matches.updateMany.mockRejectedValue(
+        new Error('Database unavailable'),
+      );
+
+      await expect(
+        service.end('mentor-user-id', 'engagement-id'),
+      ).rejects.toThrow('Database unavailable');
+
+      expect(prismaMock.matches.findUniqueOrThrow).not.toHaveBeenCalled();
+      expect(mailServiceMock.notifyMentorshipEnded).not.toHaveBeenCalled();
+    });
   });
 
   describe('mentorship started notifications', () => {
